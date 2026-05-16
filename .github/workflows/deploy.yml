@@ -4,6 +4,11 @@ on:
   push:
     branches: [main, master]
 
+permissions:
+  contents: read
+  deployments: write
+  pull-requests: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -22,7 +27,7 @@ jobs:
       - name: Create Pages Project (if not exists)
         run: |
           echo "Creating Pages project if it doesn't exist..."
-          curl -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CF_ACCOUNT_ID }}/pages/projects" \
+          curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CF_ACCOUNT_ID }}/pages/projects" \
             -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"name":"simplisave","production_branch":"main"}' || true
