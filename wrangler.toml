@@ -12,25 +12,8 @@ ENVIRONMENT = "development"
 # ⚠️ 生产环境必须在 Dashboard 修改此密钥！使用 openssl rand -hex 32 生成
 JWT_SECRET = "your-secret-key-change-in-production"
 
-# D1 数据库绑定
-# 注意：在 Cloudflare Pages Dashboard 中绑定，此处仅用于本地开发
-# 创建数据库：wrangler d1 create simplisave-db
-# 执行迁移：wrangler d1 execute simplisave-db --file=alldata.sql
-[[d1_databases]]
-binding = "DB"
-database_name = "simplisave-db"
-# 本地开发时使用此 ID，生产环境使用 Dashboard 绑定
-# database_id = "your-d1-database-id"
-
-# KV 命名空间绑定（可选，用于缓存/会话）
-# 注意：在 Cloudflare Pages Dashboard 中绑定，此处仅用于本地开发
-# 创建：wrangler kv:namespace create "KV"
-[[kv_namespaces]]
-binding = "KV"
-id = ""  # 留空，使用 Dashboard 中的绑定
-# preview_id = ""  # 预览环境 KV
-
 # 站点配置（Pages 部署）
+# 注意：D1 和 KV 绑定在 Cloudflare Pages Dashboard 中配置
 [site]
 bucket = "./dist"
 
@@ -44,8 +27,3 @@ local_protocol = "http"
 [env.production]
 name = "simplisave-production"
 vars = { ENVIRONMENT = "production" }
-# 生产环境使用不同的 D1 数据库（可选）
-# [[env.production.d1_databases]]
-# binding = "DB"
-# database_name = "simplisave-db-prod"
-# database_id = "your-production-database-id"
