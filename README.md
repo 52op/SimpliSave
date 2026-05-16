@@ -117,16 +117,36 @@ SimpliSave/
 | `CF_ACCOUNT_ID` | 步骤 3 复制 | 账户 ID |
 | `D1_DATABASE_ID` | 步骤 4 复制 | 数据库 ID |
 | `JWT_SECRET` | `openssl rand -hex 32` 生成 | JWT 签名密钥 |
+| `WORKERS_URL` | 部署后获取 | Workers API 地址 |
 
-### 6. 触发部署
+### 6. 首次部署（获取 Workers URL）
 
 ```bash
-# 修改任意文件触发部署
-git commit --allow-empty -m "chore: 触发首次部署"
+# 首次推送，触发 Workers 部署
+git commit --allow-empty -m "chore: 首次部署"
 git push
 ```
 
-### 7. 配置 D1 数据库
+### 7. 获取 Workers URL
+
+1. 访问 https://dash.cloudflare.com/
+2. **Workers & Pages** → `simplisave-api`
+3. 复制 **Workers URL**（格式：`https://simplisave-api.xxx.workers.dev`）
+
+### 8. 更新 GitHub Secret
+
+1. 访问 GitHub Secrets 页面
+2. 添加或更新 `WORKERS_URL`：粘贴上一步复制的 URL
+
+### 9. 重新部署 Pages
+
+```bash
+# 再次推送，触发 Pages 部署（使用正确的 Workers URL）
+git commit --allow-empty -m "chore: 更新 Workers URL 并重新部署 Pages"
+git push
+```
+
+### 10. 配置 D1 数据库
 
 1. 访问 https://dash.cloudflare.com/
 2. **Workers & Pages** → **D1** → `simplisave-db`
