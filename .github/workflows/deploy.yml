@@ -19,6 +19,15 @@ jobs:
 
       - run: npm run build
 
+      - name: Create Pages Project (if not exists)
+        run: |
+          echo "Creating Pages project if it doesn't exist..."
+          curl -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CF_ACCOUNT_ID }}/pages/projects" \
+            -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"name":"simplisave","production_branch":"main"}' || true
+        continue-on-error: true
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
