@@ -2,8 +2,8 @@
 
 现代化网址收藏与备忘录应用，基于 Cloudflare Pages + Workers + D1 构建的全栈应用。
 
-> 📌 **在线演示**: [https://so.sztcrs.com](https://so.sztcrs.com)  
-> 📌 **原项目**: 重构自 [hao.sztcrs.com](https://hao.sztcrs.com)
+> 📌 **在线演示**: [https://ss.it0731.cn](https://ss.it0731.cn)  
+> 📌 **原项目**: 重构自 [so.sztcrs.com](https://so.sztcrs.com)
 
 [![Deploy to Cloudflare Pages](https://img.shields.io/badge/deploy-cloudflare%20pages-f48120?logo=cloudflare)](https://deploy.workers.cloudflare.com/?url=https://github.com/52op/SimpliSave)
 [![License](https://img.shields.io/github/license/52op/SimpliSave)](LICENSE)
