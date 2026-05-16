@@ -1,0 +1,8 @@
+# Cloudflare Pages redirect rules
+# https://developers.cloudflare.com/pages/configuration/redirects/
+#
+# 排除 /api/* 路由，由 Pages Functions 处理
+# 所有其他请求回退到 index.html（SPA）
+
+!/api/*
+/*	/index.html	200
