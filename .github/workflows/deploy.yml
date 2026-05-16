@@ -11,6 +11,8 @@ permissions:
 jobs:
   deploy-workers:
     runs-on: ubuntu-latest
+    outputs:
+      workers-url: ${{ steps.get-url.outputs.url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -27,8 +29,6 @@ jobs:
           sed -i 's|database_id = ".*"|database_id = "${{ secrets.D1_DATABASE_ID }}"|' wrangler-workers.toml
           # 添加 JWT_SECRET
           echo 'JWT_SECRET = "${{ secrets.JWT_SECRET }}"' >> wrangler-workers.toml
-          # 显示配置（不显示敏感信息）
-          cat wrangler-workers.toml | grep -v "JWT_SECRET\|database_id"
 
       - name: Deploy Workers API
         uses: cloudflare/wrangler-action@v3
@@ -36,6 +36,34 @@ jobs:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           command: deploy --config wrangler-workers.toml
+
+      - name: Get Workers URL
+        id: get-url
+        run: |
+          # Workers 部署后，URL 格式: https://<name>.<account-subdomain>.workers.dev
+          # 使用 Cloudflare API 获取实际 URL
+          WORKER_NAME="simplisave-api"
+          ACCOUNT_ID="${{ secrets.CF_ACCOUNT_ID }}"
+          API_TOKEN="${{ secrets.CF_API_TOKEN }}"
+          
+          # 获取 Workers 子域名
+          RESPONSE=$(curl -s "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/services/${WORKER_NAME}" \
+            -H "Authorization: Bearer ${API_TOKEN}" \
+            -H "Content-Type: application/json")
+          
+          # 提取 workers.dev URL
+          WORKERS_URL=$(echo "$RESPONSE" | jq -r '.result.default_environment.url // empty')
+          
+          if [ -z "$WORKERS_URL" ]; then
+            # 如果 API 返回为空，使用默认格式
+            # 先获取账户子域名
+            ACCOUNT_SUBDOMAIN=$(curl -s "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}" \
+              -H "Authorization: Bearer ${API_TOKEN}" | jq -r '.result.name // empty' | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+            WORKERS_URL="https://${WORKER_NAME}.${ACCOUNT_SUBDOMAIN}.workers.dev"
+          fi
+          
+          echo "url=${WORKERS_URL}" >> $GITHUB_OUTPUT
+          echo "✅ Workers URL: ${WORKERS_URL}"
 
   deploy-pages:
     runs-on: ubuntu-latest
@@ -52,12 +80,12 @@ jobs:
 
       - name: Build with Workers URL
         run: |
-          # 从 secrets 获取 Workers URL，如果不存在则使用默认值
-          WORKERS_URL="${{ secrets.WORKERS_URL }}"
-          if [ -z "$WORKERS_URL" ]; then
-            WORKERS_URL="https://simplisave-api.${{ secrets.CF_ACCOUNT_ID }}.workers.dev"
-          fi
+          # 使用 Workers 输出的 URL
+          WORKERS_URL="${{ needs.deploy-workers.outputs.workers-url }}"
+          echo "📡 Using Workers URL: $WORKERS_URL"
+          # 写入 .env.production
           echo "VITE_API_URL=$WORKERS_URL" > .env.production
+          cat .env.production
           npm run build
 
       - name: Create Pages Project (if not exists)
