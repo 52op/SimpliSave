@@ -2,8 +2,8 @@
 
 现代化网址收藏与备忘录应用，基于 Cloudflare Pages + Workers + D1 构建的全栈应用。
 
-> 📌 **在线演示**: [https://ss.it0731.cn](https://ss.it0731.cn)  
-> 📌 **原项目**: 重构自 [so.sztcrs.com](https://so.sztcrs.com)
+> 📌 **在线演示**: [https://simplisave.pages.dev](https://simplisave.pages.dev)  
+> 📌 **原项目**: 重构自 [hao.sztcrs.com](https://hao.sztcrs.com)
 
 [![Deploy to Cloudflare Pages](https://img.shields.io/badge/deploy-cloudflare%20pages-f48120?logo=cloudflare)](https://deploy.workers.cloudflare.com/?url=https://github.com/52op/SimpliSave)
 [![License](https://img.shields.io/github/license/52op/SimpliSave)](LICENSE)
@@ -54,7 +54,7 @@
 | **数据库** | Cloudflare D1 (SQLite) | 持久化 |
 | **缓存** | Cloudflare KV | 会话/缓存 |
 | **编辑** | Tiptap 2 | 备忘录富文本 |
-| **部署** | Cloudflare Pages + Workers | 全球 CDN |
+| **部署** | Cloudflare Pages + GitHub Actions | 全球 CDN |
 
 ## 📦 项目结构
 
@@ -88,128 +88,87 @@ SimpliSave/
 └── package.json
 ```
 
-## 🚀 部署到 Cloudflare Pages（推荐）
+## 🚀 部署到 Cloudflare Pages（使用 GitHub Actions）
 
-### 方式一：通过 Dashboard 直接部署（最简单）
+### 1. Fork 本项目
 
-#### 1. 推送代码到 GitHub
+点击右上角 **Fork** 按钮，将项目 fork 到你的 GitHub 账号。
+
+### 2. 获取 Cloudflare API Token
+
+1. 访问 https://dash.cloudflare.com/profile/api-tokens
+2. 点击 **Create Token**
+3. 选择 **Edit Cloudflare Workers** 模板
+4. **Permissions** 部分，添加：
+   - **Account** → **Cloudflare Pages** → **Edit**
+   - **Account** → **D1** → **Edit**
+5. 点击 **Continue to summary**
+6. 点击 **Create Token**
+7. **复制 API Token**（只显示一次！）
+
+### 3. 获取 Account ID
+
+1. 访问 https://dash.cloudflare.com/
+2. 右侧边栏找到 **Account ID**
+3. 点击复制
+
+### 4. 添加到 GitHub Secrets
+
+1. 访问你的仓库：https://github.com/你的用户名/SimpliSave
+2. **Settings** → **Secrets and variables** → **Actions**
+3. 点击 **New repository secret**
+4. 添加两个密钥：
+
+| Name | Value |
+|------|-------|
+| `CF_API_TOKEN` | 步骤 2 中复制的 API Token |
+| `CF_ACCOUNT_ID` | 步骤 3 中复制的 Account ID |
+
+### 5. 触发部署
+
+推送到 `main` 或 `master` 分支会自动触发部署：
 
 ```bash
-# 初始化 Git
-cd SimpliSave
-git init
-git add .
-git commit -m "Initial commit"
-
-# 关联远程仓库（替换为你的仓库）
-git remote add origin https://github.com/52op/SimpliSave.git
-git branch -M main
-git push -u origin main
+git push origin main
 ```
 
-#### 2. 在 Cloudflare Dashboard 创建 Pages 项目
+### 6. 创建 D1 数据库
 
-1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
-2. 进入 **Workers & Pages** → **Pages**
-3. 点击 **Create a project** → **Connect to Git**
-4. 选择你的 GitHub 仓库 `52op/SimpliSave`
-5. 点击 **Begin setup**
+1. 访问 https://dash.cloudflare.com/
+2. **Workers & Pages** → **D1**
+3. 点击 **Create a database**
+4. 命名为 `simplisave-db`
+5. 创建后，点击 **Execute SQL**
+6. 粘贴 `alldata.sql` 文件内容并执行
 
-#### 3. 配置构建设置
+### 7. 绑定 D1 数据库
 
-- **Framework preset**: `Vite`
-- **Build command**: `npm run build`
-- **Build output directory**: `dist`
-- **Root directory**: 留空
-
-#### 4. 创建 D1 数据库
-
-1. 进入 **Workers & Pages** → **D1**
-2. 点击 **Create a database**
-3. 命名为 `simplisave-db`
-4. 创建后复制 `database_id`
-
-#### 5. 执行数据库迁移
-
-在本地执行：
-```bash
-wrangler d1 execute simplisave-db --remote --file=schema.sql
-```
-
-或者在 Cloudflare Dashboard 的 D1 页面，点击 **Execute SQL**，粘贴 `schema.sql` 内容执行。
-
-#### 6. 配置环境变量和绑定
-
-在 Pages 项目设置中（**Settings** → **Environment variables**）：
-
-##### 添加环境变量：
-
-| 变量名 | 值 | 说明 |
-|--------|-----|------|
-| `ENVIRONMENT` | `production` | 环境标识 |
-| `JWT_SECRET` | `openssl rand -hex 32` 生成 | JWT 签名密钥 |
-
-生成 JWT_SECRET：
-```bash
-# Linux/Mac
-openssl rand -hex 32
-
-# Windows PowerShell
-[Convert]::ToBase64String((Get-Random -Count 32))
-```
-
-##### 添加 D1 数据库绑定：
-
-1. 进入 **Settings** → **Functions** → **D1 database bindings**
-2. 点击 **Add binding**
-3. **Variable name**: `DB`
-4. **Database**: 选择 `simplisave-db`
+1. 进入 Pages 项目 → **Settings**
+2. **Functions** → **D1 database bindings**
+3. 点击 **Add binding**
+4. 配置：
+   - **Variable name**: `DB`
+   - **Database**: 选择 `simplisave-db`
 5. 点击 **Save**
 
-##### 添加 KV 命名空间（可选）：
+### 8. 配置环境变量
 
-1. 进入 **Workers & Pages** → **KV**
-2. 点击 **Create a namespace**，命名为 `simplisave-kv`
-3. 返回 Pages 项目设置
-4. **Settings** → **Functions** → **KV namespace bindings**
-5. 点击 **Add binding**
-6. **Variable name**: `KV`
-7. **Namespace**: 选择 `simplisave-kv`
+**Settings** → **Environment variables**：
+- `ENVIRONMENT`: `production`
+- `JWT_SECRET`: 生成一个随机字符串（例如：`openssl rand -hex 32`）
 
-#### 7. 部署
+### 9. 重新部署
 
-1. 回到 Pages 项目，点击 **Deployments**
-2. 如果是首次部署，点击 **Retry deployment**
-3. 等待构建完成（约 1-2 分钟）
-4. 部署成功后，访问分配的域名（如 `simplisave.pages.dev`）
+1. 回到 **Deployments** 页面
+2. 找到最新的部署
+3. 点击 **Retry deployment**
 
-#### 8. （可选）绑定自定义域名
+### 10. 访问应用
 
-1. 进入 Pages 项目 → **Custom domains**
-2. 点击 **Add custom domain**
-3. 输入你的域名（如 `so.sztcrs.com`）
-4. 按提示配置 DNS
+- 首页：`https://simplisave.pages.dev/`
+- API：`https://simplisave.pages.dev/api/bookmarks?public=1`
 
 ---
-
-### 方式二：使用 Wrangler CLI 部署
-
-```bash
-# 登录 Cloudflare
-wrangler login
-
-# 创建 D1 数据库
-wrangler d1 create simplisave-db
-
-# 执行数据库迁移
-wrangler d1 execute simplisave-db --remote --file=schema.sql
-
-# 构建前端
-npm run build
-
-# 部署到 Pages
-wrangler pages deploy dist --project-name simplisave
-```
 
 ## ⚙️ 环境变量
 
@@ -228,13 +187,7 @@ wrangler pages deploy dist --project-name simplisave
 |---------------|----------|
 | `DB` | `simplisave-db` |
 
-### KV 命名空间绑定（可选）
-
-在 **Settings** → **Functions** → **KV namespace bindings** 添加：
-
-| Variable name | Namespace |
-|---------------|-----------|
-| `KV` | `simplisave-kv` |
+---
 
 ## 📝 API 接口
 
@@ -287,6 +240,8 @@ wrangler pages deploy dist --project-name simplisave
 | PUT | `/memos/:id` | 更新备忘录 |
 | DELETE | `/memos/:id` | 删除备忘录 |
 | POST | `/memos/:id/pin` | 置顶/取消置顶 |
+
+---
 
 ## 🔒 安全建议
 
