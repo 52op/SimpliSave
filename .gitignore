@@ -106,3 +106,5 @@ wrangler.local.toml
 部署指南.md
 重构方案.md
 重构进度.md
+
+alldata.sql

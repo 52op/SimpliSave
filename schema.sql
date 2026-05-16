@@ -1,6 +1,8 @@
 ﻿-- SimpliSave D1 Schema
 -- Cloudflare D1 (SQLite)
 
+DROP TABLE IF EXISTS tags; DROP TABLE IF EXISTS memos; DROP TABLE IF EXISTS bookmarks; DROP TABLE IF EXISTS categories; DROP TABLE IF EXISTS users;
+
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
     email TEXT UNIQUE NOT NULL,
@@ -66,11 +68,4 @@ CREATE TABLE IF NOT EXISTS tags (
     UNIQUE(user_id, name, type)
 );
 
--- Indexes
-CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id);
-CREATE INDEX IF NOT EXISTS idx_bookmarks_category ON bookmarks(category_id);
-CREATE INDEX IF NOT EXISTS idx_bookmarks_favorite ON bookmarks(user_id, is_favorite);
-CREATE INDEX IF NOT EXISTS idx_memos_user ON memos(user_id);
-CREATE INDEX IF NOT EXISTS idx_memos_pinned ON memos(user_id, is_pinned);
-CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id);
-CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id); CREATE INDEX IF NOT EXISTS idx_bookmarks_category ON bookmarks(category_id); CREATE INDEX IF NOT EXISTS idx_bookmarks_favorite ON bookmarks(user_id, is_favorite); CREATE INDEX IF NOT EXISTS idx_memos_user ON memos(user_id); CREATE INDEX IF NOT EXISTS idx_memos_pinned ON memos(user_id, is_pinned); CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id); CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id);
