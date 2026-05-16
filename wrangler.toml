@@ -1,17 +1,10 @@
-﻿# SimpliSave - Cloudflare Pages 配置
-# 文档：https://developers.cloudflare.com/pages/configuration/
+﻿# wrangler.toml - 本地开发配置
+# 生产环境使用 GitHub Actions 部署
 
-# 注意：这是 Cloudflare Pages 项目，不是 Workers
-# Pages 会自动识别 functions/ 目录作为 API
-# 静态资源从 dist/ 目录部署
+name = "simplisave"
+compatibility_date = "2024-04-05"
 
-# 本地开发配置（可选）
+# 本地开发服务器配置
 [dev]
 port = 8788
 local_protocol = "http"
-
-# 生产环境变量
-# 在 Cloudflare Dashboard 中配置：
-# Settings -> Environment variables
-# - ENVIRONMENT: production
-# - JWT_SECRET: <随机生成的密钥>

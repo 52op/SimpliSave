@@ -1,4 +1,7 @@
-﻿const BASE_URL = '/api';
+﻿// API 配置
+// 开发环境使用相对路径（代理到本地 Workers）
+// 生产环境使用 Workers URL
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 function getHeaders(token?: string): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -26,13 +29,13 @@ export const authApi = {
 };
 
 export const bookmarkApi = {
-   list: (token: string) => request<any[]>('GET', '/bookmarks', undefined, token),
-   listPublic: () => request<any[]>('GET', '/bookmarks?public=1'),
-   create: (token: string, data: any) => request<any>('POST', '/bookmarks', data, token),
-   get: (token: string, id: string) => request<any>('GET', `/bookmarks/${id}`, undefined, token),
-   update: (token: string, id: string, data: any) => request<any>('PUT', `/bookmarks/${id}`, data, token),
-   delete: (token: string, id: string) => request<void>('DELETE', `/bookmarks/${id}`, undefined, token),
-   search: (token: string, q: string) => request<any[]>(token ? 'GET' : 'GET', `/bookmarks/search?q=${encodeURIComponent(q)}`, undefined, token),
+  list: (token: string) => request<any[]>('GET', '/bookmarks', undefined, token),
+  listPublic: () => request<any[]>('GET', '/bookmarks?public=1'),
+  create: (token: string, data: any) => request<any>('POST', '/bookmarks', data, token),
+  get: (token: string, id: string) => request<any>('GET', `/bookmarks/${id}`, undefined, token),
+  update: (token: string, id: string, data: any) => request<any>('PUT', `/bookmarks/${id}`, data, token),
+  delete: (token: string, id: string) => request<void>('DELETE', `/bookmarks/${id}`, undefined, token),
+  search: (token: string, q: string) => request<any[]>('GET', `/bookmarks/search?q=${encodeURIComponent(q)}`, undefined, token),
 };
 
 export const categoryApi = {
