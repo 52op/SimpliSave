@@ -1,7 +1,9 @@
 ﻿// API 配置
 // 开发环境使用相对路径（代理到本地 Workers）
 // 生产环境使用 Workers URL
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// 自动去掉结尾的 / 避免请求失败
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
 
 function getHeaders(token?: string): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
