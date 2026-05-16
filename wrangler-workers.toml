@@ -1,5 +1,6 @@
 # wrangler-workers.toml - Workers API 配置
 # 用于单独部署 API 后端
+# 敏感信息通过环境变量注入
 
 name = "simplisave-api"
 main = "workers/index.ts"
@@ -9,15 +10,9 @@ compatibility_flags = ["nodejs_compat"]
 # 环境变量
 [vars]
 ENVIRONMENT = "production"
-# ⚠️ 在 Cloudflare Dashboard 或 GitHub Secrets 中配置 JWT_SECRET
 
 # D1 数据库绑定
 [[d1_databases]]
 binding = "DB"
 database_name = "simplisave-db"
-database_id = "your-d1-database-id"
-
-# KV 命名空间绑定（可选）
-[[kv_namespaces]]
-binding = "KV"
-id = "your-kv-namespace-id"
+database_id = "b3a0c2e7-7a5a-4b1a-9f0a-1c2d3e4f5a6b"  # 你的 D1 数据库 ID

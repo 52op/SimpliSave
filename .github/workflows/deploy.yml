@@ -21,6 +21,15 @@ jobs:
 
       - run: npm ci
 
+      - name: Update wrangler-workers.toml with secrets
+        run: |
+          # 替换 database_id
+          sed -i 's|database_id = ".*"|database_id = "${{ secrets.D1_DATABASE_ID }}"|' wrangler-workers.toml
+          # 添加 JWT_SECRET
+          echo 'JWT_SECRET = "${{ secrets.JWT_SECRET }}"' >> wrangler-workers.toml
+          # 显示配置（不显示敏感信息）
+          cat wrangler-workers.toml | grep -v "JWT_SECRET\|database_id"
+
       - name: Deploy Workers API
         uses: cloudflare/wrangler-action@v3
         with:
@@ -41,9 +50,15 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run build
-        env:
-          VITE_API_URL: https://simplisave-api.your-subdomain.workers.dev
+      - name: Build with Workers URL
+        run: |
+          # 从 secrets 获取 Workers URL，如果不存在则使用默认值
+          WORKERS_URL="${{ secrets.WORKERS_URL }}"
+          if [ -z "$WORKERS_URL" ]; then
+            WORKERS_URL="https://simplisave-api.${{ secrets.CF_ACCOUNT_ID }}.workers.dev"
+          fi
+          echo "VITE_API_URL=$WORKERS_URL" > .env.production
+          npm run build
 
       - name: Create Pages Project (if not exists)
         run: |
