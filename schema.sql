@@ -155,3 +155,12 @@ CREATE INDEX IF NOT EXISTS idx_public_categories_sort ON public_categories(sort_
 CREATE INDEX IF NOT EXISTS idx_submissions_status ON bookmark_submissions(status);
 CREATE INDEX IF NOT EXISTS idx_memos_user ON memos(user_id);
 CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id);
+
+-- Default admin user (password: 52op)
+INSERT OR IGNORE INTO users (id, email, name, password_hash, role) VALUES (
+  'admin-default',
+  'letvar@it0731.cn',
+  'admin',
+  'duKAchVjk-QsGmgzBHuEvLw9-ZDgjnA9cZROYxHNnLg',
+  'admin'
+);
