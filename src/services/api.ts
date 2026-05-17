@@ -41,7 +41,7 @@ export const bookmarkApi = {
 };
 
 export const categoryApi = {
-  list: (token: string) => request<any[]>('GET', '/categories', undefined, token),
+  list: (token: string, type?: string) => request<any[]>('GET', `/categories${type ? `?type=${type}` : ''}`, undefined, token),
   create: (token: string, data: any) => request<any>('POST', '/categories', data, token),
   update: (token: string, id: string, data: any) => request<any>('PUT', `/categories/${id}`, data, token),
   delete: (token: string, id: string) => request<void>('DELETE', `/categories/${id}`, undefined, token),
@@ -53,10 +53,22 @@ export const memoApi = {
   get: (token: string, id: string) => request<any>('GET', `/memos/${id}`, undefined, token),
   update: (token: string, id: string, data: any) => request<any>('PUT', `/memos/${id}`, data, token),
   delete: (token: string, id: string) => request<void>('DELETE', `/memos/${id}`, undefined, token),
+  pin: (token: string, id: string) => request<any>('POST', `/memos/${id}/pin`, undefined, token),
 };
 
 export const tagApi = {
-  list: (token: string) => request<any[]>('GET', '/tags', undefined, token),
+  list: (token: string, type?: string) => request<any[]>('GET', `/tags${type ? `?type=${type}` : ''}`, undefined, token),
   create: (token: string, data: any) => request<any>('POST', '/tags', data, token),
   delete: (token: string, id: string) => request<void>('DELETE', `/tags/${id}`, undefined, token),
+};
+
+export const submissionApi = {
+  list: (token: string, status?: string) => request<any[]>('GET', `/submissions${status ? `?status=${status}` : ''}`, undefined, token),
+  create: (token: string, data: any) => request<any>('POST', '/submissions', data, token),
+  approve: (token: string, id: string) => request<any>('PUT', `/submissions/${id}/approve`, undefined, token),
+  reject: (token: string, id: string, note?: string) => request<any>('PUT', `/submissions/${id}/reject`, { admin_note: note }, token),
+};
+
+export const fetchMetaApi = {
+  fetch: (url: string) => request<any>('GET', `/fetch-meta?url=${encodeURIComponent(url)}`),
 };

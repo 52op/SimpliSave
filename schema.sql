@@ -1,7 +1,7 @@
 ﻿-- SimpliSave D1 Schema
 -- Cloudflare D1 (SQLite)
 
-DROP TABLE IF EXISTS tags; DROP TABLE IF EXISTS memos; DROP TABLE IF EXISTS bookmarks; DROP TABLE IF EXISTS categories; DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS submissions; DROP TABLE IF EXISTS tags; DROP TABLE IF EXISTS memos; DROP TABLE IF EXISTS bookmarks; DROP TABLE IF EXISTS categories; DROP TABLE IF EXISTS users;
 
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     password_hash TEXT NOT NULL,
     avatar_url TEXT,
+    role TEXT DEFAULT 'user' CHECK(role IN ('user','admin')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -68,4 +69,17 @@ CREATE TABLE IF NOT EXISTS tags (
     UNIQUE(user_id, name, type)
 );
 
-CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id); CREATE INDEX IF NOT EXISTS idx_bookmarks_category ON bookmarks(category_id); CREATE INDEX IF NOT EXISTS idx_bookmarks_favorite ON bookmarks(user_id, is_favorite); CREATE INDEX IF NOT EXISTS idx_memos_user ON memos(user_id); CREATE INDEX IF NOT EXISTS idx_memos_pinned ON memos(user_id, is_pinned); CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id); CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id);
+CREATE TABLE IF NOT EXISTS submissions (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    icon_url TEXT,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+    admin_note TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id); CREATE INDEX IF NOT EXISTS idx_bookmarks_category ON bookmarks(category_id); CREATE INDEX IF NOT EXISTS idx_bookmarks_favorite ON bookmarks(user_id, is_favorite); CREATE INDEX IF NOT EXISTS idx_memos_user ON memos(user_id); CREATE INDEX IF NOT EXISTS idx_memos_pinned ON memos(user_id, is_pinned); CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id); CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id); CREATE INDEX IF NOT EXISTS idx_submissions_user ON submissions(user_id); CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status);

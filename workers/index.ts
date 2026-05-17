@@ -15,6 +15,10 @@ import {
 import {
   handleListTags, handleCreateTag, handleDeleteTag
 } from './api/tags';
+import { handleFetchMeta } from './api/fetchMeta';
+import {
+  handleSubmitLink, handleListSubmissions, handleApproveSubmission, handleRejectSubmission
+} from './api/submissions';
 
 interface Env {
   DB: D1Database;
@@ -40,6 +44,10 @@ export default {
       return handleCategories(request, env, path);
     } else if (path.startsWith('/tags')) {
       return handleTags(request, env, path);
+    } else if (path.startsWith('/fetch-meta')) {
+      return handleFetchMeta(request, env);
+    } else if (path.startsWith('/submissions')) {
+      return handleSubmissions(request, env, path);
     }
     
     return new Response('Not Found', { status: 404, headers: corsHeaders() });
@@ -137,6 +145,24 @@ async function handleTags(request: Request, env: Env, path: string): Promise<Res
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       return await handleDeleteTag(request, env, id);
+    default:
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+  }
+}
+
+async function handleSubmissions(request: Request, env: Env, path: string): Promise<Response> {
+  // /submissions/:id/approve 或 /submissions/:id/reject
+  const approveMatch = path.match(/^\/submissions\/([^\/]+)\/approve$/);
+  const rejectMatch = path.match(/^\/submissions\/([^\/]+)\/reject$/);
+
+  if (approveMatch) return handleApproveSubmission(request, env);
+  if (rejectMatch) return handleRejectSubmission(request, env);
+
+  switch (request.method) {
+    case 'GET':
+      return handleListSubmissions(request, env);
+    case 'POST':
+      return handleSubmitLink(request, env);
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }

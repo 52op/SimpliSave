@@ -6,12 +6,22 @@ import Bookmarks from "./pages/Bookmarks"
 import Memos from "./pages/Memos"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import AdminCategories from "./pages/admin/AdminCategories"
+import AdminSubmissions from "./pages/admin/AdminSubmissions"
 import Header from "./components/Header"
 import "./index.css"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token)
   return token ? <>{children}</> : <Navigate to="/login" replace />
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore((s) => s.user)
+  const token = useAuthStore((s) => s.token)
+  if (!token) return <Navigate to="/login" replace />
+  if (user?.role !== "admin") return <Navigate to="/" replace />
+  return <>{children}</>
 }
 
 export default function App() {
@@ -27,6 +37,8 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
             <Route path="/memos" element={<ProtectedRoute><Memos /></ProtectedRoute>} />
+            <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
+            <Route path="/admin/submissions" element={<AdminRoute><AdminSubmissions /></AdminRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

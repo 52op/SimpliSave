@@ -47,7 +47,7 @@ export async function handleLogin(request: Request, env: any): Promise<Response>
   }
   
   const user = await env.DB.prepare(
-    'SELECT id, email, name, password_hash, created_at FROM users WHERE email = ?'
+    'SELECT id, email, name, password_hash, role, created_at FROM users WHERE email = ?'
   ).bind(email).first();
   
   if (!user) {
@@ -61,7 +61,7 @@ export async function handleLogin(request: Request, env: any): Promise<Response>
   
   const token = await signJWT({ userId: user.id, email: user.email }, env);
   return successResponse({
-    user: { id: user.id, email: user.email, name: user.name, created_at: user.created_at },
+    user: { id: user.id, email: user.email, name: user.name, role: user.role, created_at: user.created_at },
     token,
   });
 }
@@ -83,7 +83,7 @@ export async function handleGetMe(request: Request, env: any): Promise<Response>
   }
   
   const user = await env.DB.prepare(
-    'SELECT id, email, name, avatar_url, created_at, updated_at FROM users WHERE id = ?'
+    'SELECT id, email, name, avatar_url, role, created_at, updated_at FROM users WHERE id = ?'
   ).bind(payload.userId).first();
   
   if (!user) return errorResponse('User not found', 404);
@@ -117,7 +117,7 @@ export async function handleUpdateProfile(request: Request, env: any): Promise<R
   ).bind(...values).run();
   
   const user = await env.DB.prepare(
-    'SELECT id, email, name, avatar_url, created_at, updated_at FROM users WHERE id = ?'
+    'SELECT id, email, name, avatar_url, role, created_at, updated_at FROM users WHERE id = ?'
   ).bind(payload.userId).first();
   
   return successResponse(user);

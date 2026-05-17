@@ -4,7 +4,9 @@ import { useAuthStore } from "../stores/authStore"
 import { useBookmarkStore } from "../stores/bookmarkStore"
 import { bookmarkApi, categoryApi } from "../services/api"
 import { Bookmark, Category } from "../types"
-import { Search, ExternalLink, Star, Folder, Globe, Clock, Zap, Grid, List } from "lucide-react"
+import { Search, ExternalLink, Star, Folder, Globe, Clock, Zap, Grid, List, Send, Loader2, X } from "lucide-react"
+import Favicon from "../components/Favicon"
+import { submissionApi, fetchMetaApi } from "../services/api"
 
 // 搜索引擎配置
 const SEARCH_ENGINES = [
@@ -25,6 +27,10 @@ export default function Home() {
   const [selectedEngine, setSelectedEngine] = useState(SEARCH_ENGINES[0])
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [showEngines, setShowEngines] = useState(false)
+  const [showSubmitModal, setShowSubmitModal] = useState(false)
+  const [submitForm, setSubmitForm] = useState({ url: "", title: "", description: "" })
+  const [submitting, setSubmitting] = useState(false)
+  const [fetching, setFetching] = useState(false)
 
   // 加载公共书签和分类
   useEffect(() => {
@@ -78,6 +84,41 @@ export default function Home() {
 
   // 快速访问（按访问次数排序）
   const topBookmarks = [...bookmarks].sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0)).slice(0, 12)
+
+  // 提交链接
+  async function handleSubmitLink() {
+    if (!token) { alert("请先登录"); return }
+    if (!submitForm.url.trim() || !submitForm.title.trim()) return
+    setSubmitting(true)
+    try {
+      await submissionApi.create(token, submitForm)
+      alert("提交成功！等待管理员审核")
+      setShowSubmitModal(false)
+      setSubmitForm({ url: "", title: "", description: "" })
+    } catch (err: any) {
+      alert(err.message || "提交失败")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // 抓取网页信息
+  async function handleFetchMeta() {
+    if (!submitForm.url.trim()) return
+    setFetching(true)
+    try {
+      const meta = await fetchMetaApi.fetch(submitForm.url)
+      setSubmitForm(prev => ({
+        ...prev,
+        title: meta.title || prev.title,
+        description: meta.description || prev.description,
+      }))
+    } catch (err: any) {
+      alert("抓取失败: " + (err.message || "请手动填写"))
+    } finally {
+      setFetching(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -174,13 +215,9 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition text-center group"
               >
-                {b.icon_url ? (
-                  <img src={b.icon_url} alt="" className="w-10 h-10 mx-auto mb-2 rounded" />
-                ) : (
-                  <div className="w-10 h-10 mx-auto mb-2 bg-blue-100 rounded flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-blue-600" />
-                  </div>
-                )}
+                <div className="w-10 h-10 mx-auto mb-2 flex items-center justify-center">
+                  <Favicon src={b.icon_url} title={b.title} size="lg" />
+                </div>
                 <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600">{b.title}</p>
               </a>
             ))}
@@ -257,13 +294,7 @@ export default function Home() {
                       style={{ borderLeftColor: catColor }}
                     >
                       <div className="flex items-start gap-3">
-                        {b.icon_url ? (
-                          <img src={b.icon_url} alt="" className="w-8 h-8 rounded flex-shrink-0" />
-                        ) : (
-                          <div className="w-8 h-8 bg-gray-100 rounded flex-shrink-0 flex items-center justify-center">
-                            <Globe className="w-4 h-4 text-gray-400" />
-                          </div>
-                        )}
+                        <Favicon src={b.icon_url} title={b.title} size="md" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-900 truncate group-hover:text-blue-600">
                             {b.title}
@@ -295,10 +326,68 @@ export default function Home() {
             <a href="/bookmarks" className="text-blue-600 hover:underline">管理收藏</a>
             <span className="mx-2">|</span>
             <a href="/memos" className="text-blue-600 hover:underline">备忘录</a>
+            {token && (
+              <>
+                <span className="mx-2">|</span>
+                <button onClick={() => setShowSubmitModal(true)} className="text-blue-600 hover:underline">
+                  <Send className="w-3 h-3 inline mr-1" />提交链接
+                </button>
+              </>
+            )}
           </p>
           <p>© {new Date().getFullYear()} SimpliSave - 现代化网址导航</p>
         </div>
       </footer>
+
+      {/* 提交链接 Modal */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowSubmitModal(false)}>
+          <div className="bg-white rounded-lg max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold">提交链接</h3>
+              <button onClick={() => setShowSubmitModal(false)}><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">网址</label>
+                <div className="flex gap-2">
+                  <input type="url" value={submitForm.url}
+                    onChange={(e) => setSubmitForm({ ...submitForm, url: e.target.value })}
+                    placeholder="https://example.com"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <button onClick={handleFetchMeta} disabled={fetching || !submitForm.url.trim()}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1">
+                    {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : "🔍"}
+                    {fetching ? "抓取中..." : "抓取"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">标题</label>
+                <input type="text" value={submitForm.title}
+                  onChange={(e) => setSubmitForm({ ...submitForm, title: e.target.value })}
+                  placeholder="网站标题"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">描述（可选）</label>
+                <textarea value={submitForm.description}
+                  onChange={(e) => setSubmitForm({ ...submitForm, description: e.target.value })}
+                  placeholder="简短描述..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setShowSubmitModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">取消</button>
+                <button onClick={handleSubmitLink} disabled={submitting || !submitForm.url || !submitForm.title}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                  {submitting ? "提交中..." : "提交"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

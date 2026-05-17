@@ -1,55 +1,79 @@
 ﻿// Type definitions for SimpliSave
+// 注意：字段名使用 snake_case 与数据库/后端保持一致
 
 export interface User {
   id: string
   email: string
-  username: string
-  createdAt: string
-  updatedAt: string
+  name: string
+  avatar_url: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface Bookmark {
   id: string
-  userId: string
+  user_id: string
   url: string
   title: string
   description: string | null
-  favicon: string | null
-  categoryId: string | null
-  tags: string[]
-  archived: boolean
-  createdAt: string
-  updatedAt: string
+  icon_url: string | null
+  category_id: string | null
+  tags: string | string[]
+  is_favorite: number
+  visit_count: number
+  is_public: number
+  archived: number
+  created_at: string
+  updated_at: string
 }
 
 export interface Memo {
   id: string
-  userId: string
+  user_id: string
   title: string
   content: string
-  tags: string[]
-  categoryId: string | null
-  archived: boolean
-  createdAt: string
-  updatedAt: string
+  is_pinned: number
+  color: string
+  cover_image: string | null
+  category_id: string | null
+  tags: string | string[]
+  is_public: number
+  archived: number
+  created_at: string
+  updated_at: string
 }
 
 export interface Category {
   id: string
-  userId: string
+  user_id: string
   name: string
+  icon: string | null
   color: string
-  createdAt: string
-  updatedAt: string
+  sort_order: number
+  type: 'bookmark' | 'memo'
+  created_at: string
 }
 
 export interface Tag {
   id: string
-  userId: string
+  user_id: string
   name: string
+  type: 'bookmark' | 'memo'
   color: string
-  createdAt: string
-  updatedAt: string
+  created_at: string
+}
+
+export interface Submission {
+  id: string
+  user_id: string
+  url: string
+  title: string
+  description: string | null
+  icon_url: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  admin_note: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface AuthState {
@@ -81,56 +105,9 @@ export interface ApiResponse<T = any> {
   error?: string
 }
 
-// API request types
-export interface LoginRequest {
-  email: string
-  password: string
-}
-
-export interface RegisterRequest {
-  email: string
-  username: string
-  password: string
-}
-
-export interface CreateBookmarkRequest {
+export interface FetchMetaResult {
+  title: string
+  description: string
+  icon: string
   url: string
-  title: string
-  description?: string
-  favicon?: string
-  categoryId?: string
-  tags?: string[]
-}
-
-export interface UpdateBookmarkRequest {
-  title?: string
-  description?: string
-  categoryId?: string | null
-  tags?: string[]
-  archived?: boolean
-}
-
-export interface CreateMemoRequest {
-  title: string
-  content: string
-  tags?: string[]
-  categoryId?: string
-}
-
-export interface UpdateMemoRequest {
-  title?: string
-  content?: string
-  tags?: string[]
-  categoryId?: string | null
-  archived?: boolean
-}
-
-export interface CreateCategoryRequest {
-  name: string
-  color: string
-}
-
-export interface CreateTagRequest {
-  name: string
-  color: string
 }

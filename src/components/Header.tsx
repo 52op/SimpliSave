@@ -1,7 +1,7 @@
 ﻿import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuthStore } from "../stores/authStore"
 import { useTranslation } from "react-i18next"
-import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User } from "lucide-react"
+import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send } from "lucide-react"
 import { useState } from "react"
 
 export default function Header() {
@@ -16,10 +16,17 @@ export default function Header() {
     i18n.changeLanguage(next)
   }
 
+  const isAdmin = user?.role === "admin"
+
   const navs = [
     { p: "/", l: t("nav.home"), icon: <Home className="w-4 h-4" /> },
     { p: "/bookmarks", l: t("nav.bookmarks"), icon: <Star className="w-4 h-4" /> },
     { p: "/memos", l: t("nav.memos"), icon: <BookOpen className="w-4 h-4" /> },
+  ]
+
+  const adminNavs = [
+    { p: "/admin/categories", l: t("categories.title"), icon: <Star className="w-4 h-4" /> },
+    { p: "/admin/submissions", l: "审核链接", icon: <Send className="w-4 h-4" /> },
   ]
 
   return (
@@ -27,8 +34,8 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-6">
-            <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)} 
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
               className="lg:hidden p-2 rounded-md hover:bg-gray-100"
             >
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -54,6 +61,23 @@ export default function Header() {
                   {n.l}
                 </Link>
               ))}
+              {isAdmin && (
+                <div className="relative group">
+                  <button className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 flex items-center gap-1.5">
+                    <Shield className="w-4 h-4" />
+                    管理
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 hidden group-hover:block min-w-[140px]">
+                    {adminNavs.map((n) => (
+                      <Link key={n.p} to={n.p}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        {n.icon}
+                        {n.l}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-3">
@@ -72,6 +96,7 @@ export default function Header() {
                     <User className="w-4 h-4 text-blue-600" />
                   </div>
                   <span className="text-sm text-gray-700">{user?.name || user?.email}</span>
+                  {isAdmin && <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">Admin</span>}
                 </div>
                 <button
                   onClick={() => {
@@ -86,14 +111,14 @@ export default function Header() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition"
                 >
                   {t("auth.login")}
                 </Link>
-                <Link 
-                  to="/register" 
+                <Link
+                  to="/register"
                   className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition"
                 >
                   {t("auth.register")}
@@ -113,8 +138,8 @@ export default function Header() {
               to={n.p}
               onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-2 px-3 py-3 rounded-md text-sm ${
-                loc.pathname === n.p 
-                  ? "bg-blue-50 text-blue-700" 
+                loc.pathname === n.p
+                  ? "bg-blue-50 text-blue-700"
                   : "text-gray-600 hover:bg-gray-100"
               }`}
             >
@@ -122,9 +147,26 @@ export default function Header() {
               {n.l}
             </Link>
           ))}
+          {isAdmin && (
+            <>
+              <div className="border-t my-2" />
+              <p className="px-3 text-xs text-gray-400 font-medium">管理</p>
+              {adminNavs.map((n) => (
+                <Link
+                  key={n.p}
+                  to={n.p}
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center gap-2 px-3 py-3 rounded-md text-sm text-gray-600 hover:bg-gray-100"
+                >
+                  {n.icon}
+                  {n.l}
+                </Link>
+              ))}
+            </>
+          )}
           {!token && (
             <>
-              <div className="border-t my-2"></div>
+              <div className="border-t my-2" />
               <Link
                 to="/login"
                 onClick={() => setSidebarOpen(false)}
