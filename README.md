@@ -184,7 +184,7 @@ git push
 - `schema.sql`：创建 v3 表结构
 - 然后运行数据转换脚本：
   ```bash
-  node scripts/data-migrate.js --input="../path/to/hao_sztcrs_com.sql"
+  node scripts/data-migrate.cjs --input="../path/to/hao_sztcrs_com.sql"
   ```
   输出 SQL 到 D1 执行，或在 D1 Dashboard 中直接粘贴执行。
 
@@ -215,7 +215,7 @@ git push
 | 文件 | 用途 |
 |------|------|
 | `schema.sql` | v3 完整建表结构 |
-| `scripts/data-migrate.js` | 从原 `hao_sztcrs_com.sql` 转换公开数据 |
+| `scripts/data-migrate.cjs` | 从原 `hao_sztcrs_com.sql` 转换公开数据 |
 
 ## 📝 API 概览
 
