@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useMemoStore } from "../stores/memoStore"
-import { memoApi, categoryApi, tagApi } from "../services/api"
+import { memoApi, userCategoryApi, tagApi } from "../services/api"
 import { Memo } from "../types"
 import { Plus, Search, Trash2, Edit2, X, Pin, PinOff, Tag as TagIcon } from "lucide-react"
 
@@ -70,7 +70,7 @@ export default function Memos() {
     try {
       const [memoRes, catRes, tagRes] = await Promise.all([
         memoApi.list(token),
-        categoryApi.list(token, "memo"),
+        userCategoryApi.list(token),
         tagApi.list(token, "memo"),
       ])
       setMemos(memoRes)
@@ -192,7 +192,7 @@ export default function Memos() {
   async function handleAddCategory() {
     if (!token || !categoryNameState.trim()) return
     try {
-      const res = await categoryApi.create(token, { name: categoryNameState, color: categoryColorState, type: "memo" })
+      const res = await userCategoryApi.create(token, { name: categoryNameState, color: categoryColorState })
       addCategory(res)
       setShowCategoryModal(false)
       setCategoryNameState("")

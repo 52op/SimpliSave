@@ -1,24 +1,22 @@
 ﻿// Cloudflare Worker entry point
 import { corsHeaders, handleCors } from './utils/response';
+import { handleRegister, handleLogin, handleLogout, handleGetMe, handleUpdateProfile } from './api/auth';
 import {
-  handleRegister, handleLogin, handleLogout, handleGetMe, handleUpdateProfile
-} from './api/auth';
+  handleListPublicBookmarks, handleCreatePublicBookmark, handleGetPublicBookmark,
+  handleUpdatePublicBookmark, handleDeletePublicBookmark
+} from './api/publicBookmarks';
 import {
-   handleListBookmarks, handleCreateBookmark, handleGetBookmark, handleUpdateBookmark, handleDeleteBookmark, handleSearchBookmarks
- } from './api/bookmarks';
+  handleListUserBookmarks, handleCreateUserBookmark, handleGetUserBookmark,
+  handleUpdateUserBookmark, handleDeleteUserBookmark, handleExportUserBookmarks
+} from './api/userBookmarks';
 import {
-  handleListMemos, handleCreateMemo, handleGetMemo, handleUpdateMemo, handleDeleteMemo, handlePinMemo
-} from './api/memos';
-import {
-  handleListCategories, handleCreateCategory, handleUpdateCategory, handleDeleteCategory
+  handleListUserCategories, handleCreateUserCategory, handleUpdateUserCategory, handleDeleteUserCategory,
+  handleListPublicCategories, handleCreatePublicCategory, handleUpdatePublicCategory, handleDeletePublicCategory
 } from './api/categories';
-import {
-  handleListTags, handleCreateTag, handleDeleteTag
-} from './api/tags';
+import { handleCreateSubmission, handleListSubmissions, handleApproveSubmission, handleRejectSubmission } from './api/submissions';
 import { handleFetchMeta } from './api/fetchMeta';
-import {
-  handleSubmitLink, handleListSubmissions, handleApproveSubmission, handleRejectSubmission
-} from './api/submissions';
+import { handleListMemos, handleCreateMemo, handleGetMemo, handleUpdateMemo, handleDeleteMemo, handlePinMemo } from './api/memos';
+import { handleListTags, handleCreateTag, handleDeleteTag } from './api/tags';
 
 interface Env {
   DB: D1Database;
@@ -29,106 +27,152 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const corsResponse = handleCors(request);
     if (corsResponse) return corsResponse;
-    
+
     const url = new URL(request.url);
     const path = url.pathname.replace(/^\/api/, '');
-    
-    // Route handlers
-    if (path.startsWith('/auth')) {
-      return handleAuth(request, env, path);
-    } else if (path.startsWith('/bookmarks')) {
-      return handleBookmarks(request, env, path);
-    } else if (path.startsWith('/memos')) {
-      return handleMemos(request, env, path);
-    } else if (path.startsWith('/categories')) {
-      return handleCategories(request, env, path);
-    } else if (path.startsWith('/tags')) {
-      return handleTags(request, env, path);
-    } else if (path.startsWith('/fetch-meta')) {
-      return handleFetchMeta(request, env);
-    } else if (path.startsWith('/submissions')) {
-      return handleSubmissions(request, env, path);
-    }
-    
+
+    if (path.startsWith('/auth')) return handleAuth(request, env, path);
+    if (path.startsWith('/public-bookmarks')) return handlePublicBookmarks(request, env, path);
+    if (path.startsWith('/user-bookmarks')) return handleUserBookmarks(request, env, path);
+    if (path.startsWith('/public-categories')) return handlePublicCategories(request, env, path);
+    if (path.startsWith('/user-categories')) return handleUserCategories(request, env, path);
+    if (path.startsWith('/submissions')) return handleSubmissions(request, env, path);
+    if (path.startsWith('/fetch-meta')) return handleFetchMeta(request, env);
+    if (path.startsWith('/memos')) return handleMemos(request, env, path);
+    if (path.startsWith('/tags')) return handleTags(request, env, path);
+
     return new Response('Not Found', { status: 404, headers: corsHeaders() });
   }
 };
 
 async function handleAuth(request: Request, env: Env, path: string): Promise<Response> {
   switch (path) {
-    case '/auth/register': return await handleRegister(request, env);
-    case '/auth/login': return await handleLogin(request, env);
-    case '/auth/logout': return await handleLogout(request, env);
-    case '/auth/me': return await handleGetMe(request, env);
-    case '/auth/profile': return await handleUpdateProfile(request, env);
+    case '/auth/register': return handleRegister(request, env);
+    case '/auth/login': return handleLogin(request, env);
+    case '/auth/logout': return handleLogout(request, env);
+    case '/auth/me': return handleGetMe(request, env);
+    case '/auth/profile': return handleUpdateProfile(request, env);
     default: return new Response('Not Found', { status: 404, headers: corsHeaders() });
   }
 }
 
-async function handleBookmarks(request: Request, env: Env, path: string): Promise<Response> {
-   const id = path.match(/^\/bookmarks\/([^\/]+)$/)?.[1];
+async function handlePublicBookmarks(request: Request, env: Env, path: string): Promise<Response> {
+  const id = path.match(/^\/public-bookmarks\/([^\/]+)$/)?.[1];
 
-   // Search endpoint
-   if (path === '/bookmarks/search') {
-     return handleSearchBookmarks(request, env);
-   }
-
-   switch (request.method) {
-     case 'GET':
-       if (id) return await handleGetBookmark(request, env, id);
-       return await handleListBookmarks(request, env);
-     case 'POST':
-       return await handleCreateBookmark(request, env);
-     case 'PUT':
-       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-       return await handleUpdateBookmark(request, env, id);
-     case 'DELETE':
-       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-       return await handleDeleteBookmark(request, env, id);
-     default:
-       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
-   }
- }
-
-async function handleMemos(request: Request, env: Env, path: string): Promise<Response> {
-  const id = path.match(/^\/memos\/([^\/]+)$/)?.[1];
-  const pinMatch = path.match(/^\/memos\/([^\/]+)\/pin$/);
-  
-  if (pinMatch) {
-    return await handlePinMemo(request, env, pinMatch[1]);
-  }
-  
   switch (request.method) {
     case 'GET':
-      if (id) return await handleGetMemo(request, env, id);
-      return await handleListMemos(request, env);
+      if (id) return handleGetPublicBookmark(request, env, id);
+      return handleListPublicBookmarks(request, env);
     case 'POST':
-      return await handleCreateMemo(request, env);
+      return handleCreatePublicBookmark(request, env);
     case 'PUT':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return await handleUpdateMemo(request, env, id);
+      return handleUpdatePublicBookmark(request, env, id);
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return await handleDeleteMemo(request, env, id);
+      return handleDeletePublicBookmark(request, env, id);
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }
 }
 
-async function handleCategories(request: Request, env: Env, path: string): Promise<Response> {
-  const id = path.match(/^\/categories\/([^\/]+)$/)?.[1];
-  
+async function handleUserBookmarks(request: Request, env: Env, path: string): Promise<Response> {
+  const id = path.match(/^\/user-bookmarks\/([^\/]+)$/)?.[1];
+
+  if (path === '/user-bookmarks/export') {
+    return handleExportUserBookmarks(request, env);
+  }
+
   switch (request.method) {
     case 'GET':
-      return await handleListCategories(request, env);
+      if (id) return handleGetUserBookmark(request, env, id);
+      return handleListUserBookmarks(request, env);
     case 'POST':
-      return await handleCreateCategory(request, env);
+      return handleCreateUserBookmark(request, env);
     case 'PUT':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return await handleUpdateCategory(request, env, id);
+      return handleUpdateUserBookmark(request, env, id);
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return await handleDeleteCategory(request, env, id);
+      return handleDeleteUserBookmark(request, env, id);
+    default:
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+  }
+}
+
+async function handlePublicCategories(request: Request, env: Env, path: string): Promise<Response> {
+  const id = path.match(/^\/public-categories\/([^\/]+)$/)?.[1];
+
+  switch (request.method) {
+    case 'GET':
+      return handleListPublicCategories(request, env);
+    case 'POST':
+      return handleCreatePublicCategory(request, env);
+    case 'PUT':
+      if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleUpdatePublicCategory(request, env, id);
+    case 'DELETE':
+      if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleDeletePublicCategory(request, env, id);
+    default:
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+  }
+}
+
+async function handleUserCategories(request: Request, env: Env, path: string): Promise<Response> {
+  const id = path.match(/^\/user-categories\/([^\/]+)$/)?.[1];
+
+  switch (request.method) {
+    case 'GET':
+      return handleListUserCategories(request, env);
+    case 'POST':
+      return handleCreateUserCategory(request, env);
+    case 'PUT':
+      if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleUpdateUserCategory(request, env, id);
+    case 'DELETE':
+      if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleDeleteUserCategory(request, env, id);
+    default:
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+  }
+}
+
+async function handleSubmissions(request: Request, env: Env, path: string): Promise<Response> {
+  const approveMatch = path.match(/^\/submissions\/([^\/]+)\/approve$/);
+  const rejectMatch = path.match(/^\/submissions\/([^\/]+)\/reject$/);
+
+  if (approveMatch) return handleApproveSubmission(request, env, approveMatch[1]);
+  if (rejectMatch) return handleRejectSubmission(request, env, rejectMatch[1]);
+
+  switch (request.method) {
+    case 'GET':
+      return handleListSubmissions(request, env);
+    case 'POST':
+      return handleCreateSubmission(request, env);
+    default:
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+  }
+}
+
+async function handleMemos(request: Request, env: Env, path: string): Promise<Response> {
+  const id = path.match(/^\/memos\/([^\/]+)$/)?.[1];
+  const pinMatch = path.match(/^\/memos\/([^\/]+)\/pin$/);
+
+  if (pinMatch) return handlePinMemo(request, env, pinMatch[1]);
+
+  switch (request.method) {
+    case 'GET':
+      if (id) return handleGetMemo(request, env, id);
+      return handleListMemos(request, env);
+    case 'POST':
+      return handleCreateMemo(request, env);
+    case 'PUT':
+      if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleUpdateMemo(request, env, id);
+    case 'DELETE':
+      if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleDeleteMemo(request, env, id);
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }
@@ -136,33 +180,15 @@ async function handleCategories(request: Request, env: Env, path: string): Promi
 
 async function handleTags(request: Request, env: Env, path: string): Promise<Response> {
   const id = path.match(/^\/tags\/([^\/]+)$/)?.[1];
-  
+
   switch (request.method) {
     case 'GET':
-      return await handleListTags(request, env);
+      return handleListTags(request, env);
     case 'POST':
-      return await handleCreateTag(request, env);
+      return handleCreateTag(request, env);
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return await handleDeleteTag(request, env, id);
-    default:
-      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
-  }
-}
-
-async function handleSubmissions(request: Request, env: Env, path: string): Promise<Response> {
-  // /submissions/:id/approve 或 /submissions/:id/reject
-  const approveMatch = path.match(/^\/submissions\/([^\/]+)\/approve$/);
-  const rejectMatch = path.match(/^\/submissions\/([^\/]+)\/reject$/);
-
-  if (approveMatch) return handleApproveSubmission(request, env);
-  if (rejectMatch) return handleRejectSubmission(request, env);
-
-  switch (request.method) {
-    case 'GET':
-      return handleListSubmissions(request, env);
-    case 'POST':
-      return handleSubmitLink(request, env);
+      return handleDeleteTag(request, env, id);
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }

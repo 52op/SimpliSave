@@ -1,8 +1,6 @@
-﻿// Categories API handlers
+﻿// Categories API handlers (public + user)
 import { verifyJWT } from '../utils/jwt';
 import { successResponse, errorResponse } from '../utils/response';
-
-interface Env { DB: D1Database; }
 
 async function getUserId(request: Request, env: any): Promise<string | null> {
   const authHeader = request.headers.get('Authorization');
@@ -11,62 +9,127 @@ async function getUserId(request: Request, env: any): Promise<string | null> {
   return payload?.userId || null;
 }
 
-export async function handleListCategories(request: Request, env: any): Promise<Response> {
-   const userId = await getUserId(request, env)
-   if (!userId) return errorResponse('Unauthorized', 401)
-   const url = new URL(request.url)
-   const type = url.searchParams.get('type') || 'bookmark'
+async function getUserRole(request: Request, env: any): Promise<string | null> {
+  const userId = await getUserId(request, env);
+  if (!userId) return null;
+  const user = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(userId).first();
+  return user?.role || 'user';
+}
 
-   const categories = await env.DB.prepare(
-     'SELECT * FROM categories WHERE user_id = ? AND type = ? ORDER BY sort_order ASC'
-   ).bind(userId, type).all()
-   return successResponse(categories.results)
- }
+// 用户私有分类
+export async function handleListUserCategories(request: Request, env: any): Promise<Response> {
+  const userId = await getUserId(request, env);
+  if (!userId) return errorResponse('Unauthorized', 401);
 
- export async function handleCreateCategory(request: Request, env: any): Promise<Response> {
-   const userId = await getUserId(request, env)
-   if (!userId) return errorResponse('Unauthorized', 401)
+  const categories = await env.DB.prepare(
+    'SELECT * FROM user_categories WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC'
+  ).bind(userId).all();
+  return successResponse(categories.results);
+}
 
-   const body = await request.json() as { name: string; icon?: string; color?: string; type?: string; sort_order?: number }
-   if (!body.name) return errorResponse('Name is required', 400)
+export async function handleCreateUserCategory(request: Request, env: any): Promise<Response> {
+  const userId = await getUserId(request, env);
+  if (!userId) return errorResponse('Unauthorized', 401);
 
-   const type = body.type || 'bookmark'
-   const result = await env.DB.prepare(
-     'INSERT INTO categories (user_id, name, icon, color, sort_order, type) VALUES (?, ?, ?, ?, ?, ?)'
-   ).bind(userId, body.name, body.icon || null, body.color || '#3b82f6', body.sort_order || 0, type).run()
+  const body = await request.json() as any;
+  if (!body.name) return errorResponse('Name is required', 400);
 
-   if (!result.success) return errorResponse('Failed to create category', 500)
+  const result = await env.DB.prepare(
+    'INSERT INTO user_categories (user_id, name, icon, color, sort_order) VALUES (?, ?, ?, ?, ?)'
+  ).bind(userId, body.name, body.icon || null, body.color || '#3b82f6', body.sort_order || 0).run();
 
-   const category = await env.DB.prepare('SELECT * FROM categories WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').bind(userId).first()
-   return successResponse(category, 201)
- }
+  if (!result.success) return errorResponse('Failed to create user category', 500);
 
- export async function handleUpdateCategory(request: Request, env: any, id: string): Promise<Response> {
-   const userId = await getUserId(request, env)
-   if (!userId) return errorResponse('Unauthorized', 401)
+  const category = await env.DB.prepare('SELECT * FROM user_categories WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').bind(userId).first();
+  return successResponse(category, 201);
+}
 
-   const body = await request.json() as any
-   const updates: string[] = []; const values: any[] = []
+export async function handleUpdateUserCategory(request: Request, env: any, id: string): Promise<Response> {
+  const userId = await getUserId(request, env);
+  if (!userId) return errorResponse('Unauthorized', 401);
 
-   if (body.name) { updates.push('name = ?'); values.push(body.name) }
-   if (body.icon) { updates.push('icon = ?'); values.push(body.icon) }
-   if (body.color) { updates.push('color = ?'); values.push(body.color) }
-   if (body.sort_order) { updates.push('sort_order = ?'); values.push(body.sort_order) }
+  const body = await request.json() as any;
+  const updates: string[] = [];
+  const values: any[] = [];
 
-   if (updates.length === 0) return errorResponse('No fields to update', 400)
-   values.push(id, userId)
+  if (body.name) { updates.push('name = ?'); values.push(body.name); }
+  if (body.icon !== undefined) { updates.push('icon = ?'); values.push(body.icon); }
+  if (body.color) { updates.push('color = ?'); values.push(body.color); }
+  if (body.sort_order !== undefined) { updates.push('sort_order = ?'); values.push(body.sort_order); }
 
-   await env.DB.prepare(`UPDATE categories SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`).bind(...values).run()
+  if (updates.length === 0) return errorResponse('No fields to update', 400);
+  updates.push('updated_at = CURRENT_TIMESTAMP');
+  values.push(id, userId);
 
-   const category = await env.DB.prepare('SELECT * FROM categories WHERE id = ? AND user_id = ?').bind(id, userId).first()
-   return successResponse(category)
- }
+  await env.DB.prepare(`UPDATE user_categories SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`).bind(...values).run();
 
- export async function handleDeleteCategory(request: Request, env: any, id: string): Promise<Response> {
-   const userId = await getUserId(request, env)
-   if (!userId) return errorResponse('Unauthorized', 401)
+  const category = await env.DB.prepare('SELECT * FROM user_categories WHERE id = ? AND user_id = ?').bind(id, userId).first();
+  return successResponse(category);
+}
 
-   const result = await env.DB.prepare('DELETE FROM categories WHERE id = ? AND user_id = ?').bind(id, userId).run()
-   if (!result.success) return errorResponse('Failed to delete category', 500)
-   return successResponse({ message: 'Category deleted' })
- }
+export async function handleDeleteUserCategory(request: Request, env: any, id: string): Promise<Response> {
+  const userId = await getUserId(request, env);
+  if (!userId) return errorResponse('Unauthorized', 401);
+
+  const result = await env.DB.prepare('DELETE FROM user_categories WHERE id = ? AND user_id = ?').bind(id, userId).run();
+  if (!result.success) return errorResponse('Failed to delete user category', 500);
+  return successResponse({ message: 'User category deleted' });
+}
+
+// 管理员公开分类
+export async function handleListPublicCategories(request: Request, env: any): Promise<Response> {
+  const categories = await env.DB.prepare(
+    'SELECT * FROM public_categories ORDER BY sort_order ASC, created_at DESC'
+  ).all();
+  return successResponse(categories.results);
+}
+
+export async function handleCreatePublicCategory(request: Request, env: any): Promise<Response> {
+  const role = await getUserRole(request, env);
+  const userId = await getUserId(request, env);
+  if (role !== 'admin' || !userId) return errorResponse('Admin only', 403);
+
+  const body = await request.json() as any;
+  if (!body.name) return errorResponse('Name is required', 400);
+
+  const result = await env.DB.prepare(
+    'INSERT INTO public_categories (name, icon, color, sort_order, created_by) VALUES (?, ?, ?, ?, ?)'
+  ).bind(body.name, body.icon || null, body.color || '#3b82f6', body.sort_order || 0, userId).run();
+
+  if (!result.success) return errorResponse('Failed to create public category', 500);
+
+  const category = await env.DB.prepare('SELECT * FROM public_categories ORDER BY created_at DESC LIMIT 1').first();
+  return successResponse(category, 201);
+}
+
+export async function handleUpdatePublicCategory(request: Request, env: any, id: string): Promise<Response> {
+  const role = await getUserRole(request, env);
+  if (role !== 'admin') return errorResponse('Admin only', 403);
+
+  const body = await request.json() as any;
+  const updates: string[] = [];
+  const values: any[] = [];
+
+  if (body.name) { updates.push('name = ?'); values.push(body.name); }
+  if (body.icon !== undefined) { updates.push('icon = ?'); values.push(body.icon); }
+  if (body.color) { updates.push('color = ?'); values.push(body.color); }
+  if (body.sort_order !== undefined) { updates.push('sort_order = ?'); values.push(body.sort_order); }
+
+  if (updates.length === 0) return errorResponse('No fields to update', 400);
+  updates.push('updated_at = CURRENT_TIMESTAMP');
+  values.push(id);
+
+  await env.DB.prepare(`UPDATE public_categories SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
+
+  const category = await env.DB.prepare('SELECT * FROM public_categories WHERE id = ?').bind(id).first();
+  return successResponse(category);
+}
+
+export async function handleDeletePublicCategory(request: Request, env: any, id: string): Promise<Response> {
+  const role = await getUserRole(request, env);
+  if (role !== 'admin') return errorResponse('Admin only', 403);
+
+  const result = await env.DB.prepare('DELETE FROM public_categories WHERE id = ?').bind(id).run();
+  if (!result.success) return errorResponse('Failed to delete public category', 500);
+  return successResponse({ message: 'Public category deleted' });
+}

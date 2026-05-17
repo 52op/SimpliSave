@@ -1,4 +1,4 @@
-// Submissions API handlers
+// Bookmark submissions API handlers
 import { verifyJWT } from '../utils/jwt';
 import { successResponse, errorResponse } from '../utils/response';
 
@@ -16,25 +16,34 @@ async function getUserRole(request: Request, env: any): Promise<string | null> {
   return user?.role || 'user';
 }
 
-// 用户提交链接
-export async function handleSubmitLink(request: Request, env: any): Promise<Response> {
+// 用户提交公开分享申请
+export async function handleCreateSubmission(request: Request, env: any): Promise<Response> {
   const userId = await getUserId(request, env);
   if (!userId) return errorResponse('Unauthorized', 401);
 
-  const body = await request.json() as { url: string; title: string; description?: string; icon_url?: string };
+  const body = await request.json() as any;
   if (!body.url || !body.title) return errorResponse('URL and title are required', 400);
 
   const result = await env.DB.prepare(
-    'INSERT INTO submissions (user_id, url, title, description, icon_url) VALUES (?, ?, ?, ?, ?)'
-  ).bind(userId, body.url, body.title, body.description || null, body.icon_url || null).run();
+    'INSERT INTO bookmark_submissions (user_id, user_bookmark_id, title, url, description, icon_url, suggested_category_id, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(
+    userId,
+    body.user_bookmark_id || null,
+    body.title,
+    body.url,
+    body.description || null,
+    body.icon_url || null,
+    body.suggested_category_id || null,
+    JSON.stringify(body.tags || [])
+  ).run();
 
-  if (!result.success) return errorResponse('Failed to submit link', 500);
+  if (!result.success) return errorResponse('Failed to create submission', 500);
 
-  const submission = await env.DB.prepare('SELECT * FROM submissions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').bind(userId).first();
+  const submission = await env.DB.prepare('SELECT * FROM bookmark_submissions WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').bind(userId).first();
   return successResponse(submission, 201);
 }
 
-// 管理员获取待审核列表
+// 管理员查看申请列表
 export async function handleListSubmissions(request: Request, env: any): Promise<Response> {
   const role = await getUserRole(request, env);
   if (role !== 'admin') return errorResponse('Admin only', 403);
@@ -43,49 +52,60 @@ export async function handleListSubmissions(request: Request, env: any): Promise
   const status = url.searchParams.get('status') || 'pending';
 
   const submissions = await env.DB.prepare(
-    'SELECT s.*, u.name as user_name, u.email as user_email FROM submissions s LEFT JOIN users u ON s.user_id = u.id WHERE s.status = ? ORDER BY s.created_at DESC'
+    `SELECT bs.*, u.name as user_name, u.email as user_email, pc.name as suggested_category_name
+     FROM bookmark_submissions bs
+     LEFT JOIN users u ON bs.user_id = u.id
+     LEFT JOIN public_categories pc ON bs.suggested_category_id = pc.id
+     WHERE bs.status = ?
+     ORDER BY bs.created_at DESC`
   ).bind(status).all();
+
   return successResponse(submissions.results);
 }
 
-// 管理员通过审核（转为书签）
-export async function handleApproveSubmission(request: Request, env: any): Promise<Response> {
+// 管理员通过审核 → 创建公开导航
+export async function handleApproveSubmission(request: Request, env: any, id: string): Promise<Response> {
   const role = await getUserRole(request, env);
-  if (role !== 'admin') return errorResponse('Admin only', 403);
+  const adminId = await getUserId(request, env);
+  if (role !== 'admin' || !adminId) return errorResponse('Admin only', 403);
 
-  const id = new URL(request.url).pathname.match(/\/submissions\/([^\/]+)\/approve/)?.[1];
-  if (!id) return errorResponse('Missing id', 400);
-
-  const submission = await env.DB.prepare('SELECT * FROM submissions WHERE id = ?').bind(id).first();
+  const submission = await env.DB.prepare('SELECT * FROM bookmark_submissions WHERE id = ?').bind(id).first();
   if (!submission) return errorResponse('Submission not found', 404);
 
-  // 创建书签
-  const bookmarkResult = await env.DB.prepare(
-    'INSERT INTO bookmarks (user_id, title, url, description, icon_url, is_public) VALUES (?, ?, ?, ?, ?, 1)'
-  ).bind(submission.user_id, submission.title, submission.url, submission.description, submission.icon_url).run();
+  const publicResult = await env.DB.prepare(
+    'INSERT INTO public_bookmarks (title, url, description, icon_url, category_id, tags, status, source_submission_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(
+    submission.title,
+    submission.url,
+    submission.description,
+    submission.icon_url,
+    submission.suggested_category_id,
+    submission.tags,
+    'active',
+    submission.id,
+    adminId
+  ).run();
 
-  if (!bookmarkResult.success) return errorResponse('Failed to create bookmark', 500);
+  if (!publicResult.success) return errorResponse('Failed to create public bookmark', 500);
 
-  // 更新提交状态
+  const publicBookmark = await env.DB.prepare('SELECT id FROM public_bookmarks WHERE source_submission_id = ? ORDER BY created_at DESC LIMIT 1').bind(id).first();
+
   await env.DB.prepare(
-    'UPDATE submissions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-  ).bind('approved', id).run();
+    'UPDATE bookmark_submissions SET status = ?, approved_public_bookmark_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+  ).bind('approved', publicBookmark?.id || null, id).run();
 
-  return successResponse({ message: 'Submission approved and bookmark created' });
+  return successResponse({ message: 'Submission approved', public_bookmark_id: publicBookmark?.id });
 }
 
 // 管理员拒绝审核
-export async function handleRejectSubmission(request: Request, env: any): Promise<Response> {
+export async function handleRejectSubmission(request: Request, env: any, id: string): Promise<Response> {
   const role = await getUserRole(request, env);
   if (role !== 'admin') return errorResponse('Admin only', 403);
-
-  const id = new URL(request.url).pathname.match(/\/submissions\/([^\/]+)\/reject/)?.[1];
-  if (!id) return errorResponse('Missing id', 400);
 
   const body = await request.json().catch(() => ({})) as { admin_note?: string };
 
   await env.DB.prepare(
-    'UPDATE submissions SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+    'UPDATE bookmark_submissions SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
   ).bind('rejected', body.admin_note || null, id).run();
 
   return successResponse({ message: 'Submission rejected' });

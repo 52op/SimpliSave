@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
-import { categoryApi } from "../../services/api"
+import { publicCategoryApi } from "../../services/api"
 import { Category } from "../../types"
 import { Plus, Trash2, Edit2, X, Folder } from "lucide-react"
 
@@ -12,17 +12,16 @@ export default function AdminCategories() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingCat, setEditingCat] = useState<Category | null>(null)
-  const [filterType, setFilterType] = useState<"bookmark" | "memo">("bookmark")
 
   const [form, setForm] = useState({ name: "", icon: "", color: "#3b82f6", sort_order: 0 })
 
-  useEffect(() => { loadData() }, [filterType])
+  useEffect(() => { loadData() }, [])
 
   async function loadData() {
     if (!token) return
     setLoading(true)
     try {
-      const res = await categoryApi.list(token, filterType)
+      const res = await publicCategoryApi.list()
       setCategories(res)
     } catch (err) {
       console.error(err)
@@ -35,10 +34,10 @@ export default function AdminCategories() {
     if (!token || !form.name.trim()) return
     try {
       if (editingCat) {
-        const res = await categoryApi.update(token, editingCat.id, { ...form, type: filterType })
+        const res = await publicCategoryApi.update(token, editingCat.id, { ...form })
         setCategories(categories.map(c => c.id === editingCat.id ? res : c))
       } else {
-        const res = await categoryApi.create(token, { ...form, type: filterType })
+        const res = await publicCategoryApi.create(token, { ...form })
         setCategories([res, ...categories])
       }
       setShowModal(false)
@@ -52,7 +51,7 @@ export default function AdminCategories() {
   async function handleDelete(id: string) {
     if (!token || !confirm(t("categories.delete") + "?")) return
     try {
-      await categoryApi.delete(token, id)
+      await publicCategoryApi.delete(token, id)
       setCategories(categories.filter(c => c.id !== id))
     } catch (err: any) {
       alert(err.message || t("common.error"))
@@ -80,16 +79,7 @@ export default function AdminCategories() {
         </button>
       </div>
 
-      <div className="flex gap-2 mb-4">
-        <button onClick={() => setFilterType("bookmark")}
-          className={`px-4 py-2 rounded-lg ${filterType === "bookmark" ? "bg-blue-600 text-white" : "bg-gray-100"}`}>
-          {t("categories.typeBookmark")}
-        </button>
-        <button onClick={() => setFilterType("memo")}
-          className={`px-4 py-2 rounded-lg ${filterType === "memo" ? "bg-blue-600 text-white" : "bg-gray-100"}`}>
-          {t("categories.typeMemo")}
-        </button>
-      </div>
+
 
       {loading ? (
         <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>

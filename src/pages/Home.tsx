@@ -2,11 +2,10 @@ import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useBookmarkStore } from "../stores/bookmarkStore"
-import { bookmarkApi, categoryApi } from "../services/api"
+import { publicBookmarkApi, publicCategoryApi, submissionApi, fetchMetaApi } from "../services/api"
 import { Bookmark, Category } from "../types"
 import { Search, ExternalLink, Star, Folder, Globe, Clock, Zap, Grid, List, Send, Loader2, X } from "lucide-react"
 import Favicon from "../components/Favicon"
-import { submissionApi, fetchMetaApi } from "../services/api"
 
 // 搜索引擎配置
 const SEARCH_ENGINES = [
@@ -41,14 +40,12 @@ export default function Home() {
     setLoading(true)
     try {
       // 获取公共书签（无需登录）
-      const publicBookmarks = await bookmarkApi.listPublic()
+      const publicBookmarks = await publicBookmarkApi.list()
       setBookmarks(publicBookmarks)
 
-      // 获取分类
-      if (token) {
-        const catRes = await categoryApi.list(token)
-        setCategories(catRes)
-      }
+      // 获取公开分类
+      const catRes = await publicCategoryApi.list()
+      setCategories(catRes)
     } catch (err) {
       console.error("Failed to load data:", err)
     } finally {
