@@ -22,6 +22,7 @@ export default function Bookmarks() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
   const [fetching, setFetching] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [submittingShare, setSubmittingShare] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
@@ -185,6 +186,37 @@ export default function Bookmarks() {
     }
   }
 
+  async function handleExportHtml() {
+    if (!token) return
+    try {
+      const res = await userBookmarkApi.exportHtml(token)
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `simplisave-bookmarks-${Date.now()}.html`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (err: any) {
+      alert(err.message || t("common.error"))
+    }
+  }
+
+  async function handleImportFile(file: File) {
+    if (!token) return
+    setImporting(true)
+    try {
+      const html = await file.text()
+      const result = await userBookmarkApi.importHtml(token, html)
+      alert(`导入完成：${result.imported}/${result.total}`)
+      await loadData()
+    } catch (err: any) {
+      alert(err.message || "导入失败")
+    } finally {
+      setImporting(false)
+    }
+  }
+
   function openEditModal(b: Bookmark) {
     setEditingBookmark(b)
     setFormData({
@@ -231,8 +263,16 @@ export default function Bookmarks() {
           <p className="text-sm text-gray-500 mt-1">管理你自己的收藏，可申请分享到公开导航</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <label className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2 cursor-pointer">
+            <Upload className="w-4 h-4" />{importing ? "导入中..." : "导入HTML"}
+            <input type="file" accept=".html,text/html" className="hidden" disabled={importing}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.currentTarget.value = "" }} />
+          </label>
+          <button onClick={handleExportHtml} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+            <Download className="w-4 h-4" />导出HTML
+          </button>
           <button onClick={handleExport} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
-            <Download className="w-4 h-4" />导出
+            <Download className="w-4 h-4" />导出JSON
           </button>
           <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
             <Folder className="w-4 h-4" />分类

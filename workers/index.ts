@@ -9,6 +9,7 @@ import {
   handleListUserBookmarks, handleCreateUserBookmark, handleGetUserBookmark,
   handleUpdateUserBookmark, handleDeleteUserBookmark, handleExportUserBookmarks
 } from './api/userBookmarks';
+import { handleImportUserBookmarks, handleExportUserBookmarksHtml } from './api/importExport';
 import {
   handleListUserCategories, handleCreateUserCategory, handleUpdateUserCategory, handleDeleteUserCategory,
   handleListPublicCategories, handleCreatePublicCategory, handleUpdatePublicCategory, handleDeletePublicCategory
@@ -81,6 +82,12 @@ async function handleUserBookmarks(request: Request, env: Env, path: string): Pr
 
   if (path === '/user-bookmarks/export') {
     return handleExportUserBookmarks(request, env);
+  }
+  if (path === '/user-bookmarks/export-html') {
+    return handleExportUserBookmarksHtml(request, env);
+  }
+  if (path === '/user-bookmarks/import' && request.method === 'POST') {
+    return handleImportUserBookmarks(request, env);
   }
 
   switch (request.method) {
