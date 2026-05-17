@@ -83,16 +83,16 @@ SimpliSave/
 │   │   ├── importExport.ts             # HTML 导入导出 API
 │   │   └── fetchMeta.ts                # 网页信息抓取 API
 │   └── index.ts
-├── schema.sql                          # v2 最新数据库结构
-├── alldata.sql                         # v2 初始公开导航数据
-├── upgrade-v2.sql                      # 旧结构升级脚本
+├── schema.sql                          # v3 数据库结构（建表）
+├── upgrade-v3.sql                      # v2→v3 升级脚本
 └── package.json
 ```
 
 ## 🧠 数据模型
 
 ### 公开导航
-- `public_bookmarks`
+- `public_card_groups`（卡片组）
+- `public_bookmarks`（子链接）
 - `public_categories`
 
 ### 私人收藏夹
@@ -182,12 +182,16 @@ git push
 
 ### 新库初始化（推荐）
 执行：
-- `schema.sql`：创建 v2 结构
-- `alldata.sql`：写入初始公开导航数据
+- `schema.sql`：创建 v3 表结构
+- 然后运行数据转换脚本：
+  ```bash
+  node scripts/data-migrate.js --input="../path/to/hao_sztcrs_com.sql"
+  ```
+  输出 SQL 到 D1 执行，或在 D1 Dashboard 中直接粘贴执行。
 
 ### 旧库升级
 执行：
-- `upgrade-v2.sql`
+- `upgrade-v3.sql`（v2 → v3 迁移）
 
 > 建议在 Cloudflare D1 的 **Execute SQL** 中执行。
 
@@ -215,9 +219,9 @@ git push
 
 | 文件 | 用途 |
 |------|------|
-| `schema.sql` | v2 全新结构定义 |
-| `alldata.sql` | 初始化公开导航数据 |
-| `upgrade-v2.sql` | 从旧 bookmarks 架构升级到新公开/私有/审核架构 |
+| `schema.sql` | v3 完整建表结构 |
+| `upgrade-v3.sql` | v2 → v3 迁移脚本 |
+| `scripts/data-migrate.js` | 从原 `hao_sztcrs_com.sql` 转换公开数据 |
 
 ## 📝 API 概览
 
@@ -227,8 +231,16 @@ git push
 - `GET /auth/me`
 - `PUT /auth/profile`
 
-### 公开导航
-- `GET /public-bookmarks`
+### 公开导航（卡片组）
+- `GET /card-groups` — 列出卡片组
+- `GET /card-groups/by-slug/:slug` — 卡片组详情（含子链接）
+- `POST /card-groups`（管理员）
+- `PUT /card-groups/:id`（管理员）
+- `DELETE /card-groups/:id`（管理员）
+- `POST /card-groups/:id/visit` — 记录访问
+
+### 公开子链接
+- `GET /public-bookmarks?group_id=...`
 - `POST /public-bookmarks`（管理员）
 - `PUT /public-bookmarks/:id`（管理员）
 - `DELETE /public-bookmarks/:id`（管理员）
