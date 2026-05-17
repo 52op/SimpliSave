@@ -83,8 +83,7 @@ SimpliSave/
 │   │   ├── importExport.ts             # HTML 导入导出 API
 │   │   └── fetchMeta.ts                # 网页信息抓取 API
 │   └── index.ts
-├── schema.sql                          # v3 数据库结构（建表）
-├── upgrade-v3.sql                      # v2→v3 升级脚本
+├── schema.sql                          # v3 数据库结构
 └── package.json
 ```
 
@@ -189,10 +188,6 @@ git push
   ```
   输出 SQL 到 D1 执行，或在 D1 Dashboard 中直接粘贴执行。
 
-### 旧库升级
-执行：
-- `upgrade-v3.sql`（v2 → v3 迁移）
-
 > 建议在 Cloudflare D1 的 **Execute SQL** 中执行。
 
 ## 8. 配置 Workers 绑定
@@ -220,7 +215,6 @@ git push
 | 文件 | 用途 |
 |------|------|
 | `schema.sql` | v3 完整建表结构 |
-| `upgrade-v3.sql` | v2 → v3 迁移脚本 |
 | `scripts/data-migrate.js` | 从原 `hao_sztcrs_com.sql` 转换公开数据 |
 
 ## 📝 API 概览
