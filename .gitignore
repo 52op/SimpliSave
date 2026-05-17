@@ -109,3 +109,4 @@ wrangler.local.toml
 
 alldata.sql
 upgrade.sql
+scripts\data-migrate.cjs

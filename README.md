@@ -2,8 +2,8 @@
 
 现代化网址收藏与备忘录应用，基于 Cloudflare Pages + Workers + D1 构建的全栈应用。
 
-> 📌 **在线演示**: [https://simplisave.pages.dev](https://simplisave.pages.dev)  
-> 📌 **原项目**: 重构自 [hao.sztcrs.com](https://hao.sztcrs.com)
+> 📌 **在线演示**: [https://master.simplisave.pages.dev](https://master.simplisave.pages.dev)  
+> 📌 **原项目**: 重构自 [so.sztcrs.com](https://so.sztcrs.com)
 
 [![Deploy to Cloudflare Pages](https://img.shields.io/badge/deploy-cloudflare%20pages-f48120?logo=cloudflare)](https://deploy.workers.cloudflare.com/?url=https://github.com/52op/SimpliSave)
 [![License](https://img.shields.io/github/license/52op/SimpliSave)](LICENSE)
@@ -170,7 +170,9 @@ https://simplisave-api.xxx.workers.dev
 
 将它填写到 GitHub Secret：`WORKERS_URL`
 
-然后再次推送触发 Pages 使用正确后端地址重新构建：
+然后2选1:
+方法1.在GITHUB Actions里面找到deploy-pages脚本重行运行一次
+方法2.再次推送触发 Pages 使用正确后端地址重新构建：
 
 ```bash
 git commit --allow-empty -m "chore: trigger redeploy"
@@ -182,13 +184,9 @@ git push
 ### 新库初始化（推荐）
 执行：
 - `schema.sql`：创建 v3 表结构
-- 然后运行数据转换脚本：
-  ```bash
-  node scripts/data-migrate.cjs --input="../path/to/hao_sztcrs_com.sql"
-  ```
-  输出 SQL 到 D1 执行，或在 D1 Dashboard 中直接粘贴执行。
 
-> 建议在 Cloudflare D1 的 **Execute SQL** 中执行。
+> 建议在 Cloudflare D1 的 **Query** 中执行。
+- 将sql粘贴到Query中，点Run按钮右边下拉三角，选择 **Run current statement**
 
 ## 8. 配置 Workers 绑定
 
@@ -205,7 +203,7 @@ git push
 ## 9. 验证
 
 ### 前端
-- `https://simplisave.pages.dev/`
+- 在workers 和 pages页面找到你的pages域名类似于 : `https://simplisave.pages.dev/`
 
 ### Workers API
 - `https://<your-workers-url>/public-bookmarks`
@@ -215,7 +213,6 @@ git push
 | 文件 | 用途 |
 |------|------|
 | `schema.sql` | v3 完整建表结构 |
-| `scripts/data-migrate.cjs` | 从原 `hao_sztcrs_com.sql` 转换公开数据 |
 
 ## 📝 API 概览
 
