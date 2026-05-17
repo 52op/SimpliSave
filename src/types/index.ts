@@ -76,6 +76,24 @@ export interface Submission {
   updated_at: string
 }
 
+export interface PublicBookmark {
+  id: string
+  title: string
+  url: string
+  description: string | null
+  icon_url: string | null
+  category_id: string | null
+  tags: string | string[]
+  sort_order: number
+  status: string
+  visit_count: number
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  category_name?: string | null
+  category_color?: string | null
+}
+
 export interface AuthState {
   user: User | null
   token: string | null

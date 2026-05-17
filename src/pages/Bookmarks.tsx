@@ -4,7 +4,7 @@ import { useAuthStore } from "../stores/authStore"
 import { useBookmarkStore } from "../stores/bookmarkStore"
 import { userBookmarkApi, userCategoryApi, tagApi, fetchMetaApi, submissionApi } from "../services/api"
 import { Bookmark } from "../types"
-import { Plus, Search, Star, Trash2, Edit2, Folder, X, Loader2, Upload, Download, Share2, Archive } from "lucide-react"
+import { Plus, Search, Star, Trash2, Edit2, Folder, X, Loader2, Upload, Download, Share2, Archive, CheckSquare, Square, CheckCheck } from "lucide-react"
 import Favicon from "../components/Favicon"
 
 export default function Bookmarks() {
@@ -24,6 +24,8 @@ export default function Bookmarks() {
   const [fetching, setFetching] = useState(false)
   const [importing, setImporting] = useState(false)
   const [submittingShare, setSubmittingShare] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [batchLoading, setBatchLoading] = useState(false)
 
   const [formData, setFormData] = useState({
     title: "", url: "", description: "", icon_url: "", category_id: "", tags: [] as string[], is_favorite: 0,
@@ -217,6 +219,89 @@ export default function Bookmarks() {
     }
   }
 
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filteredBookmarks.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredBookmarks.map(b => b.id)))
+    }
+  }
+
+  async function handleBatchDelete() {
+    if (!token || selectedIds.size === 0) return
+    if (!confirm(t("bookmarks.batchDeleteConfirm", { count: selectedIds.size }))) return
+    setBatchLoading(true)
+    try {
+      await Promise.all(Array.from(selectedIds).map(id => userBookmarkApi.delete(token, id)))
+      setBookmarks(bookmarks.filter(b => !selectedIds.has(b.id)))
+      setSelectedIds(new Set())
+    } catch (err: any) {
+      alert(err.message || t("common.error"))
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  async function handleBatchArchive(archived: boolean) {
+    if (!token || selectedIds.size === 0) return
+    setBatchLoading(true)
+    try {
+      await Promise.all(Array.from(selectedIds).map(id => userBookmarkApi.update(token, id, { archived: archived ? 1 : 0 })))
+      await loadData()
+      setSelectedIds(new Set())
+    } catch (err: any) {
+      alert(err.message || t("common.error"))
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  async function handleBatchFavorite(favorite: boolean) {
+    if (!token || selectedIds.size === 0) return
+    setBatchLoading(true)
+    try {
+      await Promise.all(Array.from(selectedIds).map(id => userBookmarkApi.update(token, id, { is_favorite: favorite ? 1 : 0 })))
+      await loadData()
+      setSelectedIds(new Set())
+    } catch (err: any) {
+      alert(err.message || t("common.error"))
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
+  async function handleBatchShare() {
+    if (!token || selectedIds.size === 0) return
+    setBatchLoading(true)
+    let successCount = 0
+    let failCount = 0
+    for (const id of selectedIds) {
+      const b = bookmarks.find(b => b.id === id)
+      if (!b) continue
+      try {
+        const tagsArray = typeof b.tags === "string" ? JSON.parse(b.tags || "[]") : b.tags
+        await submissionApi.create(token, {
+          user_bookmark_id: b.id, title: b.title, url: b.url,
+          description: b.description, icon_url: b.icon_url, tags: tagsArray,
+        })
+        successCount++
+      } catch {
+        failCount++
+      }
+    }
+    alert(t("bookmarks.batchShareResult", { success: successCount, fail: failCount ? `，失败 ${failCount} 个` : '' }))
+    setSelectedIds(new Set())
+    setBatchLoading(false)
+  }
+
   function openEditModal(b: Bookmark) {
     setEditingBookmark(b)
     setFormData({
@@ -307,6 +392,32 @@ export default function Bookmarks() {
         </button>
       </div>
 
+      {filteredBookmarks.length > 0 && (
+        <div className="flex items-center gap-2 mb-3 px-1">
+          <button onClick={toggleSelectAll} className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600">
+            {selectedIds.size === filteredBookmarks.length ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+            {t("bookmarks.selectAll")}
+          </button>
+          <span className="text-sm text-gray-400">
+            {selectedIds.size > 0
+              ? t("bookmarks.selected", { count: selectedIds.size })
+              : t("bookmarks.total", { count: filteredBookmarks.length })}
+          </span>
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-1 ml-auto">
+              <button onClick={() => handleBatchFavorite(true)} disabled={batchLoading}
+                className="px-2.5 py-1 text-xs bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100 disabled:opacity-50">{t("bookmarks.batchFavorite")}</button>
+              <button onClick={() => handleBatchArchive(true)} disabled={batchLoading}
+                className="px-2.5 py-1 text-xs bg-purple-50 text-purple-700 rounded hover:bg-purple-100 disabled:opacity-50">{t("bookmarks.batchArchive")}</button>
+              <button onClick={handleBatchShare} disabled={batchLoading}
+                className="px-2.5 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 disabled:opacity-50">{t("bookmarks.batchShare")}</button>
+              <button onClick={handleBatchDelete} disabled={batchLoading}
+                className="px-2.5 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100 disabled:opacity-50">{t("bookmarks.batchDelete")}</button>
+            </div>
+          )}
+        </div>
+      )}
+
       {filteredBookmarks.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow">
           <Folder className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -318,9 +429,12 @@ export default function Bookmarks() {
           {filteredBookmarks.map((b) => {
             const tagsArray = typeof b.tags === "string" ? JSON.parse(b.tags || "[]") : b.tags
             return (
-              <div key={b.id} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition">
+              <div key={b.id} className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition ${selectedIds.has(b.id) ? 'ring-2 ring-blue-400' : ''}`}>
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <button onClick={() => toggleSelect(b.id)} className="shrink-0 text-gray-400 hover:text-blue-500">
+                      {selectedIds.has(b.id) ? <CheckSquare className="w-4 h-4 text-blue-500" /> : <Square className="w-4 h-4" />}
+                    </button>
                     <Favicon src={b.icon_url} title={b.title} size="sm" />
                     <a href={b.url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline truncate">{b.title}</a>
                   </div>

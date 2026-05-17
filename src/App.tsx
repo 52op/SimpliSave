@@ -8,6 +8,7 @@ import Login from "./pages/Login"
 import Register from "./pages/Register"
 import AdminCategories from "./pages/admin/AdminCategories"
 import AdminSubmissions from "./pages/admin/AdminSubmissions"
+import AdminBookmarks from "./pages/admin/AdminBookmarks"
 import Header from "./components/Header"
 import "./index.css"
 
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="/memos" element={<ProtectedRoute><Memos /></ProtectedRoute>} />
             <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
             <Route path="/admin/submissions" element={<AdminRoute><AdminSubmissions /></AdminRoute>} />
+            <Route path="/admin/bookmarks" element={<AdminRoute><AdminBookmarks /></AdminRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

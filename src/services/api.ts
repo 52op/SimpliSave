@@ -37,6 +37,7 @@ export const publicBookmarkApi = {
   },
   create: (token: string, data: any) => request<any>('POST', '/public-bookmarks', data, token),
   get: (token: string, id: string) => request<any>('GET', `/public-bookmarks/${id}`, undefined, token),
+  getById: (token: string, id: string) => request<any>('GET', `/public-bookmarks/${id}`, undefined, token),
   update: (token: string, id: string, data: any) => request<any>('PUT', `/public-bookmarks/${id}`, data, token),
   delete: (token: string, id: string) => request<void>('DELETE', `/public-bookmarks/${id}`, undefined, token),
 };

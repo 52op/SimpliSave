@@ -27,6 +27,15 @@ const resources = {
       
       // Bookmarks
       "bookmarks.title": "Bookmarks",
+      "bookmarks.selectAll": "Select All",
+      "bookmarks.selected": "Selected {count} items",
+      "bookmarks.total": "{count} items",
+      "bookmarks.batchFavorite": "Favorite",
+      "bookmarks.batchArchive": "Archive",
+      "bookmarks.batchShare": "Share",
+      "bookmarks.batchDelete": "Delete",
+      "bookmarks.batchDeleteConfirm": "Delete {count} selected bookmarks?",
+      "bookmarks.batchShareResult": "Done: {success} succeeded{fail}",
       "bookmarks.add": "Add Bookmark",
       "bookmarks.edit": "Edit Bookmark",
       "bookmarks.delete": "Delete Bookmark",
@@ -101,6 +110,18 @@ const resources = {
       "common.selectCategory": "Select category",
       "common.noCategory": "No category",
       "common.createCategory": "Create category",
+
+      // Admin - Bookmarks
+      "admin.bookmarks.title": "Public Bookmarks",
+      "admin.bookmarks.add": "Add Bookmark",
+      "admin.bookmarks.edit": "Edit Bookmark",
+      "admin.bookmarks.formTitle": "Title",
+      "admin.bookmarks.formUrl": "URL",
+      "admin.bookmarks.formDescription": "Description",
+      "admin.bookmarks.formCategory": "Category",
+      "admin.bookmarks.formIcon": "Icon URL",
+      "admin.bookmarks.visitCount": "Visits",
+      "admin.bookmarks.confirmDelete": "Are you sure you want to delete this bookmark?",
     }
   },
   zh: {
@@ -128,6 +149,15 @@ const resources = {
       
       // Bookmarks
       "bookmarks.title": "网址收藏",
+      "bookmarks.selectAll": "全选",
+      "bookmarks.selected": "已选 {count} 项",
+      "bookmarks.total": "{count} 项",
+      "bookmarks.batchFavorite": "批量收藏",
+      "bookmarks.batchArchive": "批量归档",
+      "bookmarks.batchShare": "批量分享",
+      "bookmarks.batchDelete": "批量删除",
+      "bookmarks.batchDeleteConfirm": "确定删除选中的 {count} 个收藏？",
+      "bookmarks.batchShareResult": "申请完成：成功 {success} 个{fail}",
       "bookmarks.add": "添加收藏",
       "bookmarks.edit": "编辑收藏",
       "bookmarks.delete": "删除收藏",
@@ -202,6 +232,18 @@ const resources = {
       "common.selectCategory": "选择分类",
       "common.noCategory": "无分类",
       "common.createCategory": "创建分类",
+
+      // Admin - 公开链接
+      "admin.bookmarks.title": "公开链接管理",
+      "admin.bookmarks.add": "添加链接",
+      "admin.bookmarks.edit": "编辑链接",
+      "admin.bookmarks.formTitle": "标题",
+      "admin.bookmarks.formUrl": "URL",
+      "admin.bookmarks.formDescription": "描述",
+      "admin.bookmarks.formCategory": "分类",
+      "admin.bookmarks.formIcon": "图标URL",
+      "admin.bookmarks.visitCount": "访问次数",
+      "admin.bookmarks.confirmDelete": "确定要删除这个链接吗？",
     }
   }
 };
