@@ -20,17 +20,23 @@ async function getUserRole(request: Request, env: any): Promise<string | null> {
 export async function handleListPublicBookmarks(request: Request, env: any): Promise<Response> {
   const url = new URL(request.url);
   const categoryId = url.searchParams.get('category_id');
+  const groupId = url.searchParams.get('group_id');
   const q = url.searchParams.get('q');
 
-  let sql = `SELECT pb.*, pc.name as category_name, pc.color as category_color
+  let sql = `SELECT pb.*, pc.name as category_name, pc.color as category_color, pcg.title as group_title
              FROM public_bookmarks pb
              LEFT JOIN public_categories pc ON pb.category_id = pc.id
+             LEFT JOIN public_card_groups pcg ON pb.group_id = pcg.id
              WHERE pb.status = 'active'`;
   const params: any[] = [];
 
   if (categoryId) {
     sql += ' AND pb.category_id = ?';
     params.push(categoryId);
+  }
+  if (groupId) {
+    sql += ' AND pb.group_id = ?';
+    params.push(groupId);
   }
   if (q) {
     sql += ' AND (pb.title LIKE ? OR pb.url LIKE ? OR pb.description LIKE ?)';

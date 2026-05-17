@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
-import { useBookmarkStore } from "../stores/bookmarkStore"
-import { publicBookmarkApi, publicCategoryApi, submissionApi, fetchMetaApi } from "../services/api"
-import { Bookmark, Category } from "../types"
-import { Search, ExternalLink, Star, Folder, Globe, Clock, Zap, Grid, List, Send, Loader2, X } from "lucide-react"
+import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi } from "../services/api"
+import { CardGroup, Category } from "../types"
+import { Search, ExternalLink, Folder, Globe, Zap, Send, Loader2, X } from "lucide-react"
 import Favicon from "../components/Favicon"
+import { useNavigate } from "react-router-dom"
 
-// 搜索引擎配置
 const SEARCH_ENGINES = [
   { name: "百度", url: "https://www.baidu.com/s", param: "wd", icon: "https://www.baidu.com/favicon.ico", color: "#2932e1" },
   { name: "Google", url: "https://www.google.com/search", param: "q", icon: "https://www.google.com/favicon.ico", color: "#4285f4" },
@@ -18,10 +17,12 @@ const SEARCH_ENGINES = [
 
 export default function Home() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const token = useAuthStore((s) => s.token)
-  const { bookmarks, categories, setBookmarks, setCategories } = useBookmarkStore()
-  
+
   const [loading, setLoading] = useState(true)
+  const [cardGroups, setCardGroups] = useState<CardGroup[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedEngine, setSelectedEngine] = useState(SEARCH_ENGINES[0])
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
@@ -31,7 +32,6 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false)
   const [fetching, setFetching] = useState(false)
 
-  // 加载公共书签和分类
   useEffect(() => {
     loadData()
   }, [])
@@ -39,13 +39,12 @@ export default function Home() {
   async function loadData() {
     setLoading(true)
     try {
-      // 获取公共书签（无需登录）
-      const publicBookmarks = await publicBookmarkApi.list()
-      setBookmarks(publicBookmarks)
-
-      // 获取公开分类
-      const catRes = await publicCategoryApi.list()
-      setCategories(catRes)
+      const [groups, cats] = await Promise.all([
+        cardGroupApi.list(),
+        publicCategoryApi.list(),
+      ])
+      setCardGroups(groups)
+      setCategories(cats)
     } catch (err) {
       console.error("Failed to load data:", err)
     } finally {
@@ -53,25 +52,21 @@ export default function Home() {
     }
   }
 
-  // 搜索书签
-  const filteredBookmarks = bookmarks.filter((b) => {
+  const filteredGroups = cardGroups.filter((g) => {
     const matchesSearch = !searchQuery || 
-      b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (b.description && b.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesCategory = selectedCategory === "all" || b.category_id === selectedCategory
+      g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (g.description && g.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    const matchesCategory = selectedCategory === "all" || g.category_id === selectedCategory
     return matchesSearch && matchesCategory
   })
 
-  // 按分类分组
-  const groupedBookmarks = filteredBookmarks.reduce((acc, b) => {
-    const catId = b.category_id || "uncategorized"
+  const groupedGroups = filteredGroups.reduce((acc, g) => {
+    const catId = g.category_id || "uncategorized"
     if (!acc[catId]) acc[catId] = []
-    acc[catId].push(b)
+    acc[catId].push(g)
     return acc
-  }, {} as Record<string, Bookmark[]>)
+  }, {} as Record<string, CardGroup[]>)
 
-  // 执行搜索
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     if (!searchQuery.trim()) return
@@ -79,10 +74,8 @@ export default function Home() {
     window.open(url, "_blank")
   }
 
-  // 快速访问（按访问次数排序）
-  const topBookmarks = [...bookmarks].sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0)).slice(0, 12)
+  const topGroups = [...cardGroups].sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0)).slice(0, 12)
 
-  // 提交链接
   async function handleSubmitLink() {
     if (!token) { alert("请先登录"); return }
     if (!submitForm.url.trim() || !submitForm.title.trim()) return
@@ -99,7 +92,6 @@ export default function Home() {
     }
   }
 
-  // 抓取网页信息
   async function handleFetchMeta() {
     if (!submitForm.url.trim()) return
     setFetching(true)
@@ -197,25 +189,22 @@ export default function Home() {
       </div>
 
       {/* 常用推荐 */}
-      {topBookmarks.length > 0 && (
+      {topGroups.length > 0 && (
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <Zap className="w-5 h-5 text-yellow-500" />
             <h2 className="text-xl font-semibold text-gray-900">常用推荐</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {topBookmarks.map((b) => (
+            {topGroups.map((g) => (
               <a
-                key={b.id}
-                href={b.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                key={g.id}
+                href={`/g/${g.slug}`}
+                onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
                 className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition text-center group"
               >
-                <div className="w-10 h-10 mx-auto mb-2 flex items-center justify-center">
-                  <Favicon src={b.icon_url} title={b.title} size="lg" />
-                </div>
-                <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-600">{b.title}</p>
+                <Favicon src={g.icon_url} title={g.title} size="lg" />
+                <p className="text-sm font-medium text-gray-900 truncate mt-2 group-hover:text-blue-600">{g.title}</p>
               </a>
             ))}
           </div>
@@ -239,7 +228,7 @@ export default function Home() {
           >
             全部
           </button>
-          {categories.filter(c => c.type === "bookmark").map((c) => (
+          {categories.map((c) => (
             <button
               key={c.id}
               onClick={() => setSelectedCategory(c.id)}
@@ -256,16 +245,16 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 书签列表 */}
-      {Object.keys(groupedBookmarks).length === 0 ? (
+      {/* 卡片组列表 */}
+      {Object.keys(groupedGroups).length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg shadow">
           <Globe className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 mb-2">暂无书签</p>
+          <p className="text-gray-500 mb-2">暂无卡片组</p>
           <p className="text-sm text-gray-400">登录后可以添加私人收藏</p>
         </div>
       ) : (
         <div className="space-y-8">
-          {Object.entries(groupedBookmarks).map(([catId, items]) => {
+          {Object.entries(groupedGroups).map(([catId, items]) => {
             const category = categories.find(c => c.id === catId)
             const catName = category?.name || (catId === "uncategorized" ? "未分类" : "其他")
             const catColor = category?.color || "#3b82f6"
@@ -281,30 +270,21 @@ export default function Home() {
                   <span className="text-sm text-gray-500">({items.length})</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {items.map((b) => (
+                  {items.map((g) => (
                     <a
-                      key={b.id}
-                      href={b.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      key={g.id}
+                      href={`/g/${g.slug}`}
+                      onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
                       className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition group border-l-4"
                       style={{ borderLeftColor: catColor }}
                     >
                       <div className="flex items-start gap-3">
-                        <Favicon src={b.icon_url} title={b.title} size="md" />
+                        <Favicon src={g.icon_url} title={g.title} size="md" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate group-hover:text-blue-600">
-                            {b.title}
-                          </p>
-                          {b.description && (
-                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                              {b.description}
-                            </p>
+                          <p className="font-medium text-gray-900 truncate group-hover:text-blue-600">{g.title}</p>
+                          {g.description && (
+                            <p className="text-xs text-gray-500 mt-1 line-clamp-2">{g.description}</p>
                           )}
-                          <div className="flex items-center gap-2 mt-2">
-                            <ExternalLink className="w-3 h-3 text-gray-400" />
-                            <span className="text-xs text-gray-400 truncate">{new URL(b.url).hostname}</span>
-                          </div>
                         </div>
                       </div>
                     </a>
@@ -354,7 +334,7 @@ export default function Home() {
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                   <button onClick={handleFetchMeta} disabled={fetching || !submitForm.url.trim()}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1">
-                    {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : "🔍"}
+                    {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     {fetching ? "抓取中..." : "抓取"}
                   </button>
                 </div>

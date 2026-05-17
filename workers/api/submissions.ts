@@ -1,6 +1,7 @@
 // Bookmark submissions API handlers
 import { verifyJWT } from '../utils/jwt';
 import { successResponse, errorResponse } from '../utils/response';
+import { generateSlug } from '../utils/slug';
 
 async function getUserId(request: Request, env: any): Promise<string | null> {
   const authHeader = request.headers.get('Authorization');
@@ -72,8 +73,30 @@ export async function handleApproveSubmission(request: Request, env: any, id: st
   const submission = await env.DB.prepare('SELECT * FROM bookmark_submissions WHERE id = ?').bind(id).first();
   if (!submission) return errorResponse('Submission not found', 404);
 
+  const body = await request.json().catch(() => ({})) as any;
+  let targetGroupId = body.target_group_id || null;
+  let createdGroupId: string | null = null;
+
+  if (!targetGroupId) {
+    let slug = generateSlug(submission.title);
+    const existing = await env.DB.prepare('SELECT id FROM public_card_groups WHERE slug = ?').bind(slug).first();
+    if (existing) {
+      slug = slug + '-' + Math.random().toString(36).substring(2, 8);
+    }
+    const groupResult = await env.DB.prepare(
+      `INSERT INTO public_card_groups (title, description, slug, category_id, status, created_by)
+       VALUES (?, ?, ?, ?, 'active', ?)`
+    ).bind(submission.title, submission.description, slug, submission.suggested_category_id, adminId).run();
+
+    if (groupResult.success) {
+      const newGroup = await env.DB.prepare('SELECT id FROM public_card_groups ORDER BY created_at DESC LIMIT 1').first();
+      targetGroupId = newGroup?.id || null;
+      createdGroupId = newGroup?.id || null;
+    }
+  }
+
   const publicResult = await env.DB.prepare(
-    'INSERT INTO public_bookmarks (title, url, description, icon_url, category_id, tags, status, source_submission_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO public_bookmarks (title, url, description, icon_url, category_id, tags, status, source_submission_id, created_by, group_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     submission.title,
     submission.url,
@@ -83,7 +106,8 @@ export async function handleApproveSubmission(request: Request, env: any, id: st
     submission.tags,
     'active',
     submission.id,
-    adminId
+    adminId,
+    targetGroupId
   ).run();
 
   if (!publicResult.success) return errorResponse('Failed to create public bookmark', 500);
@@ -91,10 +115,14 @@ export async function handleApproveSubmission(request: Request, env: any, id: st
   const publicBookmark = await env.DB.prepare('SELECT id FROM public_bookmarks WHERE source_submission_id = ? ORDER BY created_at DESC LIMIT 1').bind(id).first();
 
   await env.DB.prepare(
-    'UPDATE bookmark_submissions SET status = ?, approved_public_bookmark_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-  ).bind('approved', publicBookmark?.id || null, id).run();
+    'UPDATE bookmark_submissions SET status = ?, approved_public_bookmark_id = ?, approved_public_group_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+  ).bind('approved', publicBookmark?.id || null, targetGroupId, id).run();
 
-  return successResponse({ message: 'Submission approved', public_bookmark_id: publicBookmark?.id });
+  return successResponse({
+    message: 'Submission approved',
+    public_bookmark_id: publicBookmark?.id,
+    group_id: targetGroupId
+  });
 }
 
 // 管理员拒绝审核

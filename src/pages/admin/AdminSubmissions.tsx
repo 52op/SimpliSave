@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
-import { submissionApi } from "../../services/api"
-import { Submission } from "../../types"
+import { submissionApi, cardGroupApi } from "../../services/api"
+import { Submission, CardGroup } from "../../types"
 import { Check, X, Clock, ExternalLink, Globe } from "lucide-react"
 import Favicon from "../../components/Favicon"
 
@@ -14,8 +14,14 @@ export default function AdminSubmissions() {
   const [filterStatus, setFilterStatus] = useState<"pending" | "approved" | "rejected">("pending")
   const [rejectReason, setRejectReason] = useState("")
   const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [groups, setGroups] = useState<CardGroup[]>([])
+  const [targetGroupMap, setTargetGroupMap] = useState<Record<string, string>>({})
 
   useEffect(() => { loadData() }, [filterStatus])
+
+  useEffect(() => {
+    cardGroupApi.list({}).then(setGroups).catch(console.error)
+  }, [])
 
   async function loadData() {
     if (!token) return
@@ -33,7 +39,7 @@ export default function AdminSubmissions() {
   async function handleApprove(id: string) {
     if (!token) return
     try {
-      await submissionApi.approve(token, id)
+      await submissionApi.approve(token, id, targetGroupMap[id] || undefined)
       setSubmissions(submissions.filter(s => s.id !== id))
     } catch (err: any) {
       alert(err.message || t("common.error"))
@@ -103,7 +109,15 @@ export default function AdminSubmissions() {
                 </div>
 
                 {filterStatus === "pending" && (
-                  <div className="flex gap-2 flex-shrink-0">
+                  <div className="flex gap-2 flex-shrink-0 items-center">
+                    <select
+                      value={targetGroupMap[s.id] || ""}
+                      onChange={(e) => setTargetGroupMap(prev => ({ ...prev, [s.id]: e.target.value }))}
+                      className="text-xs border rounded px-1 py-0.5"
+                    >
+                      <option value="">创建新卡片组</option>
+                      {groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
+                    </select>
                     <button onClick={() => handleApprove(s.id)}
                       className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1 text-sm">
                       <Check className="w-4 h-4" />通过

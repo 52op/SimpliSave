@@ -18,6 +18,10 @@ import { handleCreateSubmission, handleListSubmissions, handleApproveSubmission,
 import { handleFetchMeta } from './api/fetchMeta';
 import { handleListMemos, handleCreateMemo, handleGetMemo, handleUpdateMemo, handleDeleteMemo, handlePinMemo } from './api/memos';
 import { handleListTags, handleCreateTag, handleDeleteTag } from './api/tags';
+import {
+  handleListCardGroups, handleGetCardGroupBySlug, handleCreateCardGroup,
+  handleUpdateCardGroup, handleDeleteCardGroup, handleVisitCardGroup
+} from './api/cardGroups';
 
 interface Env {
   DB: D1Database;
@@ -39,6 +43,7 @@ export default {
     if (path.startsWith('/user-categories')) return handleUserCategories(request, env, path);
     if (path.startsWith('/submissions')) return handleSubmissions(request, env, path);
     if (path.startsWith('/fetch-meta')) return handleFetchMeta(request, env);
+    if (path.startsWith('/card-groups')) return handleCardGroups(request, env, path);
     if (path.startsWith('/memos')) return handleMemos(request, env, path);
     if (path.startsWith('/tags')) return handleTags(request, env, path);
 
@@ -180,6 +185,30 @@ async function handleMemos(request: Request, env: Env, path: string): Promise<Re
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       return handleDeleteMemo(request, env, id);
+    default:
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+  }
+}
+
+async function handleCardGroups(request: Request, env: Env, path: string): Promise<Response> {
+  const bySlugMatch = path.match(/^\/card-groups\/by-slug\/([^\/]+)$/);
+  const visitMatch = path.match(/^\/card-groups\/([^\/]+)\/visit$/);
+  const idMatch = path.match(/^\/card-groups\/([^\/]+)$/);
+
+  if (bySlugMatch && request.method === 'GET') return handleGetCardGroupBySlug(request, env, bySlugMatch[1]);
+  if (visitMatch && request.method === 'POST') return handleVisitCardGroup(request, env, visitMatch[1]);
+
+  switch (request.method) {
+    case 'GET':
+      return handleListCardGroups(request, env);
+    case 'POST':
+      return handleCreateCardGroup(request, env);
+    case 'PUT':
+      if (!idMatch) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleUpdateCardGroup(request, env, idMatch[1]);
+    case 'DELETE':
+      if (!idMatch) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleDeleteCardGroup(request, env, idMatch[1]);
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }

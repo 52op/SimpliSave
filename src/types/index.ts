@@ -82,6 +82,8 @@ export interface PublicBookmark {
   url: string
   description: string | null
   icon_url: string | null
+  group_id: string | null
+  group_title: string | null
   category_id: string | null
   tags: string | string[]
   sort_order: number
@@ -92,6 +94,28 @@ export interface PublicBookmark {
   updated_at: string
   category_name?: string | null
   category_color?: string | null
+}
+
+export interface CardGroup {
+  id: string
+  title: string
+  slug: string
+  description: string | null
+  icon_url: string | null
+  category_id: string | null
+  category_name: string | null
+  category_color: string | null
+  sort_order: number
+  status: string
+  source_submission_id: string | null
+  visit_count: number
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CardGroupDetail extends CardGroup {
+  bookmarks: PublicBookmark[]
 }
 
 export interface AuthState {

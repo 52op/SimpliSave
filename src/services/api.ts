@@ -1,4 +1,6 @@
-﻿// API 配置
+﻿import type { CardGroup, CardGroupDetail } from '../types';
+
+// API 配置
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 const BASE_URL = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
 
@@ -29,10 +31,11 @@ export const authApi = {
 
 // 公开导航 API
 export const publicBookmarkApi = {
-  list: (params?: { category_id?: string; q?: string }) => {
+  list: (params?: { category_id?: string; q?: string; group_id?: string }) => {
     const search = new URLSearchParams();
     if (params?.category_id) search.set('category_id', params.category_id);
     if (params?.q) search.set('q', params.q);
+    if (params?.group_id) search.set('group_id', params.group_id);
     return request<any[]>('GET', `/public-bookmarks${search.toString() ? `?${search.toString()}` : ''}`);
   },
   create: (token: string, data: any) => request<any>('POST', '/public-bookmarks', data, token),
@@ -40,6 +43,20 @@ export const publicBookmarkApi = {
   getById: (token: string, id: string) => request<any>('GET', `/public-bookmarks/${id}`, undefined, token),
   update: (token: string, id: string, data: any) => request<any>('PUT', `/public-bookmarks/${id}`, data, token),
   delete: (token: string, id: string) => request<void>('DELETE', `/public-bookmarks/${id}`, undefined, token),
+};
+
+// 卡片组 API
+export const cardGroupApi = {
+  list: (params?: { category_id?: string }) => {
+    const search = new URLSearchParams();
+    if (params?.category_id) search.set('category_id', params.category_id);
+    return request<CardGroup[]>('GET', `/card-groups${search.toString() ? `?${search.toString()}` : ''}`);
+  },
+  getBySlug: (slug: string) => request<CardGroupDetail>('GET', `/card-groups/by-slug/${encodeURIComponent(slug)}`),
+  create: (token: string, data: any) => request<CardGroup>('POST', '/card-groups', data, token),
+  update: (token: string, id: string, data: any) => request<CardGroup>('PUT', `/card-groups/${id}`, data, token),
+  delete: (token: string, id: string) => request<void>('DELETE', `/card-groups/${id}`, undefined, token),
+  visit: (id: string) => request<void>('POST', `/card-groups/${id}/visit`),
 };
 
 // 私有收藏夹 API
@@ -102,7 +119,7 @@ export const tagApi = {
 export const submissionApi = {
   list: (token: string, status?: string) => request<any[]>('GET', `/submissions${status ? `?status=${status}` : ''}`, undefined, token),
   create: (token: string, data: any) => request<any>('POST', '/submissions', data, token),
-  approve: (token: string, id: string) => request<any>('PUT', `/submissions/${id}/approve`, undefined, token),
+  approve: (token: string, id: string, targetGroupId?: string) => request<any>('PUT', `/submissions/${id}/approve`, targetGroupId ? { target_group_id: targetGroupId } : undefined, token),
   reject: (token: string, id: string, note?: string) => request<any>('PUT', `/submissions/${id}/reject`, { admin_note: note }, token),
 };
 

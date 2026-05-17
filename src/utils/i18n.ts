@@ -122,6 +122,13 @@ const resources = {
       "admin.bookmarks.formIcon": "Icon URL",
       "admin.bookmarks.visitCount": "Visits",
       "admin.bookmarks.confirmDelete": "Are you sure you want to delete this bookmark?",
+
+      // Card Group Detail
+      "cardGroup.title": "Card Group Detail",
+      "cardGroup.backToHome": "← Back to Home",
+      "cardGroup.noLinks": "No links yet",
+      "cardGroup.notFound": "Card group not found",
+      "cardGroup.visitCount": "Visits",
     }
   },
   zh: {
@@ -244,6 +251,13 @@ const resources = {
       "admin.bookmarks.formIcon": "图标URL",
       "admin.bookmarks.visitCount": "访问次数",
       "admin.bookmarks.confirmDelete": "确定要删除这个链接吗？",
+
+      // 卡片组详情
+      "cardGroup.title": "卡片组详情",
+      "cardGroup.backToHome": "← 返回首页",
+      "cardGroup.noLinks": "暂无链接",
+      "cardGroup.notFound": "卡片组不存在",
+      "cardGroup.visitCount": "访问次数",
     }
   }
 };

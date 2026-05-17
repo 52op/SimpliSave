@@ -9,6 +9,7 @@ import Register from "./pages/Register"
 import AdminCategories from "./pages/admin/AdminCategories"
 import AdminSubmissions from "./pages/admin/AdminSubmissions"
 import AdminBookmarks from "./pages/admin/AdminBookmarks"
+import CardGroupDetail from "./pages/CardGroupDetail"
 import Header from "./components/Header"
 import "./index.css"
 
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
             <Route path="/memos" element={<ProtectedRoute><Memos /></ProtectedRoute>} />
+            <Route path="/g/:slug" element={<CardGroupDetail />} />
             <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
             <Route path="/admin/submissions" element={<AdminRoute><AdminSubmissions /></AdminRoute>} />
             <Route path="/admin/bookmarks" element={<AdminRoute><AdminBookmarks /></AdminRoute>} />
