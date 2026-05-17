@@ -10,33 +10,43 @@
 
 ## ✨ 功能特性
 
-### 🏠 网址导航首页
+### 🏠 公开导航
 - 多搜索引擎切换（百度、Google、必应、搜狗、360）
-- 公共书签展示（无需登录即可浏览）
-- 常用推荐（按访问次数排序）
+- 只展示管理员维护的**公开导航**
 - 分类导航标签
+- 常用推荐（按访问次数排序）
 - 响应式设计
 
-### 🔖 网址收藏
-- 添加/编辑/删除书签
-- 分类管理
+### 🔖 私人收藏夹
+- 只管理当前用户自己的**私有收藏**
+- 添加 / 编辑 / 删除收藏
+- 收藏 / 归档
+- 私有分类管理
 - 标签系统
-- 收藏标记
 - 搜索和筛选
+- 导出 JSON
+- 导出浏览器书签 HTML
+- 导入浏览器书签 HTML
+- 从私有收藏发起“申请分享到公开导航”
+
+### ✅ 分享审核流
+- 用户提交链接申请公开分享
+- 管理员审核通过 / 拒绝
+- 审核通过后自动进入公开导航
+- 原私有收藏保留不变
 
 ### 📝 备忘录
 - Tiptap 富文本编辑器
+- 修复输入时光标丢失问题
 - 置顶功能
 - 颜色标记
 - 分类和标签支持
 
-### 🔐 用户系统
-- 注册/登录
-- JWT 认证
-- 私人收藏与公共收藏分离
-
-### 🌍 国际化
-- 中文 / English 双语支持
+### 🛠️ 辅助功能
+- 网页信息抓取（标题 / 描述 / 图标）
+- 图标加载失败自动显示标题首字符
+- 管理员公开分类管理页
+- 管理员审核页
 
 ## 🛠️ 技术栈
 
@@ -46,198 +56,236 @@
 | **UI** | TailwindCSS + Lucide React | 响应式组件 |
 | **后端** | Cloudflare Workers | Serverless API |
 | **数据库** | Cloudflare D1 (SQLite) | 持久化 |
-| **部署** | GitHub Actions | 自动部署 |
+| **部署** | GitHub Actions + Cloudflare | 自动部署 |
 
 ## 📦 项目架构
 
-```
+```text
 SimpliSave/
-├── src/                       # 前端源码
-│   ├── pages/                 # 页面组件
-│   ├── components/            # 通用组件
-│   ├── services/api.ts        # API 服务（访问 Workers）
-│   └── stores/                # 状态管理
-├── workers/                   # Workers API 源码
-│   ├── index.ts               # 路由入口
-│   ├── api/                   # API 处理
-│   └── utils/                 # 工具函数
-├── .github/workflows/         # CI/CD
-├── schema.sql                 # 数据库结构
-├── alldata.sql                # 完整数据
+├── src/
+│   ├── pages/
+│   │   ├── Home.tsx                    # 公开导航首页
+│   │   ├── Bookmarks.tsx               # 私人收藏夹
+│   │   ├── Memos.tsx                   # 备忘录
+│   │   └── admin/
+│   │       ├── AdminCategories.tsx     # 公开分类管理
+│   │       └── AdminSubmissions.tsx    # 分享审核
+│   ├── components/
+│   │   └── Favicon.tsx                 # 图标降级组件
+│   ├── services/api.ts                 # 前端 API 层
+│   └── stores/
+├── workers/
+│   ├── api/
+│   │   ├── publicBookmarks.ts          # 公开导航 API
+│   │   ├── userBookmarks.ts            # 私人收藏 API
+│   │   ├── submissions.ts              # 审核流 API
+│   │   ├── categories.ts               # 公开/私有分类 API
+│   │   ├── importExport.ts             # HTML 导入导出 API
+│   │   └── fetchMeta.ts                # 网页信息抓取 API
+│   └── index.ts
+├── schema.sql                          # v2 最新数据库结构
+├── alldata.sql                         # v2 初始公开导航数据
+├── upgrade-v2.sql                      # 旧结构升级脚本
 └── package.json
 ```
 
-**部署架构**：
-- **Cloudflare Pages**：部署前端静态文件
-- **Cloudflare Workers**：部署 API 后端
-- **Cloudflare D1**：数据库
+## 🧠 数据模型
 
-## 🚀 部署指南（使用 GitHub Actions）
+### 公开导航
+- `public_bookmarks`
+- `public_categories`
 
-### 1. Fork 本项目
+### 私人收藏夹
+- `user_bookmarks`
+- `user_categories`
 
-点击右上角 **Fork** 按钮。
+### 分享审核
+- `bookmark_submissions`
 
-### 2. 获取 Cloudflare API Token
+### 其他
+- `users`
+- `memos`
+- `tags`
+
+## 🚀 部署指南（GitHub Actions + Cloudflare）
+
+## 1. Fork 本项目
+
+点击右上角 **Fork**。
+
+## 2. 获取 Cloudflare API Token
 
 1. 访问 https://dash.cloudflare.com/profile/api-tokens
 2. 点击 **Create Token**
 3. 选择 **Edit Cloudflare Workers** 模板
-4. **Permissions**：
-   - **Account** → **Cloudflare Pages** → **Edit**
-   - **Account** → **Workers** → **Edit**
-   - **Account** → **D1** → **Edit**
-5. 点击 **Continue to summary** → **Create Token**
-6. **复制 API Token**
+4. 权限至少包括：
+   - **Account → Cloudflare Pages → Edit**
+   - **Account → Workers → Edit**
+   - **Account → D1 → Edit**
+5. 创建 Token 并复制
 
-### 3. 获取 Account ID
+## 3. 获取 Account ID
 
-1. 访问 https://dash.cloudflare.com/
-2. 右侧边栏找到 **Account ID**
-3. 复制
+登录 Cloudflare Dashboard，在右侧边栏复制 **Account ID**。
 
-### 4. 创建 D1 数据库
+## 4. 创建 D1 数据库
 
-1. 访问 https://dash.cloudflare.com/
-2. **Workers & Pages** → **D1**
-3. 点击 **Create a database**
-4. 命名为 `simplisave-db`
-5. 创建后，进入数据库 → **Settings**
-6. 复制 **Database ID**
+1. **Workers & Pages → D1**
+2. 创建数据库 `simplisave-db`
+3. 进入数据库设置，复制 **Database ID**
 
-### 5. 添加 GitHub Secrets
+## 5. 添加 GitHub Secrets
 
-访问你的仓库：https://github.com/你的用户名/SimpliSave/settings/secrets/actions
+仓库地址：
+`https://github.com/你的用户名/SimpliSave/settings/secrets/actions`
 
-添加以下 secrets：
+添加：
 
-| Name | Value | 说明 |
-|------|-------|------|
-| `CF_API_TOKEN` | 步骤 2 复制 | Cloudflare API Token |
-| `CF_ACCOUNT_ID` | 步骤 3 复制 | 账户 ID |
-| `D1_DATABASE_ID` | 步骤 4 复制 | 数据库 ID |
-| `JWT_SECRET` | `openssl rand -hex 32` 生成 | JWT 签名密钥 |
-| `WORKERS_URL` | 部署后获取 | Workers API 地址 |
-
-### 6. 首次部署（获取 Workers URL）
-
-```bash
-# 首次推送，触发 Workers 部署
-git commit --allow-empty -m "chore: 首次部署"
-git push
-```
-
-### 7. 获取 Workers URL
-
-1. 访问 https://dash.cloudflare.com/
-2. **Workers & Pages** → `simplisave-api`
-3. 复制 **Workers URL**（格式：`https://simplisave-api.xxx.workers.dev`）
-
-### 8. 更新 GitHub Secret
-
-1. 访问 GitHub Secrets 页面
-2. 添加或更新 `WORKERS_URL`：粘贴上一步复制的 URL
-
-### 9. 重新部署 Pages
-
-```bash
-# 再次推送，触发 Pages 部署（使用正确的 Workers URL）
-git commit --allow-empty -m "chore: 更新 Workers URL 并重新部署 Pages"
-git push
-```
-
-### 10. 配置 D1 数据库
-
-1. 访问 https://dash.cloudflare.com/
-2. **Workers & Pages** → **D1** → `simplisave-db`
-3. 点击 **Execute SQL**
-4. 粘贴 `alldata.sql` 文件内容并执行
-
-### 8. 配置 Workers 绑定
-
-部署完成后：
-1. **Workers & Pages** → `simplisave-api` → **Settings**
-2. **D1 database bindings** → 确认 `DB` 绑定到 `simplisave-db`
-3. 如果没有，点击 **Add binding** 添加
-
-### 9. 验证部署
-
-- 首页：`https://simplisave.pages.dev/`
-- API：`https://simplisave-api.xxx.workers.dev/bookmarks?public=1`
-
----
-
-## ⚙️ 环境变量
-
-### Workers 环境变量（在 Workers 设置中配置）
-
-| 变量名 | 说明 |
-|--------|------|
+| Name | 说明 |
+|------|------|
+| `CF_API_TOKEN` | Cloudflare API Token |
+| `CF_ACCOUNT_ID` | Cloudflare Account ID |
+| `D1_DATABASE_ID` | D1 Database ID |
 | `JWT_SECRET` | JWT 签名密钥 |
-| `ENVIRONMENT` | `production` |
+| `WORKERS_URL` | 首次部署 Workers 后填写实际地址 |
 
-### D1 数据库绑定
+> `JWT_SECRET` 可使用：
+>
+> ```bash
+> openssl rand -hex 32
+> ```
 
-在 Workers 设置 → **D1 database bindings**：
-- **Variable name**: `DB`
-- **Database**: `simplisave-db`
+## 6. 首次部署 Workers
 
----
+推送代码后，GitHub Actions 会先尝试部署 Workers。
 
-## 📝 API 接口
+```bash
+git push
+```
 
-### 认证 `/auth/*`
+部署成功后，在 Cloudflare Dashboard 中打开 `simplisave-api`，复制 Workers URL，类似：
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/auth/register` | 用户注册 |
-| POST | `/auth/login` | 用户登录 |
-| GET | `/auth/me` | 获取当前用户 |
+```text
+https://simplisave-api.xxx.workers.dev
+```
 
-### 书签 `/bookmarks/*`
+将它填写到 GitHub Secret：`WORKERS_URL`
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/bookmarks?public=1` | 获取公共书签 |
-| GET | `/bookmarks` | 获取个人书签 |
-| POST | `/bookmarks` | 创建书签 |
-| PUT | `/bookmarks/:id` | 更新书签 |
-| DELETE | `/bookmarks/:id` | 删除书签 |
-| GET | `/bookmarks/search?q=xxx` | 搜索书签 |
+然后再次推送触发 Pages 使用正确后端地址重新构建：
 
-### 备忘录 `/memos/*`
+```bash
+git commit --allow-empty -m "chore: trigger redeploy"
+git push
+```
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| GET | `/memos` | 获取列表 |
-| POST | `/memos` | 创建 |
-| PUT | `/memos/:id` | 更新 |
-| DELETE | `/memos/:id` | 删除 |
+## 7. 初始化数据库
 
----
+### 新库初始化（推荐）
+执行：
+- `schema.sql`：创建 v2 结构
+- `alldata.sql`：写入初始公开导航数据
 
-## 🔧 故障排查
+### 旧库升级
+执行：
+- `upgrade-v2.sql`
 
-### Q: Pages 显示 Not Found
-A: 确认 `functions/` 目录已删除，改用单独的 Workers API。
+> 建议在 Cloudflare D1 的 **Execute SQL** 中执行。
 
-### Q: API 返回 404
-A: 检查 Workers 是否部署成功，访问 Workers URL 测试。
+## 8. 配置 Workers 绑定
 
-### Q: 数据库连接失败
-A: 检查 Workers 的 D1 绑定是否正确。
+打开 `simplisave-api` Worker：
 
-### Q: 登录失败
-A: 检查 `JWT_SECRET` 环境变量是否配置。
+- **D1 database bindings**
+  - Variable name: `DB`
+  - Database: `simplisave-db`
 
----
+- **Environment variables / Secrets**
+  - `JWT_SECRET`
+  - `ENVIRONMENT=production`
+
+## 9. 验证
+
+### 前端
+- `https://simplisave.pages.dev/`
+
+### Workers API
+- `https://<your-workers-url>/public-bookmarks`
+
+## 📘 数据库脚本说明
+
+| 文件 | 用途 |
+|------|------|
+| `schema.sql` | v2 全新结构定义 |
+| `alldata.sql` | 初始化公开导航数据 |
+| `upgrade-v2.sql` | 从旧 bookmarks 架构升级到新公开/私有/审核架构 |
+
+## 📝 API 概览
+
+### 认证
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
+- `PUT /auth/profile`
+
+### 公开导航
+- `GET /public-bookmarks`
+- `POST /public-bookmarks`（管理员）
+- `PUT /public-bookmarks/:id`（管理员）
+- `DELETE /public-bookmarks/:id`（管理员）
+
+### 私人收藏夹
+- `GET /user-bookmarks`
+- `POST /user-bookmarks`
+- `PUT /user-bookmarks/:id`
+- `DELETE /user-bookmarks/:id`
+- `GET /user-bookmarks/export`
+- `GET /user-bookmarks/export-html`
+- `POST /user-bookmarks/import`
+
+### 分类
+- `GET /public-categories`
+- `POST /public-categories`（管理员）
+- `GET /user-categories`
+- `POST /user-categories`
+
+### 分享审核
+- `POST /submissions`
+- `GET /submissions`（管理员）
+- `PUT /submissions/:id/approve`（管理员）
+- `PUT /submissions/:id/reject`（管理员）
+
+### 备忘录
+- `GET /memos`
+- `POST /memos`
+- `PUT /memos/:id`
+- `DELETE /memos/:id`
+- `POST /memos/:id/pin`
+
+### 辅助
+- `GET /fetch-meta?url=...`
+
+## 🔧 常见问题
+
+### Pages 正常但没有后端数据
+确认：
+1. `WORKERS_URL` 已正确填写到 GitHub Secrets
+2. Worker 已绑定 D1
+3. Pages 已重新构建
+
+### 导入浏览器 HTML 无数据
+确认导入文件是浏览器导出的标准书签 HTML。
+
+### 图标不显示
+已内置降级逻辑，会自动显示标题首字符。
+
+### 管理员菜单不显示
+确认数据库里该用户 `role='admin'`。
 
 ## 📄 许可证
 
 MIT License
 
 ## 🙏 致谢
-
 - 原项目：[hao.sztcrs.com](https://hao.sztcrs.com)
 - [Cloudflare Workers](https://workers.cloudflare.com/)
 - [Cloudflare Pages](https://pages.cloudflare.com/)
