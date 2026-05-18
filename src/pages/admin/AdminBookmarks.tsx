@@ -5,6 +5,7 @@ import { publicBookmarkApi, publicCategoryApi, cardGroupApi } from "../../servic
 import { PublicBookmark, Category, CardGroup } from "../../types"
 import { Plus, Trash2, Edit2, X, ExternalLink, Globe, FolderOpen, Search, Star } from "lucide-react"
 import Favicon from "../../components/Favicon"
+import ImageUploader from "../../components/ImageUploader"
 
 export default function AdminBookmarks() {
   const { t } = useTranslation()
@@ -396,9 +397,12 @@ export default function AdminBookmarks() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formIcon")}</label>
-                    <input type="text" value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })}
-                      placeholder="https://example.com/favicon.ico"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <div className="flex gap-2">
+                      <ImageUploader type="icon" value={form.icon_url} onChange={(url) => setForm({ ...form, icon_url: url })} className="w-12 h-12 shrink-0" />
+                      <input type="text" value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })}
+                        placeholder="https://example.com/favicon.ico"
+                        className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">所属卡片组</label>
@@ -503,10 +507,13 @@ export default function AdminBookmarks() {
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">图标 URL</label>
-                <input type="text" value={groupForm.icon_url} onChange={(e) => setGroupForm({ ...groupForm, icon_url: e.target.value })}
-                  placeholder="https://example.com/icon.png"
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                <label className="block text-sm font-medium mb-1">图标</label>
+                <div className="flex gap-2">
+                  <ImageUploader type="icon" value={groupForm.icon_url} onChange={(url) => setGroupForm({ ...groupForm, icon_url: url })} className="w-12 h-12 shrink-0" />
+                  <input type="text" value={groupForm.icon_url} onChange={(e) => setGroupForm({ ...groupForm, icon_url: e.target.value })}
+                    placeholder="https://example.com/icon.png"
+                    className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">分类</label>

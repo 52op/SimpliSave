@@ -13,6 +13,7 @@ import AdminSearchEngines from "./pages/admin/AdminSearchEngines"
 import AdminImageBeds from "./pages/admin/AdminImageBeds"
 import CardGroupDetail from "./pages/CardGroupDetail"
 import SearchPage from "./pages/Search"
+import Profile from "./pages/Profile"
 import Header from "./components/Header"
 import "./index.css"
 
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
             <Route path="/memos" element={<ProtectedRoute><Memos /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/g/:slug" element={<CardGroupDetail />} />
             <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />

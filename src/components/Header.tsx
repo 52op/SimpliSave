@@ -109,13 +109,16 @@ export default function Header() {
             </button>
             {token ? (
               <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md">
+                <Link
+                  to="/profile"
+                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-md hover:bg-gray-100"
+                >
                   <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                     <User className="w-4 h-4 text-blue-600" />
                   </div>
                   <span className="text-sm text-gray-700">{user?.name || user?.email}</span>
                   {isAdmin && <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">Admin</span>}
-                </div>
+                </Link>
                 <button
                   onClick={() => {
                     logout()
@@ -150,7 +153,7 @@ export default function Header() {
       {/* Sidebar for mobile */}
       {sidebarOpen && (
         <div className="lg:hidden border-t px-4 py-3 space-y-1 bg-white">
-          {navs.map((n) => (
+              {navs.map((n) => (
             <Link
               key={n.p}
               to={n.p}
@@ -165,6 +168,16 @@ export default function Header() {
               {n.l}
             </Link>
           ))}
+          {token && (
+            <Link
+              to="/profile"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-2 px-3 py-3 rounded-md text-sm text-gray-600 hover:bg-gray-100"
+            >
+              <User className="w-4 h-4" />
+              个人资料
+            </Link>
+          )}
           {isAdmin && (
             <>
               <div className="border-t my-2" />

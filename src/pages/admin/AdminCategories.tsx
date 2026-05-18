@@ -4,6 +4,7 @@ import { useAuthStore } from "../../stores/authStore"
 import { publicCategoryApi } from "../../services/api"
 import { Category } from "../../types"
 import { Plus, Trash2, Edit2, X, Folder, ArrowUp, ArrowDown } from "lucide-react"
+import ImageUploader from "../../components/ImageUploader"
 
 export default function AdminCategories() {
   const { t } = useTranslation()
@@ -158,9 +159,12 @@ export default function AdminCategories() {
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">{t("categories.icon")} (HTML/SVG)</label>
-                <input type="text" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })}
-                  placeholder="<svg>...</svg>" className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+                <label className="block text-sm font-medium mb-1">{t("categories.icon")} (HTML/SVG 或图片)</label>
+                <div className="flex gap-2">
+                  <ImageUploader type="icon" value={form.icon && form.icon.startsWith('http') ? form.icon : ''} onChange={(url) => setForm({ ...form, icon: url })} className="w-10 h-10 shrink-0" />
+                  <input type="text" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })}
+                    placeholder="<svg>...</svg> 或 https://example.com/icon.png" className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t("categories.color")}</label>
