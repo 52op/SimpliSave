@@ -1,4 +1,4 @@
-﻿import type { CardGroup, CardGroupDetail, ImagebedConfig, ImagebedSettings, UploadTokenResponse } from '../types';
+﻿import type { CardGroup, CardGroupDetail, ImagebedConfig, ImagebedSettings, UploadTokenResponse, SiteSettings } from '../types';
 
 // API 配置
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -147,4 +147,9 @@ export const imagebedApi = {
   updateSettings: (token: string, data: any) => request<ImagebedSettings>('PUT', '/imagebed/settings', data, token),
   getUploadToken: (token: string, type: string, filename: string) => request<UploadTokenResponse>('POST', '/imagebed/upload-token', { type, filename }, token),
   getAvailable: (token: string) => request<ImagebedConfig[]>('GET', '/imagebed/available', undefined, token),
+};
+
+export const siteSettingsApi = {
+  get: () => request<SiteSettings>('GET', '/site-settings'),
+  update: (token: string, data: any) => request<SiteSettings>('PUT', '/site-settings', data, token),
 };

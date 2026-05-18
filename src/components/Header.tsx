@@ -1,8 +1,9 @@
 ﻿import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuthStore } from "../stores/authStore"
 import { useTranslation } from "react-i18next"
-import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe, Search, Image } from "lucide-react"
-import { useState, useRef } from "react"
+import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe, Search, Image, Settings } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import SearchModal from "./SearchModal"
 
 export default function Header() {
   const { token, logout, user } = useAuthStore()
@@ -11,7 +12,19 @@ export default function Header() {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const adminTimer = useRef<number>()
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") { e.preventDefault(); setSearchOpen(true) }
+      if (e.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement).tagName)) {
+        e.preventDefault(); setSearchOpen(true)
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [])
 
   const toggleLang = () => {
     const next = i18n.language === "zh" ? "en" : "zh"
@@ -32,6 +45,7 @@ export default function Header() {
     { p: "/admin/bookmarks", l: t("admin.bookmarks.title"), icon: <Globe className="w-4 h-4" /> },
     { p: "/admin/search-engines", l: "搜索引擎", icon: <Search className="w-4 h-4" /> },
     { p: "/admin/imagebeds", l: "图床管理", icon: <Image className="w-4 h-4" /> },
+    { p: "/admin/site-settings", l: "站点设置", icon: <Settings className="w-4 h-4" /> },
   ]
 
   function openAdminMenu() {
@@ -99,6 +113,15 @@ export default function Header() {
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-2 rounded-md text-gray-600 hover:bg-gray-100 text-sm flex items-center gap-1.5"
+              title={t("search.title") || "搜索 (Ctrl+K)"}
+            >
+              <Search className="w-4 h-4" />
+              <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-500">Ctrl+K</kbd>
+            </button>
+            {searchOpen && <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />}
             <button
               onClick={toggleLang}
               className="p-2 rounded-md text-gray-600 hover:bg-gray-100 text-sm flex items-center gap-1"

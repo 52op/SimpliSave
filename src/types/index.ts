@@ -217,3 +217,18 @@ export interface UploadTokenResponse {
   region: string
   bed_name: string
 }
+
+export interface SiteSettings {
+  id: string
+  site_name: string
+  description: string
+  keywords: string
+  logo_url: string | null
+  favicon_url: string | null
+  footer_html: string
+  ga_id: string | null
+  beian: string | null
+  custom_head_html: string | null
+  created_at: string
+  updated_at: string
+}

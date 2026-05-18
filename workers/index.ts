@@ -31,6 +31,7 @@ import {
   handleDeleteImagebedConfig, handleToggleImagebedConfig, handleGetImagebedSettings,
   handleUpdateImagebedSettings, handleGetUploadToken, handleGetAvailableImagebeds
 } from './api/imagebed';
+import { handleGetSiteSettings, handleUpdateSiteSettings } from './api/siteSettings';
 
 interface Env {
   DB: D1Database;
@@ -57,6 +58,7 @@ export default {
     if (path.startsWith('/tags')) return handleTags(request, env, path);
     if (path.startsWith('/search-engines')) return handleSearchEngines(request, env, path);
     if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
+    if (path.startsWith('/site-settings')) return handleSiteSettings(request, env);
 
     return new Response('Not Found', { status: 404, headers: corsHeaders() });
   }
@@ -281,4 +283,15 @@ async function handleImagebed(request: Request, env: Env, path: string): Promise
   }
 
   return new Response('Not Found', { status: 404, headers: corsHeaders() });
+}
+
+async function handleSiteSettings(request: Request, env: Env): Promise<Response> {
+  switch (request.method) {
+    case 'GET':
+      return handleGetSiteSettings(request, env);
+    case 'PUT':
+      return handleUpdateSiteSettings(request, env);
+    default:
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+  }
 }

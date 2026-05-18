@@ -229,3 +229,22 @@ CREATE TABLE IF NOT EXISTS imagebed_settings (
     convert_to_webp INTEGER DEFAULT 1,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 站点设置表（单行配置）
+CREATE TABLE IF NOT EXISTS site_settings (
+    id TEXT PRIMARY KEY DEFAULT 'global',
+    site_name TEXT DEFAULT 'SimpliSave',
+    description TEXT DEFAULT '一个简约的书签与备忘管理工具',
+    keywords TEXT DEFAULT '书签,收藏,备忘,导航',
+    logo_url TEXT,
+    favicon_url TEXT,
+    footer_html TEXT DEFAULT 'Powered by SimpliSave',
+    ga_id TEXT,
+    beian TEXT,
+    custom_head_html TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 插入默认站点设置
+INSERT OR IGNORE INTO site_settings (id) VALUES ('global');
