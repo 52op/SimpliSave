@@ -36,28 +36,28 @@ function EditorToolbar({ editor, onImageUpload }: { editor: Editor | null; onIma
   }
 
   return (
-    <div className="flex items-center gap-1 p-2 border-b bg-gray-50 flex-wrap">
+    <div className="flex items-center gap-1 p-2 border-b bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700 flex-wrap">
       <button onClick={() => editor.chain().focus().toggleBold().run()}
-        className={`p-1.5 rounded text-sm ${editor.isActive("bold") ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-200"}`}>B</button>
+        className={`p-1.5 rounded text-sm ${editor.isActive("bold") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>B</button>
       <button onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={`p-1.5 rounded text-sm italic ${editor.isActive("italic") ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-200"}`}>I</button>
+        className={`p-1.5 rounded text-sm italic ${editor.isActive("italic") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>I</button>
       <button onClick={() => editor.chain().focus().toggleUnderline().run()}
-        className={`p-1.5 rounded text-sm underline ${editor.isActive("underline") ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-200"}`}>U</button>
-      <div className="w-px h-5 bg-gray-300 mx-1" />
+        className={`p-1.5 rounded text-sm underline ${editor.isActive("underline") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>U</button>
+      <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
       <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        className={`p-1.5 rounded text-sm font-bold ${editor.isActive("heading", { level: 2 }) ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-200"}`}>H</button>
+        className={`p-1.5 rounded text-sm font-bold ${editor.isActive("heading", { level: 2 }) ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>H</button>
       <button onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={`p-1.5 rounded text-sm ${editor.isActive("bulletList") ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-200"}`}>•≡</button>
+        className={`p-1.5 rounded text-sm ${editor.isActive("bulletList") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>•≡</button>
       <button onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={`p-1.5 rounded text-sm ${editor.isActive("orderedList") ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-200"}`}>1.</button>
+        className={`p-1.5 rounded text-sm ${editor.isActive("orderedList") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>1.</button>
       <button onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        className={`p-1.5 rounded text-sm ${editor.isActive("blockquote") ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-200"}`}>"</button>
-      <div className="w-px h-5 bg-gray-300 mx-1" />
+        className={`p-1.5 rounded text-sm ${editor.isActive("blockquote") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>"</button>
+      <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
       <button onClick={() => { const url = prompt("链接地址:"); if (url) editor.chain().focus().setLink({ href: url }).run() }}
-        className="p-1.5 rounded text-sm text-gray-600 hover:bg-gray-200">🔗</button>
+        className="p-1.5 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600">🔗</button>
       {onImageUpload && (
         <button onClick={handleImageUpload}
-          className="p-1.5 rounded text-sm text-gray-600 hover:bg-gray-200">️</button>
+          className="p-1.5 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600">️</button>
       )}
     </div>
   )
@@ -68,7 +68,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
     <div className="flex gap-2 flex-wrap">
       {MEMO_COLORS.map((c) => (
         <button key={c} onClick={() => onChange(c)}
-          className={`w-7 h-7 rounded-full border-2 transition ${value === c ? "border-blue-600 scale-110" : "border-gray-300 hover:scale-105"}`}
+          className={`w-7 h-7 rounded-full border-2 transition ${value === c ? "border-blue-600 scale-110" : "border-gray-300 dark:border-gray-500 hover:scale-105"}`}
           style={{ backgroundColor: c }} />
       ))}
     </div>
@@ -89,9 +89,9 @@ function TagInput({ tags, onTagsChange, value, onChange, onAdd }: {
     <div>
       <div className="flex flex-wrap gap-1.5 mb-2">
         {tags.map((tag, i) => (
-          <span key={i} className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded">
+          <span key={i} className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded">
             #{tag}
-            <button onClick={() => onTagsChange(tags.filter((_, j) => j !== i))} className="text-red-500 hover:text-red-700">×</button>
+            <button onClick={() => onTagsChange(tags.filter((_, j) => j !== i))} className="text-red-500 dark:text-red-400 hover:text-red-700">×</button>
           </span>
         ))}
       </div>
@@ -99,7 +99,7 @@ function TagInput({ tags, onTagsChange, value, onChange, onAdd }: {
         <input type="text" value={value} onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add() } }}
           placeholder="添加标签..."
-          className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+          className="flex-1 px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
         <button onClick={add}
           className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">添加</button>
       </div>
@@ -310,9 +310,9 @@ export default function Memos() {
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">{t("memos.title")}</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{t("memos.title")}</h1>
         <div className="flex gap-2">
-          <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+          <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
             {t("categories.add")}
           </button>
           <button onClick={openAddMemo} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
@@ -323,13 +323,13 @@ export default function Memos() {
 
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input type="text" placeholder={t("memos.search")} value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
         </div>
         <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
           <option value="all">{t("bookmarks.allCategories")}</option>
           {categories.filter(c => c.type === "memo").map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
@@ -338,46 +338,46 @@ export default function Memos() {
       </div>
 
       {sortedMemos.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
-          <p className="text-gray-500 mb-2">{t("memos.noMemos")}</p>
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30">
+          <p className="text-gray-500 dark:text-gray-400 mb-2">{t("memos.noMemos")}</p>
           <button onClick={openAddMemo} className="text-blue-600 hover:text-blue-700 font-medium">{t("memos.addFirst")}</button>
         </div>
       ) : (
         <div className="space-y-4">
           {sortedMemos.map((m) => (
-            <div key={m.id} className="rounded-lg shadow-md p-4 hover:shadow-lg transition border-l-4"
+            <div key={m.id} className="rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition border-l-4"
               style={{ borderLeftColor: m.color || "#e5e7eb", backgroundColor: m.color === "#ffffff" ? "#fff" : m.color + "15" }}>
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <button onClick={() => handlePinMemo(m.id)} className="text-gray-400 hover:text-yellow-500 flex-shrink-0">
+                  <button onClick={() => handlePinMemo(m.id)} className="text-gray-400 dark:text-gray-500 hover:text-yellow-500 flex-shrink-0">
                     {m.is_pinned ? <Pin className="w-4 h-4 fill-current text-yellow-500" /> : <PinOff className="w-4 h-4" />}
                   </button>
-                  {m.is_pinned && <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded flex-shrink-0">{t("memos.pinned")}</span>}
+                  {m.is_pinned && <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded flex-shrink-0">{t("memos.pinned")}</span>}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 truncate">{m.title}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{m.title}</h3>
                     {m.category_id && (
-                      <span className="text-xs px-2 py-0.5 bg-gray-100 rounded mt-1 inline-block">
+                      <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded mt-1 inline-block">
                         {categories.find(c => c.id === m.category_id)?.name || t("common.noCategory")}
                       </span>
                     )}
                     {(() => {
                       const tagsArr = typeof m.tags === "string" ? JSON.parse(m.tags || "[]") : (m.tags || [])
                       return tagsArr.slice(0, 3).map((tag, i) => (
-                        <span key={i} className="text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded ml-1 inline-block">#{tag}</span>
+                        <span key={i} className="text-xs px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded ml-1 inline-block">#{tag}</span>
                       ))
                     })()}
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
-                    <button onClick={() => openEditMemo(m)} className="p-1 text-gray-500 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                    <button onClick={() => handleDeleteMemo(m.id)} className="p-1 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => openEditMemo(m)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDeleteMemo(m.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               </div>
               {m.content && (
-                <div className="text-sm text-gray-600 prose prose-sm max-w-none mb-1 line-clamp-3"
+                <div className="text-sm text-gray-600 dark:text-gray-400 prose prose-sm max-w-none mb-1 line-clamp-3"
                   dangerouslySetInnerHTML={{ __html: m.content }} />
               )}
-              <div className="text-xs text-gray-400 mt-2">{new Date(m.created_at).toLocaleDateString()}</div>
+              <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">{new Date(m.created_at).toLocaleDateString()}</div>
             </div>
           ))}
         </div>
@@ -386,26 +386,26 @@ export default function Memos() {
       <Modal show={showAddModal} title={t("memos.add")} onClose={() => setShowAddModal(false)}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("memos.title")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.title")}</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
               placeholder={t("memos.titlePlaceholder")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("memos.content")}</label>
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.content")}</label>
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
               <EditorToolbar editor={editor} onImageUpload={handleEditorImageUpload} />
               <EditorContent editor={editor} />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("memos.color")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.color")}</label>
             <ColorPicker value={memoColor} onChange={setMemoColor} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.category")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label>
             <select value={category_id} onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
               <option value="">{t("common.noCategory")}</option>
               {categories.filter(c => c.type === "memo").map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -413,11 +413,11 @@ export default function Memos() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("memos.tags")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.tags")}</label>
             <TagInput tags={memoTags} onTagsChange={setMemoTags} value={newTag} onChange={setNewTag} onAdd={() => {}} />
           </div>
           <div className="flex gap-2 pt-4">
-            <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
             <button onClick={handleAddMemo} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">{t("common.save")}</button>
           </div>
         </div>
@@ -426,25 +426,25 @@ export default function Memos() {
       <Modal show={showEditModal} title={t("memos.edit")} onClose={() => { setShowEditModal(false); setEditingMemo(null) }}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("memos.title")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.title")}</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("memos.content")}</label>
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.content")}</label>
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
               <EditorToolbar editor={editor} onImageUpload={handleEditorImageUpload} />
               <EditorContent editor={editor} />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("memos.color")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.color")}</label>
             <ColorPicker value={memoColor} onChange={setMemoColor} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.category")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label>
             <select value={category_id} onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
               <option value="">{t("common.noCategory")}</option>
               {categories.filter(c => c.type === "memo").map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
@@ -452,11 +452,11 @@ export default function Memos() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("memos.tags")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.tags")}</label>
             <TagInput tags={memoTags} onTagsChange={setMemoTags} value={newTag} onChange={setNewTag} onAdd={() => {}} />
           </div>
           <div className="flex gap-2 pt-4">
-            <button onClick={() => { setShowEditModal(false); setEditingMemo(null) }} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={() => { setShowEditModal(false); setEditingMemo(null) }} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
             <button onClick={handleUpdateMemo} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
           </div>
         </div>
@@ -465,18 +465,18 @@ export default function Memos() {
       <Modal show={showCategoryModal} title={t("categories.add")} onClose={() => setShowCategoryModal(false)}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("categories.name")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.name")}</label>
             <input type="text" value={categoryNameState} onChange={(e) => setCategoryNameState(e.target.value)}
               placeholder={t("categories.namePlaceholder")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("categories.color")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.color")}</label>
             <input type="color" value={categoryColorState} onChange={(e) => setCategoryColorState(e.target.value)}
-              className="w-full h-10 border border-gray-300 rounded-lg" />
+              className="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg" />
           </div>
           <div className="flex gap-2 pt-4">
-            <button onClick={() => setShowCategoryModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button>
+            <button onClick={() => setShowCategoryModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
             <button onClick={handleAddCategory} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
           </div>
         </div>

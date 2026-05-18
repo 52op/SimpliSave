@@ -24,6 +24,9 @@ const resources = {
       "auth.confirmPassword": "Confirm Password",
       "auth.noAccount": "Don't have an account?",
       "auth.haveAccount": "Already have an account?",
+      "auth.signingIn": "Signing in...",
+      "auth.creatingAccount": "Creating account...",
+      "auth.passwordMismatch": "Passwords do not match",
       
       // Bookmarks
       "bookmarks.title": "Bookmarks",
@@ -129,6 +132,38 @@ const resources = {
       "cardGroup.noLinks": "No links yet",
       "cardGroup.notFound": "Card group not found",
       "cardGroup.visitCount": "Visits",
+
+      // Home page
+      "home.search": "Search",
+      "home.searchIn": "Search in",
+      "home.siteSearch": "Site",
+      "home.recommended": "Recommended",
+      "home.categories": "Categories",
+      "home.all": "All",
+      "home.noGroups": "No card groups yet",
+      "home.loginToAdd": "Login to add private bookmarks",
+      "home.uncategorized": "Uncategorized",
+      "home.other": "Other",
+      "home.submitLink": "Submit Link",
+      "home.submit": "Submit",
+      "home.submitting": "Submitting...",
+      "home.submitSuccess": "Submitted! Waiting for admin review.",
+      "home.submitFailed": "Submission failed",
+      "home.fetch": "Fetch",
+      "home.fetching": "Fetching...",
+      "home.fetchFailed": "Fetch failed: ",
+      "home.fillManually": "Please fill manually",
+
+      // Search page
+      "search.title": "Search",
+      "search.placeholder": "Search links, card groups, memos...",
+      "search.noResults": "No results",
+      "search.results": "results",
+      "search.navigate": "Arrow keys to navigate, Enter to open",
+
+      // Common additions
+      "common.loginRequired": "Please login first",
+      "common.noResults": "No results",
     }
   },
   zh: {
@@ -153,6 +188,9 @@ const resources = {
       "auth.confirmPassword": "确认密码",
       "auth.noAccount": "还没有账号？",
       "auth.haveAccount": "已有账号？",
+      "auth.signingIn": "登录中...",
+      "auth.creatingAccount": "注册中...",
+      "auth.passwordMismatch": "两次输入的密码不一致",
       
       // Bookmarks
       "bookmarks.title": "网址收藏",
@@ -258,6 +296,38 @@ const resources = {
       "cardGroup.noLinks": "暂无链接",
       "cardGroup.notFound": "卡片组不存在",
       "cardGroup.visitCount": "访问次数",
+
+      // 首页
+      "home.search": "搜索",
+      "home.searchIn": "在",
+      "home.siteSearch": "站内",
+      "home.recommended": "常用推荐",
+      "home.categories": "分类导航",
+      "home.all": "全部",
+      "home.noGroups": "暂无卡片组",
+      "home.loginToAdd": "登录后可以添加私人收藏",
+      "home.uncategorized": "未分类",
+      "home.other": "其他",
+      "home.submitLink": "提交链接",
+      "home.submit": "提交",
+      "home.submitting": "提交中...",
+      "home.submitSuccess": "提交成功！等待管理员审核",
+      "home.submitFailed": "提交失败",
+      "home.fetch": "抓取",
+      "home.fetching": "抓取中...",
+      "home.fetchFailed": "抓取失败: ",
+      "home.fillManually": "请手动填写",
+
+      // 搜索页
+      "search.title": "搜索",
+      "search.placeholder": "搜索链接、卡片组、备忘录...",
+      "search.noResults": "无结果",
+      "search.results": "条结果",
+      "search.navigate": "上下键导航，Enter 打开",
+
+      // 通用
+      "common.loginRequired": "请先登录",
+      "common.noResults": "无结果",
     }
   }
 };

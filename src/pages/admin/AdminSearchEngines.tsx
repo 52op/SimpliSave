@@ -102,7 +102,7 @@ export default function AdminSearchEngines() {
       ) : (
         <div className="space-y-2">
           {engines.map(e => (
-            <div key={e.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
+            <div key={e.id} className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {e.icon_url ? (
                   <img src={e.icon_url} alt="" className="w-6 h-6 rounded"
@@ -113,22 +113,22 @@ export default function AdminSearchEngines() {
                 )}
                 <div>
                   <span className="font-medium">{e.name}</span>
-                  <span className="text-xs text-gray-400 ml-2">#{e.sort_order}</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">#{e.sort_order}</span>
                   {e.is_site_search ? (
                     <span className="ml-2 text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">站内搜索</span>
                   ) : (
-                    <span className="ml-2 text-xs text-gray-400">{e.url}?{e.param}=...</span>
+                    <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">{e.url}?{e.param}=...</span>
                   )}
                 </div>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => openEdit(e)} className="p-1 text-gray-500 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                <button onClick={() => handleDelete(e.id)} className="p-1 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                <button onClick={() => openEdit(e)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={() => handleDelete(e.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
           ))}
           {engines.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
               <p>暂无搜索引擎</p>
             </div>
@@ -138,7 +138,7 @@ export default function AdminSearchEngines() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-lg max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center p-4 border-b">
               <h3 className="text-lg font-semibold">{editing ? "编辑搜索引擎" : "添加搜索引擎"}</h3>
               <button onClick={() => setShowModal(false)}><X className="w-5 h-5" /></button>
@@ -184,11 +184,11 @@ export default function AdminSearchEngines() {
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" checked={form.is_site_search}
                   onChange={(e) => setForm({ ...form, is_site_search: e.target.checked })}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500" />
                 站内搜索（跳转到本站搜索页面）
               </label>
               <div className="flex gap-2 pt-2">
-                <button onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+                <button onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
                 <button onClick={handleSave} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
               </div>
             </div>

@@ -73,7 +73,7 @@ export default function AdminSubmissions() {
       <div className="flex gap-2 mb-6">
         {(["pending", "approved", "rejected"] as const).map((s) => (
           <button key={s} onClick={() => setFilterStatus(s)}
-            className={`px-4 py-2 rounded-lg font-medium ${filterStatus === s ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}>
+            className={`px-4 py-2 rounded-lg font-medium ${filterStatus === s ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200"}`}>
             {s === "pending" ? "待审核" : s === "approved" ? "已通过" : "已拒绝"}
           </button>
         ))}
@@ -82,19 +82,19 @@ export default function AdminSubmissions() {
       {loading ? (
         <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>
       ) : submissions.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow text-gray-500">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 text-gray-500 dark:text-gray-400">
           <Clock className="w-12 h-12 mx-auto mb-2 text-gray-300" />
           <p>暂无{filterStatus === "pending" ? "待审核" : filterStatus === "approved" ? "已通过" : "已拒绝"}的提交</p>
         </div>
       ) : (
         <div className="space-y-4">
           {submissions.map((s) => (
-            <div key={s.id} className="bg-white rounded-lg shadow-md p-4">
+            <div key={s.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4">
               <div className="flex items-start gap-3">
                 <Favicon src={s.icon_url} title={s.title} size="md" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-medium text-gray-900">{s.title}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-gray-100">{s.title}</h3>
                     <span className={`text-xs px-2 py-0.5 rounded ${statusColors[s.status]}`}>
                       {s.status === "pending" ? "待审核" : s.status === "approved" ? "已通过" : "已拒绝"}
                     </span>
@@ -103,9 +103,9 @@ export default function AdminSubmissions() {
                     className="text-sm text-blue-600 hover:underline flex items-center gap-1">
                     <ExternalLink className="w-3 h-3" />{s.url}
                   </a>
-                  {s.description && <p className="text-sm text-gray-500 mt-1">{s.description}</p>}
+                  {s.description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{s.description}</p>}
                   {s.admin_note && <p className="text-xs text-red-500 mt-1">备注: {s.admin_note}</p>}
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                     提交者: {(s as any).user_name || (s as any).user_email || s.user_id} · {new Date(s.created_at).toLocaleString()}
                   </p>
                 </div>
@@ -141,7 +141,7 @@ export default function AdminSubmissions() {
                   <button onClick={() => handleReject(s.id)}
                     className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">确认拒绝</button>
                   <button onClick={() => { setRejectingId(null); setRejectReason("") }}
-                    className="px-3 py-2 border rounded-lg hover:bg-gray-50 text-sm">取消</button>
+                    className="px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">取消</button>
                 </div>
               )}
             </div>

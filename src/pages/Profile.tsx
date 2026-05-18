@@ -47,23 +47,23 @@ export default function Profile() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">个人资料</h1>
-      <div className="bg-white rounded-lg shadow p-6 space-y-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-6 space-y-6">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+          <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
             {avatarUrl ? (
               <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
-              <User className="w-10 h-10 text-gray-400" />
+              <User className="w-10 h-10 text-gray-400 dark:text-gray-500" />
             )}
           </div>
           <div>
-            <h3 className="font-medium text-gray-900">{user?.name}</h3>
-            <p className="text-sm text-gray-500">{user?.email}</p>
+            <h3 className="font-medium text-gray-900 dark:text-gray-100">{user?.name}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">头像</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">头像</label>
           <ImageUploader
             type="avatar"
             value={avatarUrl}
@@ -75,22 +75,22 @@ export default function Profile() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">昵称</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">昵称</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">邮箱</label>
           <input
             type="email"
             value={user?.email || ""}
             disabled
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400"
           />
         </div>
 

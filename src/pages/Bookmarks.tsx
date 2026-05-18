@@ -333,22 +333,22 @@ export default function Bookmarks() {
     <div className="max-w-6xl mx-auto p-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">私人收藏夹</h1>
-          <p className="text-sm text-gray-500 mt-1">管理你自己的收藏，可申请分享到公开导航</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">私人收藏夹</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">管理你自己的收藏，可申请分享到公开导航</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <label className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2 cursor-pointer">
+          <label className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2 cursor-pointer">
             <Upload className="w-4 h-4" />{importing ? "导入中..." : "导入HTML"}
             <input type="file" accept=".html,text/html" className="hidden" disabled={importing}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.currentTarget.value = "" }} />
           </label>
-          <button onClick={handleExportHtml} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+          <button onClick={handleExportHtml} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
             <Download className="w-4 h-4" />导出HTML
           </button>
-          <button onClick={handleExport} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+          <button onClick={handleExport} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
             <Download className="w-4 h-4" />导出JSON
           </button>
-          <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+          <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
             <Folder className="w-4 h-4" />分类
           </button>
           <button onClick={openAddModal} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
@@ -359,35 +359,35 @@ export default function Bookmarks() {
 
       <div className="flex flex-col lg:flex-row gap-4 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input type="text" placeholder={t("bookmarks.search")} value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
         </div>
         <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
           <option value="all">{t("bookmarks.allCategories")}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
         <button onClick={() => setShowFavoritesOnly(v => !v)}
-          className={`px-4 py-2 rounded-lg ${showFavoritesOnly ? "bg-yellow-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
+          className={`px-4 py-2 rounded-lg ${showFavoritesOnly ? "bg-yellow-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
           仅收藏
         </button>
         <button onClick={() => setShowArchived(v => !v)}
-          className={`px-4 py-2 rounded-lg ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
+          className={`px-4 py-2 rounded-lg ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
           {showArchived ? "查看未归档" : "查看归档"}
         </button>
       </div>
 
       {filteredBookmarks.length > 0 && (
         <div className="flex items-center gap-2 mb-3 px-1">
-          <button onClick={toggleSelectAll} className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600">
+          <button onClick={toggleSelectAll} className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600">
             {selectedIds.size === filteredBookmarks.length ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
             {t("bookmarks.selectAll")}
           </button>
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-gray-400 dark:text-gray-500">
             {selectedIds.size > 0
               ? t("bookmarks.selected", { count: selectedIds.size })
               : t("bookmarks.total", { count: filteredBookmarks.length })}
@@ -395,22 +395,22 @@ export default function Bookmarks() {
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-1 ml-auto">
               <button onClick={() => handleBatchFavorite(true)} disabled={batchLoading}
-                className="px-2.5 py-1 text-xs bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100 disabled:opacity-50">{t("bookmarks.batchFavorite")}</button>
+                className="px-2.5 py-1 text-xs bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded hover:bg-yellow-100 dark:hover:bg-yellow-900/50 disabled:opacity-50">{t("bookmarks.batchFavorite")}</button>
               <button onClick={() => handleBatchArchive(true)} disabled={batchLoading}
-                className="px-2.5 py-1 text-xs bg-purple-50 text-purple-700 rounded hover:bg-purple-100 disabled:opacity-50">{t("bookmarks.batchArchive")}</button>
+                className="px-2.5 py-1 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-100 dark:hover:bg-purple-900/50 disabled:opacity-50">{t("bookmarks.batchArchive")}</button>
               <button onClick={handleBatchShare} disabled={batchLoading}
-                className="px-2.5 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 disabled:opacity-50">{t("bookmarks.batchShare")}</button>
+                className="px-2.5 py-1 text-xs bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-100 dark:hover:bg-green-900/50 disabled:opacity-50">{t("bookmarks.batchShare")}</button>
               <button onClick={handleBatchDelete} disabled={batchLoading}
-                className="px-2.5 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100 disabled:opacity-50">{t("bookmarks.batchDelete")}</button>
+                className="px-2.5 py-1 text-xs bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-50">{t("bookmarks.batchDelete")}</button>
             </div>
           )}
         </div>
       )}
 
       {filteredBookmarks.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
-          <Folder className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 mb-2">暂无私人收藏</p>
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30">
+          <Folder className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400 mb-2">暂无私人收藏</p>
           <button onClick={openAddModal} className="text-blue-600 hover:text-blue-700 font-medium">添加第一个收藏</button>
         </div>
       ) : (
@@ -418,33 +418,33 @@ export default function Bookmarks() {
           {filteredBookmarks.map((b) => {
             const tagsArray = typeof b.tags === "string" ? JSON.parse(b.tags || "[]") : b.tags
             return (
-              <div key={b.id} className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition ${selectedIds.has(b.id) ? 'ring-2 ring-blue-400' : ''}`}>
+              <div key={b.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition ${selectedIds.has(b.id) ? 'ring-2 ring-blue-400' : ''}`}>
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <button onClick={() => toggleSelect(b.id)} className="shrink-0 text-gray-400 hover:text-blue-500">
+                    <button onClick={() => toggleSelect(b.id)} className="shrink-0 text-gray-400 dark:text-gray-500 hover:text-blue-500">
                       {selectedIds.has(b.id) ? <CheckSquare className="w-4 h-4 text-blue-500" /> : <Square className="w-4 h-4" />}
                     </button>
                     <Favicon src={b.icon_url} title={b.title} size="sm" />
                     <a href={b.url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline truncate">{b.title}</a>
                   </div>
-                  <button onClick={() => handleToggleFavorite(b.id, b.is_favorite)} className={`p-1 rounded hover:bg-gray-100 ${b.is_favorite ? "text-yellow-500" : "text-gray-400"}`}>
+                  <button onClick={() => handleToggleFavorite(b.id, b.is_favorite)} className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${b.is_favorite ? "text-yellow-500 dark:text-yellow-400" : "text-gray-400 dark:text-gray-500"}`}>
                     <Star className="w-4 h-4" fill={b.is_favorite ? "currentColor" : "none"} />
                   </button>
                 </div>
-                <p className="text-sm text-gray-600 truncate mb-2">{b.url}</p>
-                {b.description && <p className="text-sm text-gray-500 mb-3 line-clamp-2">{b.description}</p>}
+                <p className="text-sm text-gray-600 dark:text-gray-400 truncate mb-2">{b.url}</p>
+                {b.description && <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">{b.description}</p>}
                 <div className="flex items-center gap-2 flex-wrap mb-3">
-                  {b.category_id && <span className="text-xs px-2 py-1 bg-gray-100 rounded">{categories.find(c => c.id === b.category_id)?.name || t("common.noCategory")}</span>}
-                  {tagsArray.slice(0, 2).map((tag: string, i: number) => <span key={i} className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded">#{tag}</span>)}
+                  {b.category_id && <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">{categories.find(c => c.id === b.category_id)?.name || t("common.noCategory")}</span>}
+                  {tagsArray.slice(0, 2).map((tag: string, i: number) => <span key={i} className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded">#{tag}</span>)}
                 </div>
                 <div className="flex flex-wrap gap-1 justify-between items-center">
                   <div className="flex gap-1">
-                    <button onClick={() => openEditModal(b)} className="p-1 text-gray-500 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                    <button onClick={() => handleDeleteBookmark(b.id)} className="p-1 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                    <button onClick={() => handleToggleArchived(b.id, b.archived)} className="p-1 text-gray-500 hover:text-purple-600"><Archive className="w-4 h-4" /></button>
+                    <button onClick={() => openEditModal(b)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDeleteBookmark(b.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleToggleArchived(b.id, b.archived)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-purple-600"><Archive className="w-4 h-4" /></button>
                   </div>
                   <button onClick={() => handleShareBookmark(b)} disabled={submittingShare === b.id}
-                    className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 flex items-center gap-1 disabled:opacity-50">
+                    className="text-xs px-2 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-100 dark:hover:bg-green-900/50 flex items-center gap-1 disabled:opacity-50">
                     {submittingShare === b.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Share2 className="w-3 h-3" />}申请分享
                   </button>
                 </div>
@@ -458,55 +458,55 @@ export default function Bookmarks() {
       <Modal show={showAddModal} title={t("bookmarks.add")} onClose={() => setShowAddModal(false)}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.url")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.url")}</label>
             <div className="flex gap-2">
               <input type="url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} placeholder={t("bookmarks.urlPlaceholder")}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               <button onClick={handleFetchMeta} disabled={fetching || !formData.url.trim()} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1">
                 {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : "🔍"}{fetching ? "抓取中..." : "抓取"}
               </button>
             </div>
           </div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.title")}</label><input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder={t("bookmarks.titlePlaceholder")} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.description")}</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder={t("bookmarks.descriptionPlaceholder")} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.title")}</label><input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder={t("bookmarks.titlePlaceholder")} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.description")}</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder={t("bookmarks.descriptionPlaceholder")} rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.icon")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.icon")}</label>
             <div className="flex gap-2">
               <ImageUploader type="icon" value={formData.icon_url} onChange={(url) => setFormData({ ...formData, icon_url: url })} className="w-16 h-16" />
-              <input type="text" value={formData.icon_url} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} placeholder="https://example.com/icon.png" className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              <input type="text" value={formData.icon_url} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} placeholder="https://example.com/icon.png" className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
             </div>
           </div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} placeholder={t("bookmarks.tagsPlaceholder")} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div className="flex gap-2 pt-4"><button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button><button onClick={handleAddBookmark} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} placeholder={t("bookmarks.tagsPlaceholder")} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div className="flex gap-2 pt-4"><button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button><button onClick={handleAddBookmark} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
         </div>
       </Modal>
 
       {/* Edit Modal */}
       <Modal show={showEditModal} title={t("bookmarks.edit")} onClose={() => setShowEditModal(false)}>
         <div className="space-y-4">
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.url")}</label><input type="url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.title")}</label><input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.description")}</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.url")}</label><input type="url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.title")}</label><input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.description")}</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.icon")}</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.icon")}</label>
             <div className="flex gap-2">
               <ImageUploader type="icon" value={formData.icon_url} onChange={(url) => setFormData({ ...formData, icon_url: url })} className="w-16 h-16" />
-              <input type="text" value={formData.icon_url} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} placeholder="https://example.com/icon.png" className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              <input type="text" value={formData.icon_url} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} placeholder="https://example.com/icon.png" className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
             </div>
           </div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div className="flex gap-2 pt-4"><button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button><button onClick={handleUpdateBookmark} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div className="flex gap-2 pt-4"><button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button><button onClick={handleUpdateBookmark} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
         </div>
       </Modal>
 
       {/* Category Modal */}
       <Modal show={showCategoryModal} title={t("categories.add")} onClose={() => setShowCategoryModal(false)}>
         <div className="space-y-4">
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("categories.name")}</label><input type="text" value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder={t("categories.namePlaceholder")} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("categories.color")}</label><input type="color" value={categoryColor} onChange={(e) => setCategoryColor(e.target.value)} className="w-full h-10 border border-gray-300 rounded-lg" /></div>
-          <div className="flex gap-2 pt-4"><button onClick={() => setShowCategoryModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button><button onClick={handleAddCategory} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.name")}</label><input type="text" value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder={t("categories.namePlaceholder")} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.color")}</label><input type="color" value={categoryColor} onChange={(e) => setCategoryColor(e.target.value)} className="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg" /></div>
+          <div className="flex gap-2 pt-4"><button onClick={() => setShowCategoryModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button><button onClick={handleAddCategory} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
         </div>
       </Modal>
     </div>
