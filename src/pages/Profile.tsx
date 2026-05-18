@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useToast } from "../components/Toast"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
@@ -13,6 +14,7 @@ export default function Profile() {
   const token = useAuthStore((s) => s.token)
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
+  const { toast, confirm } = useToast()
 
   const [name, setName] = useState(user?.name || "")
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || "")
@@ -34,9 +36,9 @@ export default function Profile() {
         avatar_url: avatarUrl || null,
       })
       setUser(res)
-      alert(t("common.success") || "保存成功")
+      toast(t("common.success") || "保存成功", "success")
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     } finally {
       setSaving(false)
     }

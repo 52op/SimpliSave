@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useToast } from "../../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { useImagebedStore } from "../../stores/imagebedStore"
@@ -9,6 +10,7 @@ import { Plus, Trash2, Edit2, X, Server, Settings, ToggleLeft, ToggleRight } fro
 export default function AdminImageBeds() {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
+  const { toast, confirm } = useToast()
   const { configs, settings, loadConfigs, loadSettings, createConfig, updateConfig, deleteConfig, toggleConfig, updateSettings } = useImagebedStore()
 
   const [loading, setLoading] = useState(true)
@@ -67,7 +69,7 @@ export default function AdminImageBeds() {
       setEditing(null)
       resetForm()
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -77,16 +79,16 @@ export default function AdminImageBeds() {
       await updateSettings(token, settingsForm)
       setShowSettingsModal(false)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
   async function handleDelete(id: string) {
-    if (!token || !confirm("确定要删除这个图床配置吗？")) return
+    if (!token || !await confirm("确定要删除这个图床配置吗？")) return
     try {
       await deleteConfig(token, id)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -95,7 +97,7 @@ export default function AdminImageBeds() {
     try {
       await toggleConfig(token, id, enabled)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 

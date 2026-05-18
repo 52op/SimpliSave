@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useMemoStore } from "../stores/memoStore"
@@ -110,6 +111,7 @@ export default function Memos() {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
   const { memos, categories, tags, setMemos, setCategories, setTags, addMemo, updateMemo, removeMemo, addCategory, addTag } = useMemoStore()
+  const { toast, confirm } = useToast()
 
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -218,7 +220,7 @@ export default function Memos() {
       setShowAddModal(false)
       resetForm()
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -233,17 +235,17 @@ export default function Memos() {
       setShowEditModal(false)
       setEditingMemo(null)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
   async function handleDeleteMemo(id: string) {
-    if (!token || !confirm(t("memos.deleteConfirm"))) return
+    if (!token || !await confirm(t("memos.deleteConfirm"))) return
     try {
       await memoApi.delete(token, id)
       removeMemo(id)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -253,7 +255,7 @@ export default function Memos() {
       const res = await memoApi.pin(token, id)
       updateMemo(id, { is_pinned: res.is_pinned })
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -262,7 +264,7 @@ export default function Memos() {
     try {
       const validationError = validateImageFile(file)
       if (validationError) {
-        alert(validationError)
+        toast(validationError)
         return
       }
 
@@ -278,7 +280,7 @@ export default function Memos() {
 
       editor.chain().focus().setImage({ src: uploadToken.public_url }).run()
     } catch (err: any) {
-      alert(err.message || '图片上传失败')
+      toast(err.message || '图片上传失败', "error")
     }
   }
 
@@ -291,7 +293,7 @@ export default function Memos() {
       setCategoryNameState("")
       setCategoryColorState("#3b82f6")
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 

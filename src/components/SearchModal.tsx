@@ -20,6 +20,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   const navigate = useNavigate()
   const token = useAuthStore((s) => s.token)
   const inputRef = useRef<HTMLInputElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
 
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])
@@ -80,7 +81,11 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
     if (open) {
       setQuery("")
       setResults([])
-      setTimeout(() => inputRef.current?.focus(), 100)
+      const prev = document.activeElement as HTMLElement
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
+      return () => prev?.focus()
     }
   }, [open])
 
@@ -92,6 +97,26 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
   }, [open, onClose])
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !modalRef.current) return
+      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus() }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus() }
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [open])
 
   function handleSelect(result: SearchResult) {
     onClose()
@@ -120,10 +145,11 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-start justify-center pt-[15vh]"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
-        <div className="flex items-center gap-3 px-4 py-3 border-b">
+    <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-start justify-center pt-[15vh]"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      role="dialog" aria-modal="true" aria-label="搜索">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b dark:border-gray-700">
           <Search className="w-5 h-5 text-gray-400 shrink-0" />
           <input
             ref={inputRef}
@@ -132,14 +158,15 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t("search.placeholder") || "搜索链接、卡片组、备忘录..."}
-            className="flex-1 outline-none text-base"
+            className="flex-1 outline-none text-base dark:bg-gray-800 dark:text-gray-100"
+            aria-label="搜索输入"
           />
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600" aria-label="关闭搜索">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="max-h-[60vh] overflow-y-auto">
+        <div className="max-h-[60vh] overflow-y-auto" role="listbox" aria-label="搜索结果">
           {loading && (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -152,8 +179,10 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
 
           {!loading && results.length > 0 && results.map((r, i) => (
             <div key={`${r.type}-${r.id}`}
-              className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-50 last:border-0
-                ${i === selectedIndex ? "bg-blue-50" : "hover:bg-gray-50"}`}
+              role="option"
+              aria-selected={i === selectedIndex}
+              className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-0
+                ${i === selectedIndex ? "bg-blue-50 dark:bg-blue-900/30" : "hover:bg-gray-50 dark:hover:bg-gray-700/50"}`}
               onClick={() => handleSelect(r)}
               onMouseEnter={() => setSelectedIndex(i)}
             >
@@ -166,26 +195,26 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm text-gray-900 truncate">{r.title}</span>
+                  <span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{r.title}</span>
                   <span className="text-xs text-gray-400 shrink-0">
                     {r.type === "bookmark" ? "公开链接" : r.type === "group" ? "卡片组" : r.type === "private" ? "私有链接" : "备忘录"}
                   </span>
                 </div>
-                {r.description && <p className="text-xs text-gray-500 truncate mt-0.5">{r.description}</p>}
+                {r.description && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{r.description}</p>}
               </div>
               <ExternalLink className="w-4 h-4 text-gray-300 shrink-0" />
             </div>
           ))}
 
           {!loading && query && results.length > 0 && (
-            <div className="px-4 py-2 text-xs text-gray-400 border-t">
+            <div className="px-4 py-2 text-xs text-gray-400 border-t dark:border-gray-700">
               共 {results.length} 条结果 · 上下键导航 · Enter 打开
             </div>
           )}
 
           {!query && (
             <div className="text-center py-8 text-gray-400 text-sm">
-              <p className="mb-2">按 <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">Enter</kbd> 搜索全部公开内容</p>
+              <p className="mb-2">按 <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">Enter</kbd> 搜索全部公开内容</p>
               <p>提示：Ctrl+K 随时打开搜索</p>
             </div>
           )}

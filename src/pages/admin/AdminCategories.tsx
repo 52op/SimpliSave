@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useToast } from "../../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { publicCategoryApi } from "../../services/api"
@@ -9,6 +10,7 @@ import ImageUploader from "../../components/ImageUploader"
 export default function AdminCategories() {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
+  const { toast, confirm } = useToast()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -45,7 +47,7 @@ export default function AdminCategories() {
       setEditingCat(null)
       setForm({ name: "", icon: "", color: "#3b82f6", sort_order: 0 })
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -60,7 +62,7 @@ export default function AdminCategories() {
       ])
       await loadData()
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -75,17 +77,17 @@ export default function AdminCategories() {
       ])
       await loadData()
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
   async function handleDelete(id: string) {
-    if (!token || !confirm(t("categories.delete") + "?")) return
+    if (!token || !await confirm(t("categories.delete") + "?")) return
     try {
       await publicCategoryApi.delete(token, id)
       setCategories(categories.filter(c => c.id !== id))
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 

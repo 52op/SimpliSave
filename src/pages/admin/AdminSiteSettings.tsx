@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useToast } from "../../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { siteSettingsApi } from "../../services/api"
@@ -9,6 +10,7 @@ import ImageUploader from "../../components/ImageUploader"
 export default function AdminSiteSettings() {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
+  const { toast, confirm } = useToast()
   const [settings, setSettings] = useState<SiteSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -61,9 +63,9 @@ export default function AdminSiteSettings() {
       }
       const res = await siteSettingsApi.update(token, data)
       setSettings(res)
-      alert(t("common.success") || "保存成功")
+      toast(t("common.success") || "保存成功", "success")
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     } finally {
       setSaving(false)
     }

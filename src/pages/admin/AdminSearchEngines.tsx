@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useToast } from "../../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { searchEngineApi } from "../../services/api"
@@ -9,6 +10,7 @@ import ImageUploader from "../../components/ImageUploader"
 export default function AdminSearchEngines() {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
+  const { toast, confirm } = useToast()
   const [engines, setEngines] = useState<SearchEngine[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -51,17 +53,17 @@ export default function AdminSearchEngines() {
       setEditing(null)
       setForm({ name: "", url: "", param: "q", icon_url: "", color: "#3b82f6", sort_order: 0, is_site_search: false })
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
   async function handleDelete(id: string) {
-    if (!token || !confirm("确定要删除这个搜索引擎吗？")) return
+    if (!token || !await confirm("确定要删除这个搜索引擎吗？")) return
     try {
       await searchEngineApi.delete(token, id)
       setEngines(engines.filter(e => e.id !== id))
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 

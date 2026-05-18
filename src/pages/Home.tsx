@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi } from "../services/api"
@@ -13,6 +14,7 @@ export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const token = useAuthStore((s) => s.token)
+  const { toast, confirm } = useToast()
 
   const [loading, setLoading] = useState(true)
   const [cardGroups, setCardGroups] = useState<CardGroup[]>([])
@@ -85,16 +87,16 @@ export default function Home() {
     : [...cardGroups].sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0)).slice(0, 12)
 
   async function handleSubmitLink() {
-    if (!token) { alert("请先登录"); return }
+    if (!token) { toast("请先登录"); return }
     if (!submitForm.url.trim() || !submitForm.title.trim()) return
     setSubmitting(true)
     try {
       await submissionApi.create(token, submitForm)
-      alert("提交成功！等待管理员审核")
+      toast("提交成功！等待管理员审核", "success")
       setShowSubmitModal(false)
       setSubmitForm({ url: "", title: "", description: "" })
     } catch (err: any) {
-      alert(err.message || "提交失败")
+      toast(err.message || "提交失败", "error")
     } finally {
       setSubmitting(false)
     }
@@ -111,7 +113,7 @@ export default function Home() {
         description: meta.description || prev.description,
       }))
     } catch (err: any) {
-      alert("抓取失败: " + (err.message || "请手动填写"))
+      toast("抓取失败: " + (err.message || "请手动填写"), "error")
     } finally {
       setFetching(false)
     }

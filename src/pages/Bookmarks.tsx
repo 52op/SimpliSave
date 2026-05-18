@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useBookmarkStore } from "../stores/bookmarkStore"
@@ -13,6 +14,7 @@ export default function Bookmarks() {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
   const { bookmarks, categories, tags, setBookmarks, setCategories, setTags, addBookmark, updateBookmark, removeBookmark, addCategory } = useBookmarkStore()
+  const { toast, confirm } = useToast()
 
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -71,7 +73,7 @@ export default function Bookmarks() {
       const meta = await fetchMetaApi.fetch(formData.url)
       setFormData(prev => ({ ...prev, title: meta.title || prev.title, description: meta.description || prev.description, icon_url: meta.icon || prev.icon_url }))
     } catch (err: any) {
-      alert("抓取失败: " + (err.message || "请手动填写"))
+      toast("抓取失败: " + (err.message || "请手动填写"), "error")
     } finally {
       setFetching(false)
     }
@@ -88,7 +90,7 @@ export default function Bookmarks() {
       setShowAddModal(false)
       setFormData({ title: "", url: "", description: "", icon_url: "", category_id: "", tags: [], is_favorite: 0 })
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -103,17 +105,17 @@ export default function Bookmarks() {
       setShowEditModal(false)
       setEditingBookmark(null)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
   async function handleDeleteBookmark(id: string) {
-    if (!token || !confirm(t("bookmarks.deleteConfirm"))) return
+    if (!token || !await confirm(t("bookmarks.deleteConfirm"))) return
     try {
       await userBookmarkApi.delete(token, id)
       removeBookmark(id)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -123,7 +125,7 @@ export default function Bookmarks() {
       const res = await userBookmarkApi.update(token, id, { is_favorite: current ? 0 : 1 })
       updateBookmark(id, res)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -136,7 +138,7 @@ export default function Bookmarks() {
         setBookmarks(bookmarks.filter(b => b.id !== id))
       }
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -149,7 +151,7 @@ export default function Bookmarks() {
       setCategoryName("")
       setCategoryColor("#3b82f6")
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -166,9 +168,9 @@ export default function Bookmarks() {
         icon_url: bookmark.icon_url,
         tags: tagsArray,
       })
-      alert("提交成功，等待管理员审核")
+      toast("提交成功，等待管理员审核", "success")
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     } finally {
       setSubmittingShare(null)
     }
@@ -186,7 +188,7 @@ export default function Bookmarks() {
       a.click()
       window.URL.revokeObjectURL(url)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -202,7 +204,7 @@ export default function Bookmarks() {
       a.click()
       window.URL.revokeObjectURL(url)
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -212,10 +214,10 @@ export default function Bookmarks() {
     try {
       const html = await file.text()
       const result = await userBookmarkApi.importHtml(token, html)
-      alert(`导入完成：${result.imported}/${result.total}`)
+      toast(`导入完成：${result.imported}/${result.total}`, "success")
       await loadData()
     } catch (err: any) {
-      alert(err.message || "导入失败")
+      toast(err.message || "导入失败", "error")
     } finally {
       setImporting(false)
     }
@@ -239,14 +241,14 @@ export default function Bookmarks() {
 
   async function handleBatchDelete() {
     if (!token || selectedIds.size === 0) return
-    if (!confirm(t("bookmarks.batchDeleteConfirm", { count: selectedIds.size }))) return
+    if (!await confirm(t("bookmarks.batchDeleteConfirm", { count: selectedIds.size }))) return
     setBatchLoading(true)
     try {
       await Promise.all(Array.from(selectedIds).map(id => userBookmarkApi.delete(token, id)))
       setBookmarks(bookmarks.filter(b => !selectedIds.has(b.id)))
       setSelectedIds(new Set())
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     } finally {
       setBatchLoading(false)
     }
@@ -260,7 +262,7 @@ export default function Bookmarks() {
       await loadData()
       setSelectedIds(new Set())
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     } finally {
       setBatchLoading(false)
     }
@@ -274,7 +276,7 @@ export default function Bookmarks() {
       await loadData()
       setSelectedIds(new Set())
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     } finally {
       setBatchLoading(false)
     }
@@ -299,7 +301,7 @@ export default function Bookmarks() {
         failCount++
       }
     }
-    alert(t("bookmarks.batchShareResult", { success: successCount, fail: failCount ? `，失败 ${failCount} 个` : '' }))
+    toast(t("bookmarks.batchShareResult", { success: successCount, fail: failCount ? `，失败 ${failCount} 个` : '' }))
     setSelectedIds(new Set())
     setBatchLoading(false)
   }

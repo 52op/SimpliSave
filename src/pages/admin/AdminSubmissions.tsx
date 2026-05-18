@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useToast } from "../../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { submissionApi, cardGroupApi } from "../../services/api"
@@ -9,6 +10,7 @@ import Favicon from "../../components/Favicon"
 export default function AdminSubmissions() {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
+  const { toast, confirm } = useToast()
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<"pending" | "approved" | "rejected">("pending")
@@ -42,7 +44,7 @@ export default function AdminSubmissions() {
       await submissionApi.approve(token, id, targetGroupMap[id] || undefined)
       setSubmissions(submissions.filter(s => s.id !== id))
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
@@ -54,7 +56,7 @@ export default function AdminSubmissions() {
       setRejectingId(null)
       setRejectReason("")
     } catch (err: any) {
-      alert(err.message || t("common.error"))
+      toast(err.message || t("common.error"), "error")
     }
   }
 
