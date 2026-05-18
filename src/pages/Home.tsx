@@ -1,14 +1,33 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
-import { Search, ExternalLink, Folder, Globe, Zap, Send, Loader2, X } from "lucide-react"
+import { Search, ExternalLink, Folder, Globe, Zap, Send, Loader2, X, TrendingUp } from "lucide-react"
 import Favicon from "../components/Favicon"
 import { useNavigate } from "react-router-dom"
 
 const STORAGE_KEY = "preferredEngineId"
+const HOT_TAGS = ["DeepSeek", "ChatGPT", "哪吒2", "AI绘画", "春晚", "小红书热搜", "春节档电影", "科技春晚"]
+
+function jsonp(url: string, callbackName: string): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    const cb = `_jsonp_${callbackName}_${Date.now()}`
+    ;(window as any)[cb] = (data: any) => {
+      cleanup()
+      resolve(data.s || [])
+    }
+    const script = document.createElement("script")
+    script.src = `${url}&cb=${cb}`
+    script.onerror = () => { cleanup(); reject(new Error("jsonp failed")) }
+    const cleanup = () => {
+      delete (window as any)[cb]
+      if (script.parentNode) script.parentNode.removeChild(script)
+    }
+    document.head.appendChild(script)
+  })
+}
 
 export default function Home() {
   const { t } = useTranslation()
@@ -19,7 +38,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [cardGroups, setCardGroups] = useState<CardGroup[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [engines, setEngines] = useState<SearchEngine[]>([])
+  const [engines, setSearchEngines] = useState<SearchEngine[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedEngineId, setSelectedEngineId] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
@@ -28,7 +47,12 @@ export default function Home() {
   const [submitForm, setSubmitForm] = useState({ url: "", title: "", description: "" })
   const [submitting, setSubmitting] = useState(false)
   const [fetching, setFetching] = useState(false)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const engineRef = useRef<HTMLDivElement>(null)
+  const suggestRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const suggestTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     loadData()
@@ -47,6 +71,63 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handler)
   }, [showEngines])
 
+  useEffect(() => {
+    if (!showSuggestions) return
+    const handler = (e: MouseEvent) => {
+      if (suggestRef.current && !suggestRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [showSuggestions])
+
+  const doSuggest = useCallback(async (q: string) => {
+    if (!q.trim()) { setSuggestions([]); setShowSuggestions(false); return }
+    try {
+      const words = await jsonp(`https://suggestion.baidu.com/su?wd=${encodeURIComponent(q)}`, "baidu")
+      setSuggestions(words)
+      setShowSuggestions(words.length > 0)
+    } catch {
+      setSuggestions([])
+      setShowSuggestions(false)
+    }
+  }, [])
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    setSearchQuery(val)
+    if (suggestTimerRef.current) clearTimeout(suggestTimerRef.current)
+    suggestTimerRef.current = setTimeout(() => doSuggest(val), 200)
+  }
+
+  function handleSuggestionClick(word: string) {
+    setSearchQuery(word)
+    setShowSuggestions(false)
+    setSuggestions([])
+    inputRef.current?.focus()
+  }
+
+  function handleSuggestionKeyDown(e: React.KeyboardEvent, word: string) {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      handleSuggestionClick(word)
+      handleSearchDirect(word)
+    }
+  }
+
+  function handleSearchDirect(query?: string) {
+    const q = (query || searchQuery).trim()
+    if (!q || !selectedEngine) return
+    setShowSuggestions(false)
+    if (selectedEngine.is_site_search) {
+      navigate(`/search?q=${encodeURIComponent(q)}`)
+    } else {
+      const url = `${selectedEngine.url}?${selectedEngine.param}=${encodeURIComponent(q)}`
+      window.open(url, "_blank")
+    }
+  }
+
   async function loadData() {
     setLoading(true)
     try {
@@ -57,7 +138,7 @@ export default function Home() {
       ])
       setCardGroups(groups)
       setCategories(cats)
-      setEngines(engs)
+      setSearchEngines(engs)
     } catch (err) {
       console.error("Failed to load data:", err)
     } finally {
@@ -84,13 +165,7 @@ export default function Home() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    if (!searchQuery.trim() || !selectedEngine) return
-    if (selectedEngine.is_site_search) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`)
-    } else {
-      const url = `${selectedEngine.url}?${selectedEngine.param}=${encodeURIComponent(searchQuery)}`
-      window.open(url, "_blank")
-    }
+    handleSearchDirect()
   }
 
   const featuredGroups = cardGroups.filter(g => g.is_featured)
@@ -158,7 +233,7 @@ export default function Home() {
         <p className="text-gray-600 dark:text-gray-400 mb-8">{t("app.description")}</p>
         
         {/* 搜索框 */}
-        <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+        <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}>
           <div className="flex">
             <div className="relative" ref={engineRef}>
               <button
@@ -187,11 +262,14 @@ export default function Home() {
               )}
             </div>
             <input
+              ref={inputRef}
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleInputChange}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               placeholder={`${t("home.searchIn")} ${selectedEngine?.name || ""}`}
               className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              autoComplete="off"
             />
             <button
               type="submit"
@@ -201,22 +279,37 @@ export default function Home() {
               {t("home.search")}
             </button>
           </div>
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50 overflow-hidden">
+              {suggestions.map((word, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => handleSuggestionClick(word)}
+                  onKeyDown={(e) => handleSuggestionKeyDown(e, word)}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm dark:text-gray-200 flex items-center gap-2"
+                >
+                  <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  <span>{word}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </form>
 
-        {/* 快速标签 — 使用分类 */}
-        {categories.length > 0 && (
-          <div className="flex justify-center gap-2 mt-4 flex-wrap">
-            {categories.slice(0, 8).map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* 热搜词 */}
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
+          <TrendingUp className="w-4 h-4 text-red-500 mt-0.5" />
+          {HOT_TAGS.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => { setSearchQuery(tag); handleSearchDirect(tag) }}
+              className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 常用推荐 */}
