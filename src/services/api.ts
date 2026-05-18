@@ -153,3 +153,7 @@ export const siteSettingsApi = {
   get: () => request<SiteSettings>('GET', '/site-settings'),
   update: (token: string, data: any) => request<SiteSettings>('PUT', '/site-settings', data, token),
 };
+
+export const hotTagsApi = {
+  list: () => request<string[]>('GET', '/hot-tags'),
+};

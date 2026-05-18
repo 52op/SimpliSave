@@ -32,6 +32,7 @@ import {
   handleUpdateImagebedSettings, handleGetUploadToken, handleGetAvailableImagebeds
 } from './api/imagebed';
 import { handleGetSiteSettings, handleUpdateSiteSettings } from './api/siteSettings';
+import { handleHotTags } from './api/hotTags';
 
 interface Env {
   DB: D1Database;
@@ -59,6 +60,7 @@ export default {
     if (path.startsWith('/search-engines')) return handleSearchEngines(request, env, path);
     if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
     if (path.startsWith('/site-settings')) return handleSiteSettings(request, env);
+    if (path === '/hot-tags') return handleHotTags();
 
     return new Response('Not Found', { status: 404, headers: corsHeaders() });
   }

@@ -2,14 +2,14 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
-import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi } from "../services/api"
+import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
-import { Search, ExternalLink, Folder, Globe, Zap, Send, Loader2, X, TrendingUp } from "lucide-react"
+import { Search, ExternalLink, Folder, Globe, Zap, Send, Loader2, X, TrendingUp, ChevronDown, ChevronUp } from "lucide-react"
 import Favicon from "../components/Favicon"
 import { useNavigate } from "react-router-dom"
 
 const STORAGE_KEY = "preferredEngineId"
-const HOT_TAGS = ["DeepSeek", "ChatGPT", "哪吒2", "AI绘画", "春晚", "小红书热搜", "春节档电影", "科技春晚"]
+const MAX_VISIBLE_TAGS = 8
 
 function jsonp(url: string, callbackName: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
@@ -49,6 +49,8 @@ export default function Home() {
   const [fetching, setFetching] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [hotTags, setHotTags] = useState<string[]>([])
+  const [showAllTags, setShowAllTags] = useState(false)
   const engineRef = useRef<HTMLDivElement>(null)
   const suggestRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -86,6 +88,7 @@ export default function Home() {
     if (!q.trim()) { setSuggestions([]); setShowSuggestions(false); return }
     try {
       const words = await jsonp(`https://suggestion.baidu.com/su?wd=${encodeURIComponent(q)}`, "baidu")
+      // 获取自动完成类似接口 https://www.baidu.com/sugrec?prod=pc&wd=关键词  https://api.bing.com/qsonhs.aspx?q=关键词
       setSuggestions(words)
       setShowSuggestions(words.length > 0)
     } catch {
@@ -131,14 +134,16 @@ export default function Home() {
   async function loadData() {
     setLoading(true)
     try {
-      const [groups, cats, engs] = await Promise.all([
+      const [groups, cats, engs, tags] = await Promise.all([
         cardGroupApi.list(),
         publicCategoryApi.list(),
         searchEngineApi.list(true),
+        hotTagsApi.list().catch(() => [] as string[]),
       ])
       setCardGroups(groups)
       setCategories(cats)
       setSearchEngines(engs)
+      setHotTags(tags)
     } catch (err) {
       console.error("Failed to load data:", err)
     } finally {
@@ -298,18 +303,31 @@ export default function Home() {
         </form>
 
         {/* 热搜词 */}
-        <div className="flex justify-center gap-2 mt-4 flex-wrap">
-          <TrendingUp className="w-4 h-4 text-red-500 mt-0.5" />
-          {HOT_TAGS.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => { setSearchQuery(tag); handleSearchDirect(tag) }}
-              className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
+        {hotTags.length > 0 && (
+          <div className="flex justify-center items-center gap-2 mt-4">
+            <TrendingUp className="w-4 h-4 text-red-500 shrink-0" />
+            <div className="flex gap-2 flex-wrap justify-center">
+              {(showAllTags ? hotTags : hotTags.slice(0, MAX_VISIBLE_TAGS)).map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => { setSearchQuery(tag); handleSearchDirect(tag) }}
+                  className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+            {hotTags.length > MAX_VISIBLE_TAGS && (
+              <button
+                onClick={() => setShowAllTags(!showAllTags)}
+                className="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+                title={showAllTags ? "收起" : "展开全部"}
+              >
+                {showAllTags ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 常用推荐 */}
