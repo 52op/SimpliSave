@@ -123,6 +123,16 @@ export const submissionApi = {
   reject: (token: string, id: string, note?: string) => request<any>('PUT', `/submissions/${id}/reject`, { admin_note: note }, token),
 };
 
+export const searchEngineApi = {
+  list: (activeOnly?: boolean) => {
+    const search = activeOnly ? '?active_only=1' : '';
+    return request<any[]>('GET', `/search-engines${search}`);
+  },
+  create: (token: string, data: any) => request<any>('POST', '/search-engines', data, token),
+  update: (token: string, id: string, data: any) => request<any>('PUT', `/search-engines/${id}`, data, token),
+  delete: (token: string, id: string) => request<void>('DELETE', `/search-engines/${id}`, undefined, token),
+};
+
 export const fetchMetaApi = {
   fetch: (url: string) => request<any>('GET', `/fetch-meta?url=${encodeURIComponent(url)}`),
 };

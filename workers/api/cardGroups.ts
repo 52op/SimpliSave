@@ -65,8 +65,8 @@ export async function handleCreateCardGroup(request: Request, env: any): Promise
   }
 
   const result = await env.DB.prepare(
-    `INSERT INTO public_card_groups (title, description, slug, category_id, cover_url, status, sort_order, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO public_card_groups (title, description, slug, category_id, cover_url, status, sort_order, is_featured, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     body.title,
     body.description || null,
@@ -75,6 +75,7 @@ export async function handleCreateCardGroup(request: Request, env: any): Promise
     body.cover_url || null,
     body.status || 'active',
     body.sort_order || 0,
+    body.is_featured ? 1 : 0,
     null
   ).run();
 
@@ -108,6 +109,7 @@ export async function handleUpdateCardGroup(request: Request, env: any, id: stri
   if (body.cover_url !== undefined) { updates.push('cover_url = ?'); values.push(body.cover_url); }
   if (body.status !== undefined) { updates.push('status = ?'); values.push(body.status); }
   if (body.sort_order !== undefined) { updates.push('sort_order = ?'); values.push(body.sort_order); }
+  if (body.is_featured !== undefined) { updates.push('is_featured = ?'); values.push(body.is_featured ? 1 : 0); }
 
   if (updates.length === 0) return errorResponse('No fields to update', 400);
   updates.push('updated_at = CURRENT_TIMESTAMP');

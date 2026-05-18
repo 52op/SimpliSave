@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { publicBookmarkApi, publicCategoryApi, cardGroupApi } from "../../services/api"
 import { PublicBookmark, Category, CardGroup } from "../../types"
-import { Plus, Trash2, Edit2, X, ExternalLink, Globe, FolderOpen } from "lucide-react"
+import { Plus, Trash2, Edit2, X, ExternalLink, Globe, FolderOpen, Search, Star } from "lucide-react"
 import Favicon from "../../components/Favicon"
 
 export default function AdminBookmarks() {
@@ -11,22 +11,34 @@ export default function AdminBookmarks() {
   const token = useAuthStore((s) => s.token)
   const [groups, setGroups] = useState<CardGroup[]>([])
   const [selectedGroupId, setSelectedGroupId] = useState("")
-  const [showGroupModal, setShowGroupModal] = useState(false)
-  const [editingGroup, setEditingGroup] = useState<CardGroup | null>(null)
-  const [groupForm, setGroupForm] = useState({ title: "", description: "", icon_url: "" })
   const [bookmarks, setBookmarks] = useState<PublicBookmark[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
-  const [searchInput, setSearchInput] = useState("")
-  const [search, setSearch] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("")
+
+  // 子链接搜索筛选
+  const [bmSearchInput, setBmSearchInput] = useState("")
+  const [bmSearch, setBmSearch] = useState("")
+  const [bmCategoryFilter, setBmCategoryFilter] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [editingBm, setEditingBm] = useState<PublicBookmark | null>(null)
   const [page, setPage] = useState(1)
 
+  // 卡片组搜索筛选
+  const [groupSearch, setGroupSearch] = useState("")
+  const [groupCategoryFilter, setGroupCategoryFilter] = useState("")
+
+  // 卡片组模态框
+  const [showGroupModal, setShowGroupModal] = useState(false)
+  const [editingGroup, setEditingGroup] = useState<CardGroup | null>(null)
+  const [groupForm, setGroupForm] = useState({ title: "", description: "", icon_url: "", is_featured: false })
+  const [groupCategoryId, setGroupCategoryId] = useState("")
+  const [groupNewCategory, setGroupNewCategory] = useState("")
+
   const pageSize = 15
   const defaultForm = { title: "", url: "", description: "", icon_url: "", category_id: "" }
   const [form, setForm] = useState(defaultForm)
+  const [formGroupId, setFormGroupId] = useState("")
+  const [formNewGroup, setFormNewGroup] = useState("")
 
   useEffect(() => { loadGroups(); loadCategories() }, [])
 
@@ -34,12 +46,12 @@ export default function AdminBookmarks() {
     if (selectedGroupId) loadBookmarks()
   }, [selectedGroupId])
 
-  useEffect(() => { setPage(1) }, [search, categoryFilter])
+  useEffect(() => { setPage(1) }, [bmSearch, bmCategoryFilter])
 
   useEffect(() => {
-    const timer = setTimeout(() => setSearch(searchInput), 300)
+    const timer = setTimeout(() => setBmSearch(bmSearchInput), 300)
     return () => clearTimeout(timer)
-  }, [searchInput])
+  }, [bmSearchInput])
 
   async function loadGroups() {
     try {
@@ -60,8 +72,8 @@ export default function AdminBookmarks() {
     setLoading(true)
     try {
       const params: { group_id?: string; category_id?: string; q?: string } = { group_id: selectedGroupId }
-      if (categoryFilter) params.category_id = categoryFilter
-      if (search) params.q = search
+      if (bmCategoryFilter) params.category_id = bmCategoryFilter
+      if (bmSearch) params.q = bmSearch
       const res = await publicBookmarkApi.list(params)
       setBookmarks(res)
     } catch (err) {
@@ -74,18 +86,42 @@ export default function AdminBookmarks() {
   const totalPages = Math.ceil(bookmarks.length / pageSize)
   const paged = bookmarks.slice((page - 1) * pageSize, page * pageSize)
 
+  // 确保分类存在，不存在则创建
+  async function ensureCategory(name: string): Promise<string | null> {
+    if (!name || !token) return null
+    const existing = categories.find(c => c.name === name)
+    if (existing) return existing.id
+    const created = await publicCategoryApi.create(token, { name, color: "#3b82f6" })
+    await loadCategories()
+    return created.id
+  }
+
+  async function ensureGroup(title: string): Promise<string | null> {
+    if (!title || !token) return null
+    const existing = groups.find(g => g.title === title)
+    if (existing) return existing.id
+    const created = await cardGroupApi.create(token, { title })
+    await loadGroups()
+    return created.id
+  }
+
   async function handleSave() {
     if (!token || !form.title.trim() || !form.url.trim()) return
     let url = form.url.trim()
     if (!/^https?:\/\//i.test(url)) url = "https://" + url
     try {
+      let groupId = formGroupId || selectedGroupId
+      if (formNewGroup.trim() && formNewGroup !== "new") {
+        const gid = await ensureGroup(formNewGroup.trim())
+        if (gid) groupId = gid
+      }
       const data: any = {
         title: form.title.trim(),
         url,
         description: form.description.trim() || null,
         icon_url: form.icon_url.trim() || null,
         category_id: form.category_id || null,
-        group_id: selectedGroupId || null,
+        group_id: groupId || null,
       }
       if (editingBm) {
         const res = await publicBookmarkApi.update(token, editingBm.id, data)
@@ -93,10 +129,13 @@ export default function AdminBookmarks() {
       } else {
         const res = await publicBookmarkApi.create(token, data)
         setBookmarks([res, ...bookmarks])
+        setSelectedGroupId(groupId)
       }
       setShowModal(false)
       setEditingBm(null)
       setForm({ ...defaultForm })
+      setFormGroupId("")
+      setFormNewGroup("")
     } catch (err: any) {
       alert(err.message || t("common.error"))
     }
@@ -121,28 +160,39 @@ export default function AdminBookmarks() {
       icon_url: bm.icon_url || "",
       category_id: bm.category_id || "",
     })
+    setFormGroupId(bm.group_id || "")
+    setFormNewGroup("")
     setShowModal(true)
   }
 
   function openAdd() {
     setEditingBm(null)
     setForm({ ...defaultForm })
+    setFormGroupId("")
+    setFormNewGroup("")
     setShowModal(true)
   }
 
   async function handleSaveGroup() {
     if (!token || !groupForm.title.trim()) return
     try {
+      let catId = groupCategoryId
+      if (groupNewCategory.trim() && groupNewCategory !== "new") {
+        catId = await ensureCategory(groupNewCategory.trim()) || ""
+      }
+      const data: any = { ...groupForm, is_featured: groupForm.is_featured, category_id: catId || null }
       if (editingGroup) {
-        await cardGroupApi.update(token, editingGroup.id, groupForm)
+        await cardGroupApi.update(token, editingGroup.id, data)
       } else {
-        const res = await cardGroupApi.create(token, groupForm)
+        const res = await cardGroupApi.create(token, data)
         setSelectedGroupId(res.id)
       }
       await loadGroups()
       setShowGroupModal(false)
       setEditingGroup(null)
-      setGroupForm({ title: "", description: "", icon_url: "" })
+      setGroupForm({ title: "", description: "", icon_url: "", is_featured: false })
+      setGroupCategoryId("")
+      setGroupNewCategory("")
     } catch (err: any) {
       alert(err.message || t("common.error"))
     }
@@ -150,17 +200,28 @@ export default function AdminBookmarks() {
 
   function openAddGroup() {
     setEditingGroup(null)
-    setGroupForm({ title: "", description: "", icon_url: "" })
+    setGroupForm({ title: "", description: "", icon_url: "", is_featured: false })
+    setGroupCategoryId("")
+    setGroupNewCategory("")
     setShowGroupModal(true)
   }
 
   function openEditGroup(g: CardGroup) {
     setEditingGroup(g)
-    setGroupForm({ title: g.title, description: g.description || "", icon_url: g.icon_url || "" })
+    setGroupForm({ title: g.title, description: g.description || "", icon_url: g.icon_url || "", is_featured: !!g.is_featured })
+    setGroupCategoryId(g.category_id || "")
+    setGroupNewCategory("")
     setShowGroupModal(true)
   }
 
   const selectedGroup = groups.find(g => g.id === selectedGroupId)
+
+  // 卡片组列表筛选
+  const filteredGroups = groups.filter(g => {
+    const matchSearch = !groupSearch || g.title.toLowerCase().includes(groupSearch.toLowerCase()) || (g.description && g.description.toLowerCase().includes(groupSearch.toLowerCase()))
+    const matchCat = !groupCategoryFilter || g.category_id === groupCategoryFilter
+    return matchSearch && matchCat
+  })
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -178,9 +239,10 @@ export default function AdminBookmarks() {
         </div>
       </div>
 
-      <div className="mb-6">
+      {/* 选择/搜索卡片组 */}
+      <div className="mb-6 space-y-3">
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-600">选择卡片组：</label>
+          <label className="text-sm font-medium text-gray-600 shrink-0">选择卡片组：</label>
           <select
             value={selectedGroupId}
             onChange={(e) => { setSelectedGroupId(e.target.value); setPage(1) }}
@@ -198,6 +260,23 @@ export default function AdminBookmarks() {
             </button>
           )}
         </div>
+        {!selectedGroupId && (
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="text" value={groupSearch} onChange={(e) => setGroupSearch(e.target.value)}
+                placeholder="搜索卡片组..."
+                className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+            </div>
+            <select value={groupCategoryFilter} onChange={(e) => setGroupCategoryFilter(e.target.value)}
+              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              <option value="">全部分类</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {selectedGroupId ? (
@@ -211,10 +290,10 @@ export default function AdminBookmarks() {
           )}
 
           <div className="flex gap-4 mb-6">
-            <input type="text" value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
+            <input type="text" value={bmSearchInput} onChange={(e) => setBmSearchInput(e.target.value)}
               placeholder={t("bookmarks.search")}
               className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}
+            <select value={bmCategoryFilter} onChange={(e) => setBmCategoryFilter(e.target.value)}
               className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
               <option value="">{t("bookmarks.allCategories")}</option>
               {categories.map(c => (
@@ -289,6 +368,7 @@ export default function AdminBookmarks() {
             </div>
           )}
 
+          {/* 子链接编辑模态框 */}
           {showModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
               <div className="bg-white rounded-lg max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
@@ -321,6 +401,25 @@ export default function AdminBookmarks() {
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium mb-1">所属卡片组</label>
+                    <select value={formNewGroup ? "_new" : formGroupId} onChange={(e) => {
+                      if (e.target.value === "_new") { setFormNewGroup("new"); setFormGroupId("") }
+                      else { setFormGroupId(e.target.value); setFormNewGroup("") }
+                    }}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                      <option value="">{selectedGroup ? selectedGroup.title : "-- 选择卡片组 --"}</option>
+                      <option value="_new">➕ 新建卡片组</option>
+                      {groups.filter(g => g.id !== selectedGroupId).map(g => (
+                        <option key={g.id} value={g.id}>{g.title}</option>
+                      ))}
+                    </select>
+                    {!!formNewGroup && (
+                      <input type="text" value={formNewGroup === "new" ? "" : formNewGroup} onChange={(e) => setFormNewGroup(e.target.value)}
+                        placeholder="输入新卡片组名称"
+                        className="w-full mt-2 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                    )}
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formCategory")}</label>
                     <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
@@ -341,23 +440,25 @@ export default function AdminBookmarks() {
         </>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {groups.length === 0 ? (
+          {filteredGroups.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <FolderOpen className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>暂无卡片组，请先创建</p>
+              <p>{groupSearch || groupCategoryFilter ? "未找到匹配的卡片组" : "暂无卡片组，请先创建"}</p>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-gray-50">
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">标题</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">分类</th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">描述</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-500">推荐</th>
                   <th className="text-center px-4 py-3 text-sm font-medium text-gray-500">访问次数</th>
                   <th className="text-center px-4 py-3 text-sm font-medium text-gray-500">操作</th>
                 </tr>
               </thead>
               <tbody>
-                {groups.map(g => (
+                {filteredGroups.map(g => (
                   <tr key={g.id} className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedGroupId(g.id)}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -365,7 +466,9 @@ export default function AdminBookmarks() {
                         <span className="font-medium text-gray-900">{g.title}</span>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-sm text-gray-500">{g.category_name || "-"}</td>
                     <td className="px-4 py-3 text-sm text-gray-500">{g.description || "-"}</td>
+                    <td className="px-4 py-3 text-sm text-center">{g.is_featured ? <Star className="w-4 h-4 text-yellow-500 inline" /> : "-"}</td>
                     <td className="px-4 py-3 text-sm text-center text-gray-500">{g.visit_count ?? 0}</td>
                     <td className="px-4 py-3 text-center">
                       <button onClick={(e) => { e.stopPropagation(); openEditGroup(g) }}
@@ -405,6 +508,31 @@ export default function AdminBookmarks() {
                   placeholder="https://example.com/icon.png"
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">分类</label>
+                <select value={groupNewCategory ? "_new" : groupCategoryId} onChange={(e) => {
+                  if (e.target.value === "_new") setGroupNewCategory("new")
+                  else { setGroupCategoryId(e.target.value); setGroupNewCategory("") }
+                }}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                  <option value="">无分类</option>
+                  <option value="_new">➕ 新建分类</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                {!!groupNewCategory && (
+                  <input type="text" value={groupNewCategory === "new" ? "" : groupNewCategory} onChange={(e) => setGroupNewCategory(e.target.value)}
+                    placeholder="输入新分类名称"
+                    className="w-full mt-2 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                )}
+              </div>
+              <label className="flex items-center gap-2 text-sm cursor-pointer pt-2">
+                <input type="checkbox" checked={groupForm.is_featured} onChange={(e) => setGroupForm({ ...groupForm, is_featured: e.target.checked })}
+                  className="rounded border-gray-300 text-yellow-500 focus:ring-yellow-500" />
+                <Star className="w-4 h-4 text-yellow-500" />
+                置顶到首页常用推荐
+              </label>
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setShowGroupModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
                 <button onClick={handleSaveGroup} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>

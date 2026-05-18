@@ -1,19 +1,13 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
-import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi } from "../services/api"
-import { CardGroup, Category } from "../types"
+import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi } from "../services/api"
+import { CardGroup, Category, SearchEngine } from "../types"
 import { Search, ExternalLink, Folder, Globe, Zap, Send, Loader2, X } from "lucide-react"
 import Favicon from "../components/Favicon"
 import { useNavigate } from "react-router-dom"
 
-const SEARCH_ENGINES = [
-  { name: "百度", url: "https://www.baidu.com/s", param: "wd", icon: "https://www.baidu.com/favicon.ico", color: "#2932e1" },
-  { name: "Google", url: "https://www.google.com/search", param: "q", icon: "https://www.google.com/favicon.ico", color: "#4285f4" },
-  { name: "必应", url: "https://www.bing.com/search", param: "q", icon: "https://www.bing.com/favicon.ico", color: "#008373" },
-  { name: "搜狗", url: "https://www.sogou.com/web", param: "query", icon: "https://www.sogou.com/favicon.ico", color: "#fb6120" },
-  { name: "360", url: "https://www.so.com/s", param: "q", icon: "https://www.so.com/favicon.ico", color: "#07a95a" },
-]
+const STORAGE_KEY = "preferredEngineId"
 
 export default function Home() {
   const { t } = useTranslation()
@@ -23,8 +17,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [cardGroups, setCardGroups] = useState<CardGroup[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [engines, setEngines] = useState<SearchEngine[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedEngine, setSelectedEngine] = useState(SEARCH_ENGINES[0])
+  const [selectedEngineId, setSelectedEngineId] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [showEngines, setShowEngines] = useState(false)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
@@ -34,23 +29,29 @@ export default function Home() {
 
   useEffect(() => {
     loadData()
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) setSelectedEngineId(saved)
   }, [])
 
   async function loadData() {
     setLoading(true)
     try {
-      const [groups, cats] = await Promise.all([
+      const [groups, cats, engs] = await Promise.all([
         cardGroupApi.list(),
         publicCategoryApi.list(),
+        searchEngineApi.list(true),
       ])
       setCardGroups(groups)
       setCategories(cats)
+      setEngines(engs)
     } catch (err) {
       console.error("Failed to load data:", err)
     } finally {
       setLoading(false)
     }
   }
+
+  const selectedEngine = engines.find(e => e.id === selectedEngineId) || engines[0]
 
   const filteredGroups = cardGroups.filter((g) => {
     const matchesSearch = !searchQuery || 
@@ -69,12 +70,19 @@ export default function Home() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    if (!searchQuery.trim()) return
-    const url = `${selectedEngine.url}?${selectedEngine.param}=${encodeURIComponent(searchQuery)}`
-    window.open(url, "_blank")
+    if (!searchQuery.trim() || !selectedEngine) return
+    if (selectedEngine.is_site_search) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`)
+    } else {
+      const url = `${selectedEngine.url}?${selectedEngine.param}=${encodeURIComponent(searchQuery)}`
+      window.open(url, "_blank")
+    }
   }
 
-  const topGroups = [...cardGroups].sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0)).slice(0, 12)
+  const featuredGroups = cardGroups.filter(g => g.is_featured)
+  const topGroups = featuredGroups.length > 0
+    ? featuredGroups
+    : [...cardGroups].sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0)).slice(0, 12)
 
   async function handleSubmitLink() {
     if (!token) { alert("请先登录"); return }
@@ -109,6 +117,12 @@ export default function Home() {
     }
   }
 
+  const handleSelectEngine = (engine: SearchEngine) => {
+    setSelectedEngineId(engine.id)
+    localStorage.setItem(STORAGE_KEY, engine.id)
+    setShowEngines(false)
+  }
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6">
@@ -138,20 +152,21 @@ export default function Home() {
                 onClick={() => setShowEngines(!showEngines)}
                 className="px-4 py-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-lg hover:bg-gray-200 flex items-center gap-2"
               >
-                <img src={selectedEngine.icon} alt="" className="w-4 h-4" />
-                <span className="text-sm font-medium">{selectedEngine.name}</span>
+                {selectedEngine?.icon_url && <img src={selectedEngine.icon_url} alt="" className="w-4 h-4" />}
+                <span className="text-sm font-medium">{selectedEngine?.name || "搜索"}</span>
               </button>
               {showEngines && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50">
-                  {SEARCH_ENGINES.map((engine) => (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                  {engines.map((engine) => (
                     <button
-                      key={engine.name}
+                      key={engine.id}
                       type="button"
-                      onClick={() => { setSelectedEngine(engine); setShowEngines(false) }}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                      onClick={() => handleSelectEngine(engine)}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2 whitespace-nowrap"
                     >
-                      <img src={engine.icon} alt="" className="w-4 h-4" />
+                      {engine.icon_url && <img src={engine.icon_url} alt="" className="w-4 h-4" />}
                       <span>{engine.name}</span>
+                      {engine.is_site_search ? <span className="text-xs text-blue-500 ml-1">站内</span> : null}
                     </button>
                   ))}
                 </div>
@@ -161,7 +176,7 @@ export default function Home() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={`在 ${selectedEngine.name} 搜索...`}
+              placeholder={`在 ${selectedEngine?.name || ""} 搜索...`}
               className="flex-1 px-4 py-3 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
             <button

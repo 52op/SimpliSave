@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { publicCategoryApi } from "../../services/api"
 import { Category } from "../../types"
-import { Plus, Trash2, Edit2, X, Folder } from "lucide-react"
+import { Plus, Trash2, Edit2, X, Folder, ArrowUp, ArrowDown } from "lucide-react"
 
 export default function AdminCategories() {
   const { t } = useTranslation()
@@ -37,12 +37,42 @@ export default function AdminCategories() {
         const res = await publicCategoryApi.update(token, editingCat.id, { ...form })
         setCategories(categories.map(c => c.id === editingCat.id ? res : c))
       } else {
-        const res = await publicCategoryApi.create(token, { ...form })
-        setCategories([res, ...categories])
+        await publicCategoryApi.create(token, { ...form })
+        await loadData()
       }
       setShowModal(false)
       setEditingCat(null)
       setForm({ name: "", icon: "", color: "#3b82f6", sort_order: 0 })
+    } catch (err: any) {
+      alert(err.message || t("common.error"))
+    }
+  }
+
+  async function handleMoveUp(index: number) {
+    if (index <= 0 || !token) return
+    const prev = categories[index - 1]
+    const curr = categories[index]
+    try {
+      await Promise.all([
+        publicCategoryApi.update(token, prev.id, { sort_order: curr.sort_order }),
+        publicCategoryApi.update(token, curr.id, { sort_order: prev.sort_order }),
+      ])
+      await loadData()
+    } catch (err: any) {
+      alert(err.message || t("common.error"))
+    }
+  }
+
+  async function handleMoveDown(index: number) {
+    if (index >= categories.length - 1 || !token) return
+    const next = categories[index + 1]
+    const curr = categories[index]
+    try {
+      await Promise.all([
+        publicCategoryApi.update(token, next.id, { sort_order: curr.sort_order }),
+        publicCategoryApi.update(token, curr.id, { sort_order: next.sort_order }),
+      ])
+      await loadData()
     } catch (err: any) {
       alert(err.message || t("common.error"))
     }
@@ -85,17 +115,22 @@ export default function AdminCategories() {
         <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>
       ) : (
         <div className="space-y-2">
-          {categories.map((c) => (
+          {categories.map((c, i) => (
             <div key={c.id} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: c.color }} />
-                {c.icon && <span className="text-lg" dangerouslySetInnerHTML={{ __html: c.icon }} />}
+                {c.icon && <div className="w-6 h-6 flex items-center justify-center overflow-hidden [&_svg]:max-w-full [&_svg]:max-h-full" dangerouslySetInnerHTML={{ __html: c.icon }} />}
                 <span className="font-medium">{c.name}</span>
                 <span className="text-xs text-gray-400">#{c.sort_order}</span>
               </div>
-              <div className="flex gap-1">
-                <button onClick={() => openEdit(c)} className="p-1 text-gray-500 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                <button onClick={() => handleDelete(c.id)} className="p-1 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+              <div className="flex items-center gap-1">
+                <button onClick={() => openEdit(c)} className="p-1 text-gray-500 hover:text-blue-600" title="编辑"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={() => handleDelete(c.id)} className="p-1 text-gray-500 hover:text-red-600" title="删除"><Trash2 className="w-4 h-4" /></button>
+                <span className="text-gray-200 mx-1">|</span>
+                <button onClick={() => handleMoveUp(i)} disabled={i === 0}
+                  className="p-1 text-gray-400 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed" title="上移"><ArrowUp className="w-4 h-4" /></button>
+                <button onClick={() => handleMoveDown(i)} disabled={i === categories.length - 1}
+                  className="p-1 text-gray-400 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed" title="下移"><ArrowDown className="w-4 h-4" /></button>
               </div>
             </div>
           ))}

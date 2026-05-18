@@ -16,6 +16,10 @@ import {
 } from './api/categories';
 import { handleCreateSubmission, handleListSubmissions, handleApproveSubmission, handleRejectSubmission } from './api/submissions';
 import { handleFetchMeta } from './api/fetchMeta';
+import {
+  handleListSearchEngines, handleCreateSearchEngine,
+  handleUpdateSearchEngine, handleDeleteSearchEngine
+} from './api/searchEngines';
 import { handleListMemos, handleCreateMemo, handleGetMemo, handleUpdateMemo, handleDeleteMemo, handlePinMemo } from './api/memos';
 import { handleListTags, handleCreateTag, handleDeleteTag } from './api/tags';
 import {
@@ -46,6 +50,7 @@ export default {
     if (path.startsWith('/card-groups')) return handleCardGroups(request, env, path);
     if (path.startsWith('/memos')) return handleMemos(request, env, path);
     if (path.startsWith('/tags')) return handleTags(request, env, path);
+    if (path.startsWith('/search-engines')) return handleSearchEngines(request, env, path);
 
     return new Response('Not Found', { status: 404, headers: corsHeaders() });
   }
@@ -209,6 +214,25 @@ async function handleCardGroups(request: Request, env: Env, path: string): Promi
     case 'DELETE':
       if (!idMatch) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       return handleDeleteCardGroup(request, env, idMatch[1]);
+    default:
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+  }
+}
+
+async function handleSearchEngines(request: Request, env: Env, path: string): Promise<Response> {
+  const id = path.match(/^\/search-engines\/([^\/]+)$/)?.[1];
+
+  switch (request.method) {
+    case 'GET':
+      return handleListSearchEngines(request, env);
+    case 'POST':
+      return handleCreateSearchEngine(request, env);
+    case 'PUT':
+      if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleUpdateSearchEngine(request, env, id);
+    case 'DELETE':
+      if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
+      return handleDeleteSearchEngine(request, env, id);
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }

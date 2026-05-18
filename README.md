@@ -186,7 +186,7 @@ git push
 - `schema.sql`：创建 v3 表结构
 
 > 建议在 Cloudflare D1 的 **Query** 中执行。
-- 将sql粘贴到Query中，点Run按钮右边下拉三角，选择 **Run current statement**
+- 将sql粘贴到Query中，点Run按钮右边下拉三角，选择 **Run all statement**
 
 ## 8. 配置 Workers 绑定
 

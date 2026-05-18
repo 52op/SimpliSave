@@ -1,8 +1,8 @@
 ﻿import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuthStore } from "../stores/authStore"
 import { useTranslation } from "react-i18next"
-import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe } from "lucide-react"
-import { useState } from "react"
+import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe, Search } from "lucide-react"
+import { useState, useRef } from "react"
 
 export default function Header() {
   const { token, logout, user } = useAuthStore()
@@ -10,6 +10,8 @@ export default function Header() {
   const loc = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false)
+  const adminTimer = useRef<number>()
 
   const toggleLang = () => {
     const next = i18n.language === "zh" ? "en" : "zh"
@@ -28,7 +30,18 @@ export default function Header() {
     { p: "/admin/categories", l: t("categories.title"), icon: <Star className="w-4 h-4" /> },
     { p: "/admin/submissions", l: "审核链接", icon: <Send className="w-4 h-4" /> },
     { p: "/admin/bookmarks", l: t("admin.bookmarks.title"), icon: <Globe className="w-4 h-4" /> },
+    { p: "/admin/search-engines", l: "搜索引擎", icon: <Search className="w-4 h-4" /> },
   ]
+
+  function openAdminMenu() {
+    if (adminTimer.current) clearTimeout(adminTimer.current)
+    setAdminDropdownOpen(true)
+  }
+
+  function closeAdminMenu() {
+    if (adminTimer.current) clearTimeout(adminTimer.current)
+    adminTimer.current = window.setTimeout(() => setAdminDropdownOpen(false), 200)
+  }
 
   return (
     <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
@@ -63,20 +76,23 @@ export default function Header() {
                 </Link>
               ))}
               {isAdmin && (
-                <div className="relative group">
+                <div className="relative" onMouseEnter={openAdminMenu} onMouseLeave={closeAdminMenu}>
                   <button className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 flex items-center gap-1.5">
                     <Shield className="w-4 h-4" />
                     管理
                   </button>
-                  <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 hidden group-hover:block min-w-[140px]">
-                    {adminNavs.map((n) => (
-                      <Link key={n.p} to={n.p}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        {n.icon}
-                        {n.l}
-                      </Link>
-                    ))}
-                  </div>
+                  {adminDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg py-1 min-w-[140px]" onMouseEnter={openAdminMenu} onMouseLeave={closeAdminMenu}>
+                      {adminNavs.map((n) => (
+                        <Link key={n.p} to={n.p}
+                          onClick={() => setAdminDropdownOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                          {n.icon}
+                          {n.l}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </nav>

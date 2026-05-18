@@ -156,6 +156,32 @@ CREATE INDEX IF NOT EXISTS idx_submissions_status ON bookmark_submissions(status
 CREATE INDEX IF NOT EXISTS idx_memos_user ON memos(user_id);
 CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id);
 
+-- 卡片组增加置顶推荐字段
+ALTER TABLE public_card_groups ADD COLUMN is_featured INTEGER DEFAULT 0;
+
+-- 搜索引擎（管理员维护，首页下拉切换）
+CREATE TABLE IF NOT EXISTS search_engines (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    param TEXT NOT NULL,
+    icon_url TEXT,
+    color TEXT DEFAULT '#3b82f6',
+    sort_order INTEGER DEFAULT 0,
+    is_site_search INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 插入默认搜索引擎
+INSERT OR IGNORE INTO search_engines (id, name, url, param, icon_url, color, sort_order) VALUES
+  ('se-bing',   '必应',   'https://www.bing.com/search',   'q',     'https://www.bing.com/favicon.ico', '#008373', 1),
+  ('se-google', 'Google', 'https://www.google.com/search', 'q',     'https://www.google.com/favicon.ico', '#4285f4', 2),
+  ('se-sogou',  '搜狗',   'https://www.sogou.com/web',     'query', 'https://www.sogou.com/favicon.ico', '#fb6120', 3),
+  ('se-360',    '360',    'https://www.so.com/s',          'q',     'https://www.so.com/favicon.ico', '#07a95a', 4),
+  ('se-baidu',  '百度',   'https://www.baidu.com/s',      'wd',    'https://www.baidu.com/favicon.ico', '#2932e1', 5);
+
 -- Default admin user (password: 52op)
 INSERT OR IGNORE INTO users (id, email, name, password_hash, role) VALUES (
   'admin-default',

@@ -109,6 +109,7 @@ export interface CardGroup {
   status: string
   source_submission_id: string | null
   visit_count: number
+  is_featured: number
   created_by: string | null
   created_at: string
   updated_at: string
@@ -139,6 +140,20 @@ export interface MemoState {
   tags: Tag[]
   isLoading: boolean
   error: string | null
+}
+
+export interface SearchEngine {
+  id: string
+  name: string
+  url: string
+  param: string
+  icon_url: string | null
+  color: string
+  sort_order: number
+  is_site_search: number
+  is_active: number
+  created_at: string
+  updated_at: string
 }
 
 export interface ApiResponse<T = any> {
