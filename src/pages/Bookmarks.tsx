@@ -6,6 +6,8 @@ import { userBookmarkApi, userCategoryApi, tagApi, fetchMetaApi, submissionApi }
 import { Bookmark } from "../types"
 import { Plus, Search, Star, Trash2, Edit2, Folder, X, Loader2, Upload, Download, Share2, Archive, CheckSquare, Square, CheckCheck } from "lucide-react"
 import Favicon from "../components/Favicon"
+import Modal from "../components/Modal"
+import ImageUploader from "../components/ImageUploader"
 
 export default function Bookmarks() {
   const { t } = useTranslation()
@@ -321,21 +323,6 @@ export default function Bookmarks() {
     setShowAddModal(true)
   }
 
-  const Modal = ({ show, title, children, onClose }: { show: boolean; title: string; children: React.ReactNode; onClose: () => void }) => {
-    if (!show) return null
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-        <div className="bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="flex justify-between items-center p-4 border-b">
-            <h3 className="text-lg font-semibold">{title}</h3>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5" /></button>
-          </div>
-          <div className="p-4">{children}</div>
-        </div>
-      </div>
-    )
-  }
-
   if (loading) {
     return <div className="max-w-6xl mx-auto p-6"><div className="flex justify-center items-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div></div>
   }
@@ -481,6 +468,13 @@ export default function Bookmarks() {
           <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.title")}</label><input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder={t("bookmarks.titlePlaceholder")} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.description")}</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder={t("bookmarks.descriptionPlaceholder")} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.icon")}</label>
+            <div className="flex gap-2">
+              <ImageUploader type="icon" value={formData.icon_url} onChange={(url) => setFormData({ ...formData, icon_url: url })} className="w-16 h-16" />
+              <input type="text" value={formData.icon_url} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} placeholder="https://example.com/icon.png" className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+            </div>
+          </div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} placeholder={t("bookmarks.tagsPlaceholder")} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           <div className="flex gap-2 pt-4"><button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button><button onClick={handleAddBookmark} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
         </div>
@@ -493,6 +487,13 @@ export default function Bookmarks() {
           <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.title")}</label><input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.description")}</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.icon")}</label>
+            <div className="flex gap-2">
+              <ImageUploader type="icon" value={formData.icon_url} onChange={(url) => setFormData({ ...formData, icon_url: url })} className="w-16 h-16" />
+              <input type="text" value={formData.icon_url} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} placeholder="https://example.com/icon.png" className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+            </div>
+          </div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           <div className="flex gap-2 pt-4"><button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">{t("common.cancel")}</button><button onClick={handleUpdateBookmark} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
         </div>

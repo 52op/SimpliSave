@@ -1,4 +1,4 @@
-﻿import type { CardGroup, CardGroupDetail } from '../types';
+﻿import type { CardGroup, CardGroupDetail, ImagebedConfig, ImagebedSettings, UploadTokenResponse } from '../types';
 
 // API 配置
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -135,4 +135,16 @@ export const searchEngineApi = {
 
 export const fetchMetaApi = {
   fetch: (url: string) => request<any>('GET', `/fetch-meta?url=${encodeURIComponent(url)}`),
+};
+
+export const imagebedApi = {
+  listConfigs: (token: string) => request<ImagebedConfig[]>('GET', '/imagebed/configs', undefined, token),
+  createConfig: (token: string, data: any) => request<ImagebedConfig>('POST', '/imagebed/configs', data, token),
+  updateConfig: (token: string, id: string, data: any) => request<ImagebedConfig>('PUT', `/imagebed/configs/${id}`, data, token),
+  deleteConfig: (token: string, id: string) => request<void>('DELETE', `/imagebed/configs/${id}`, undefined, token),
+  toggleConfig: (token: string, id: string, enabled: number) => request<ImagebedConfig>('POST', `/imagebed/configs/${id}/toggle`, { enabled }, token),
+  getSettings: (token: string) => request<ImagebedSettings>('GET', '/imagebed/settings', undefined, token),
+  updateSettings: (token: string, data: any) => request<ImagebedSettings>('PUT', '/imagebed/settings', data, token),
+  getUploadToken: (token: string, type: string, filename: string) => request<UploadTokenResponse>('POST', '/imagebed/upload-token', { type, filename }, token),
+  getAvailable: (token: string) => request<ImagebedConfig[]>('GET', '/imagebed/available', undefined, token),
 };

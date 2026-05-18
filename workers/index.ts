@@ -26,6 +26,11 @@ import {
   handleListCardGroups, handleGetCardGroupBySlug, handleCreateCardGroup,
   handleUpdateCardGroup, handleDeleteCardGroup, handleVisitCardGroup
 } from './api/cardGroups';
+import {
+  handleListImagebedConfigs, handleCreateImagebedConfig, handleUpdateImagebedConfig,
+  handleDeleteImagebedConfig, handleToggleImagebedConfig, handleGetImagebedSettings,
+  handleUpdateImagebedSettings, handleGetUploadToken, handleGetAvailableImagebeds
+} from './api/imagebed';
 
 interface Env {
   DB: D1Database;
@@ -51,6 +56,7 @@ export default {
     if (path.startsWith('/memos')) return handleMemos(request, env, path);
     if (path.startsWith('/tags')) return handleTags(request, env, path);
     if (path.startsWith('/search-engines')) return handleSearchEngines(request, env, path);
+    if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
 
     return new Response('Not Found', { status: 404, headers: corsHeaders() });
   }
@@ -252,4 +258,27 @@ async function handleTags(request: Request, env: Env, path: string): Promise<Res
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }
+}
+
+async function handleImagebed(request: Request, env: Env, path: string): Promise<Response> {
+  const id = path.match(/^\/imagebed\/configs\/([^\/]+)$/)?.[1];
+  const toggleMatch = path.match(/^\/imagebed\/configs\/([^\/]+)\/toggle$/);
+
+  if (path === '/imagebed/configs' && request.method === 'GET') return handleListImagebedConfigs(request, env);
+  if (path === '/imagebed/configs' && request.method === 'POST') return handleCreateImagebedConfig(request, env);
+  if (path === '/imagebed/settings' && request.method === 'GET') return handleGetImagebedSettings(request, env);
+  if (path === '/imagebed/settings' && request.method === 'PUT') return handleUpdateImagebedSettings(request, env);
+  if (path === '/imagebed/upload-token' && request.method === 'POST') return handleGetUploadToken(request, env);
+  if (path === '/imagebed/available' && request.method === 'GET') return handleGetAvailableImagebeds(request, env);
+  if (toggleMatch && request.method === 'POST') return handleToggleImagebedConfig(request, env, toggleMatch[1]);
+
+  if (id) {
+    switch (request.method) {
+      case 'PUT': return handleUpdateImagebedConfig(request, env, id);
+      case 'DELETE': return handleDeleteImagebedConfig(request, env, id);
+      default: return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
+    }
+  }
+
+  return new Response('Not Found', { status: 404, headers: corsHeaders() });
 }

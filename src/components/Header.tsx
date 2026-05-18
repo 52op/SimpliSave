@@ -1,7 +1,7 @@
 ﻿import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuthStore } from "../stores/authStore"
 import { useTranslation } from "react-i18next"
-import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe, Search } from "lucide-react"
+import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe, Search, Image } from "lucide-react"
 import { useState, useRef } from "react"
 
 export default function Header() {
@@ -31,6 +31,7 @@ export default function Header() {
     { p: "/admin/submissions", l: "审核链接", icon: <Send className="w-4 h-4" /> },
     { p: "/admin/bookmarks", l: t("admin.bookmarks.title"), icon: <Globe className="w-4 h-4" /> },
     { p: "/admin/search-engines", l: "搜索引擎", icon: <Search className="w-4 h-4" /> },
+    { p: "/admin/imagebeds", l: "图床管理", icon: <Image className="w-4 h-4" /> },
   ]
 
   function openAdminMenu() {

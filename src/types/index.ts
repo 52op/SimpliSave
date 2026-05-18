@@ -168,3 +168,52 @@ export interface FetchMetaResult {
   icon: string
   url: string
 }
+
+export interface ImagebedConfig {
+  id: string
+  name: string
+  endpoint: string
+  access_key?: string
+  secret_key?: string
+  bucket: string
+  region: string | null
+  custom_domain: string | null
+  path_template: string
+  enabled: number
+  is_default: number
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ImagebedSettings {
+  id: string
+  icon_max_width: number
+  icon_max_height: number
+  icon_quality: number
+  cover_max_width: number
+  cover_max_height: number
+  cover_quality: number
+  memo_max_width: number
+  memo_max_height: number
+  memo_quality: number
+  avatar_max_width: number
+  avatar_max_height: number
+  avatar_quality: number
+  max_file_size_mb: number
+  allowed_formats: string
+  convert_to_webp: number
+  updated_at: string
+}
+
+export type ImageType = 'icon' | 'cover' | 'memo' | 'avatar'
+
+export interface UploadTokenResponse {
+  upload_url: string
+  public_url: string
+  access_key: string
+  secret_key: string
+  bucket: string
+  region: string
+  bed_name: string
+}

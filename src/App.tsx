@@ -10,6 +10,7 @@ import AdminCategories from "./pages/admin/AdminCategories"
 import AdminSubmissions from "./pages/admin/AdminSubmissions"
 import AdminBookmarks from "./pages/admin/AdminBookmarks"
 import AdminSearchEngines from "./pages/admin/AdminSearchEngines"
+import AdminImageBeds from "./pages/admin/AdminImageBeds"
 import CardGroupDetail from "./pages/CardGroupDetail"
 import SearchPage from "./pages/Search"
 import Header from "./components/Header"
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/admin/submissions" element={<AdminRoute><AdminSubmissions /></AdminRoute>} />
             <Route path="/admin/bookmarks" element={<AdminRoute><AdminBookmarks /></AdminRoute>} />
             <Route path="/admin/search-engines" element={<AdminRoute><AdminSearchEngines /></AdminRoute>} />
+            <Route path="/admin/imagebeds" element={<AdminRoute><AdminImageBeds /></AdminRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

@@ -190,3 +190,42 @@ INSERT OR IGNORE INTO users (id, email, name, password_hash, role) VALUES (
   'duKAchVjk-QsGmgzBHuEvLw9-ZDgjnA9cZROYxHNnLg',
   'admin'
 );
+
+-- 图床配置表（支持多云床 S3 兼容存储）
+CREATE TABLE IF NOT EXISTS imagebed_configs (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    name TEXT NOT NULL,
+    endpoint TEXT NOT NULL,
+    access_key TEXT NOT NULL,
+    secret_key TEXT NOT NULL,
+    bucket TEXT NOT NULL,
+    region TEXT,
+    custom_domain TEXT,
+    path_template TEXT DEFAULT '{year}/{month}/{day}/{time}_{md5}.{ext}',
+    enabled INTEGER DEFAULT 1,
+    is_default INTEGER DEFAULT 0,
+    sort_order INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 图片上传尺寸限制设置表
+CREATE TABLE IF NOT EXISTS imagebed_settings (
+    id TEXT PRIMARY KEY DEFAULT 'global',
+    icon_max_width INTEGER DEFAULT 128,
+    icon_max_height INTEGER DEFAULT 128,
+    icon_quality INTEGER DEFAULT 80,
+    cover_max_width INTEGER DEFAULT 800,
+    cover_max_height INTEGER DEFAULT 600,
+    cover_quality INTEGER DEFAULT 85,
+    memo_max_width INTEGER DEFAULT 1200,
+    memo_max_height INTEGER DEFAULT 1200,
+    memo_quality INTEGER DEFAULT 85,
+    avatar_max_width INTEGER DEFAULT 256,
+    avatar_max_height INTEGER DEFAULT 256,
+    avatar_quality INTEGER DEFAULT 85,
+    max_file_size_mb INTEGER DEFAULT 10,
+    allowed_formats TEXT DEFAULT 'image/jpeg,image/png,image/webp,image/gif',
+    convert_to_webp INTEGER DEFAULT 1,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

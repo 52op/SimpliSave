@@ -11,19 +11,24 @@
     "deploy:pages": "wrangler pages deploy ./dist --project-name simplisave"
   },
   "dependencies": {
+    "@tiptap/extension-image": "^3.23.4",
+    "@tiptap/extension-link": "^3.23.4",
     "@tiptap/extension-placeholder": "^3.23.2",
     "@tiptap/extension-underline": "^3.23.2",
     "@tiptap/react": "^3.23.2",
     "@tiptap/starter-kit": "^3.23.2",
+    "@types/uuid": "^10.0.0",
+    "browser-image-compression": "^2.0.2",
     "date-fns": "^2.30.0",
     "i18next": "^23.1.0",
     "lucide-react": "^0.300.0",
     "pinyin-pro": "^3.28.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-easy-crop": "^5.5.7",
     "react-i18next": "^14.0.0",
     "react-router-dom": "^6.22.0",
-    "uuid": "^9.0.0",
+    "uuid": "^9.0.1",
     "zustand": "^4.5.0"
   },
   "devDependencies": {
