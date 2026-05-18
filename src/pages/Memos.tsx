@@ -10,10 +10,8 @@ import { compressImage, validateImageFile } from "../utils/imageCompress"
 import type { Editor } from "@tiptap/react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
-import Underline from "@tiptap/extension-underline"
 import Placeholder from "@tiptap/extension-placeholder"
 import Image from "@tiptap/extension-image"
-import Link from "@tiptap/extension-link"
 
 const MEMO_COLORS = [
   "#ffffff", "#fff7ed", "#fef3c7", "#dcfce7", "#dbeafe",
@@ -134,8 +132,6 @@ export default function Memos() {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Underline,
-      Link,
       Image,
       Placeholder.configure({ placeholder: t("memos.contentPlaceholder") }),
     ],
