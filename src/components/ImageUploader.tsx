@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { useAuthStore } from '../stores/authStore'
 import { useImagebedStore } from '../stores/imagebedStore'
 import { imagebedApi } from '../services/api'
-import { compressImage, validateImageFile, getImageDimensions } from '../utils/imageCompress'
+import { compressImage, validateImageFile } from '../utils/imageCompress'
 import ImageCropper from './ImageCropper'
 import UploadProgress from './UploadProgress'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
@@ -23,7 +23,7 @@ export default function ImageUploader({
   onChange,
   aspectRatio = 1,
   className = '',
-  placeholder = '点击或拖拽上传图片',
+  placeholder = '点击上传',
 }: ImageUploaderProps) {
   const token = useAuthStore((s) => s.token)
   const settings = useImagebedStore((s) => s.settings)
@@ -173,7 +173,7 @@ export default function ImageUploader({
   )
 
   return (
-    <div className={className} onPaste={handlePaste}>
+    <div className={`${className} overflow-hidden`} onPaste={handlePaste}>
       <input
         ref={fileInputRef}
         type="file"
@@ -192,7 +192,7 @@ export default function ImageUploader({
       )}
 
       {value ? (
-        <div className="relative group">
+        <div className="relative w-full h-full group">
           <img
             src={value}
             alt="Uploaded"
@@ -201,43 +201,33 @@ export default function ImageUploader({
               ;(e.target as HTMLImageElement).src = ''
             }}
           />
-          <button
-            onClick={handleRemove}
-            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <X className="w-3 h-3" />
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg"
-          >
-            <Upload className="w-5 h-5 text-white opacity-0 group-hover:opacity-100" />
-          </button>
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
+            <button onClick={handleRemove}
+              className="absolute top-0.5 right-0.5 p-0.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <X className="w-3 h-3" />
+            </button>
+            <Upload className="w-4 h-4 text-white opacity-0 group-hover:opacity-100" />
+          </div>
         </div>
       ) : uploading ? (
-        <div className="p-4 border border-gray-300 rounded-lg">
+        <div className="w-full h-full flex items-center justify-center p-1">
           <UploadProgress progress={progress} status={uploadStatus} />
         </div>
       ) : errorMessage ? (
-        <div className="p-4 border border-red-300 bg-red-50 rounded-lg">
-          <p className="text-sm text-red-600">{errorMessage}</p>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="mt-2 text-sm text-blue-600 hover:text-blue-700"
-          >
-            重新选择
-          </button>
+        <div className="w-full h-full flex flex-col items-center justify-center p-1 border border-red-300 bg-red-50 rounded-lg cursor-pointer"
+          onClick={() => fileInputRef.current?.click()}>
+          <p className="text-[10px] text-red-600 text-center leading-tight">{errorMessage}</p>
+          <p className="text-[10px] text-blue-600 mt-0.5">点击重试</p>
         </div>
       ) : (
         <div
           onClick={() => fileInputRef.current?.click()}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          className="border-2 border-dashed border-gray-300 rounded-lg text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+          className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
         >
-          <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">{placeholder}</p>
-          <p className="text-xs text-gray-400 mt-1">支持拖拽或 Ctrl+V 粘贴</p>
+          <ImageIcon className="w-5 h-5 text-gray-400 mb-0.5 shrink-0" />
+          <p className="text-[10px] text-gray-500 leading-tight text-center px-0.5">{placeholder}</p>
         </div>
       )}
     </div>
