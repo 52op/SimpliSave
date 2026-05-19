@@ -46,6 +46,13 @@ export default function AdminBookmarks() {
   const [formGroupId, setFormGroupId] = useState("")
   const [formNewGroup, setFormNewGroup] = useState("")
 
+  const cleanText = (value?: string | null) =>
+    (value || "")
+      .replace(/\\r\\n/g, "\n")
+      .replace(/\\n/g, "\n")
+      .replace(/\brn\b/g, "\n")
+      .trim()
+
   useEffect(() => { loadGroups(); loadCategories() }, [])
 
   useEffect(() => {
@@ -242,19 +249,6 @@ export default function AdminBookmarks() {
           )}
         </div>
       } />
-      <div className="ui-card p-4 mb-6">
-        <div className="flex gap-2">
-          <button onClick={openAddGroup} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
-            <Plus className="w-4 h-4" />新建卡片组
-          </button>
-          {selectedGroupId && (
-            <button onClick={openAdd} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
-              <Plus className="w-4 h-4" />{t("admin.bookmarks.add")}
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* 选择/搜索卡片组 */}
       <div className="ui-card p-4 mb-6 space-y-3">
         <div className="flex items-center gap-3">
@@ -326,7 +320,8 @@ export default function AdminBookmarks() {
               <p>暂无子链接</p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">\n              <table className="w-full">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
+              <table className="w-full">
                 <thead>
                   <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">ID</th>
@@ -457,7 +452,8 @@ export default function AdminBookmarks() {
           )}
         </>
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">\n          {filteredGroups.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
+          {filteredGroups.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <FolderOpen className="w-12 h-12 mx-auto mb-2 text-gray-300" />
               <p>{groupSearch || groupCategoryFilter ? "未找到匹配的卡片组" : "暂无卡片组，请先创建"}</p>
@@ -484,7 +480,7 @@ export default function AdminBookmarks() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{g.category_name || "-"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{g.description || "-"}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-pre-line">{cleanText(g.description) || "-"}</td>
                     <td className="px-4 py-3 text-sm text-center">{g.is_featured ? <Star className="w-4 h-4 text-yellow-500 inline" /> : "-"}</td>
                     <td className="px-4 py-3 text-sm text-center text-gray-500 dark:text-gray-400">{g.visit_count ?? 0}</td>
                     <td className="px-4 py-3 text-center">
