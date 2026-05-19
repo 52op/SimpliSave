@@ -268,9 +268,6 @@ export default function Home() {
     <div className="max-w-7xl mx-auto dark:text-gray-300">
       {/* 搜索区域 */}
       <div className="ui-card text-center py-10 px-4 mb-8">
-        <div className="mx-auto mb-4 inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-sm text-blue-700 dark:text-blue-300">
-          Ctrl+K / / 快速搜索 · 收藏 · 备忘录
-        </div>
         <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">SimpliSave</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8">{t("app.description")}</p>
         
@@ -342,35 +339,41 @@ export default function Home() {
         {/* 热搜词 */}
         {displayTags.length > 0 && (
           <div
-            className="flex flex-col items-center mt-4"
+            className="mx-auto mt-5 max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/70 px-4 py-4 text-left"
             onMouseEnter={() => setTagPaused(true)}
             onMouseLeave={() => setTagPaused(false)}
           >
-            <div className="flex items-center gap-2 h-8">
-              <TrendingUp className="w-4 h-4 text-red-500 shrink-0" />
-              <div className="flex gap-2 justify-center" style={{ width: showAllTags ? 'auto' : '480px' }}>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                <TrendingUp className="w-4 h-4 text-red-500 shrink-0" />
+                <span>搜索热点</span>
+              </div>
+              {displayTags.length > TAG_GROUP_SIZE && (
+                <button
+                  onClick={handleTagToggle}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-sm text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                  title={showAllTags ? "收起热点" : "展开全部"}
+                >
+                  <span>{showAllTags ? "收起热点" : "展开全部"}</span>
+                  {showAllTags ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              )}
+            </div>
+            {!showAllTags && (
+              <div className="flex flex-wrap justify-center gap-2">
                 {currentTags.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => handleTagClick(tag)}
-                    className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition whitespace-nowrap"
+                    className="rounded-full bg-white px-3 py-1.5 text-sm text-gray-600 shadow-sm transition hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     {tag}
                   </button>
                 ))}
               </div>
-              {displayTags.length > TAG_GROUP_SIZE && (
-                <button
-                  onClick={handleTagToggle}
-                  className="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
-                  title={showAllTags ? "收起" : "展开全部"}
-                >
-                  {showAllTags ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-              )}
-            </div>
+            )}
             {!showAllTags && totalGroups > 1 && (
-              <div className="flex gap-1.5 mt-2">
+              <div className="mt-3 flex justify-center gap-1.5">
                 {Array.from({ length: totalGroups }).map((_, i) => (
                   <button
                     key={i}
@@ -383,12 +386,12 @@ export default function Home() {
               </div>
             )}
             {showAllTags && (
-              <div className="flex gap-2 flex-wrap justify-center mt-2">
+              <div className="flex max-h-56 flex-wrap gap-2 overflow-y-auto pr-1">
                 {displayTags.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => handleTagClick(tag)}
-                    className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                    className="rounded-full bg-white px-3 py-1.5 text-sm text-gray-600 shadow-sm transition hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     {tag}
                   </button>
