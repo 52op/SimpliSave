@@ -306,7 +306,7 @@ export default function Memos() {
   async function handleAddCategory() {
     if (!token || !categoryNameState.trim()) return
     try {
-      const res = await userCategoryApi.create(token, { name: categoryNameState, color: categoryColorState })
+      const res = await userCategoryApi.create(token, { name: categoryNameState, color: categoryColorState, type: "memo" })
       addCategory(res)
       setShowCategoryModal(false)
       setCategoryNameState("")

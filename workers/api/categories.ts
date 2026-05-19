@@ -24,7 +24,10 @@ export async function handleListUserCategories(request: Request, env: any): Prom
   const categories = await env.DB.prepare(
     'SELECT * FROM user_categories WHERE user_id = ? ORDER BY sort_order ASC, created_at DESC'
   ).bind(userId).all();
-  return successResponse(categories.results);
+  return successResponse(categories.results.map((item: any) => ({
+    ...item,
+    type: item.type || 'bookmark',
+  })));
 }
 
 export async function handleCreateUserCategory(request: Request, env: any): Promise<Response> {
@@ -36,13 +39,14 @@ export async function handleCreateUserCategory(request: Request, env: any): Prom
 
   const id = crypto.randomUUID();
   const sortOrder = body.sort_order ?? 0;
+  const type = body.type === 'memo' ? 'memo' : 'bookmark';
   const result = await env.DB.prepare(
-    'INSERT INTO user_categories (id, user_id, name, icon, color, sort_order) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(id, userId, body.name, body.icon || null, body.color || '#3b82f6', sortOrder).run();
+    'INSERT INTO user_categories (id, user_id, name, icon, color, sort_order, type) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, userId, body.name, body.icon || null, body.color || '#3b82f6', sortOrder, type).run();
 
   if (!result.success) return errorResponse('Failed to create user category', 500);
 
-  return successResponse({ id, user_id: userId, name: body.name, icon: body.icon || null, color: body.color || '#3b82f6', sort_order: sortOrder, created_at: new Date().toISOString() }, 201);
+  return successResponse({ id, user_id: userId, name: body.name, icon: body.icon || null, color: body.color || '#3b82f6', sort_order: sortOrder, type, created_at: new Date().toISOString() }, 201);
 }
 
 export async function handleUpdateUserCategory(request: Request, env: any, id: string): Promise<Response> {
@@ -57,6 +61,7 @@ export async function handleUpdateUserCategory(request: Request, env: any, id: s
   if (body.icon !== undefined) { updates.push('icon = ?'); values.push(body.icon); }
   if (body.color) { updates.push('color = ?'); values.push(body.color); }
   if (body.sort_order !== undefined) { updates.push('sort_order = ?'); values.push(body.sort_order); }
+  if (body.type === 'bookmark' || body.type === 'memo') { updates.push('type = ?'); values.push(body.type); }
 
   if (updates.length === 0) return errorResponse('No fields to update', 400);
   updates.push('updated_at = CURRENT_TIMESTAMP');

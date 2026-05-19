@@ -31,13 +31,19 @@ export default function MemoViewer() {
     setLoading(true)
     try {
       let res
+      let canBypassPassword = false
       if (token) {
-        try { res = await memoApi.get(token, id) } catch { res = await publicMemoApi.get(id) }
+        try {
+          res = await memoApi.get(token, id)
+          canBypassPassword = true
+        } catch {
+          res = await publicMemoApi.get(id)
+        }
       } else {
         res = await publicMemoApi.get(id)
       }
       setMemo(res)
-      if (!res.share_password) setVerified(true)
+      if (canBypassPassword || !res.share_password) setVerified(true)
     } catch {
       setError(t("memos.notFound") || "备忘录不存在或未公开")
     } finally {

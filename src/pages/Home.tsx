@@ -34,6 +34,16 @@ function jsonp(url: string, callbackName: string): Promise<string[]> {
   })
 }
 
+async function fetchSuggestions(query: string): Promise<string[]> {
+  const response = await fetch(`https://www.baidu.com/sugrec?prod=pc&wd=${encodeURIComponent(query)}`)
+  if (!response.ok) throw new Error("suggest failed")
+  const data = await response.json()
+  if (Array.isArray(data?.g)) {
+    return data.g.map((item: { q?: string }) => item.q || "").filter(Boolean)
+  }
+  return []
+}
+
 export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -121,13 +131,18 @@ export default function Home() {
   const doSuggest = useCallback(async (q: string) => {
     if (!q.trim()) { setSuggestions([]); setShowSuggestions(false); return }
     try {
-      const words = await jsonp(`https://suggestion.baidu.com/su?wd=${encodeURIComponent(q)}`, "baidu")
-      // 获取自动完成类似接口 https://www.baidu.com/sugrec?prod=pc&wd=关键词  https://api.bing.com/qsonhs.aspx?q=关键词
+      const words = await fetchSuggestions(q)
       setSuggestions(words)
       setShowSuggestions(words.length > 0)
     } catch {
-      setSuggestions([])
-      setShowSuggestions(false)
+      try {
+        const words = await jsonp(`https://suggestion.baidu.com/su?wd=${encodeURIComponent(q)}`, "baidu")
+        setSuggestions(words)
+        setShowSuggestions(words.length > 0)
+      } catch {
+        setSuggestions([])
+        setShowSuggestions(false)
+      }
     }
   }, [])
 
@@ -135,7 +150,7 @@ export default function Home() {
     const val = e.target.value
     setSearchQuery(val)
     if (suggestTimerRef.current) clearTimeout(suggestTimerRef.current)
-    suggestTimerRef.current = setTimeout(() => doSuggest(val), 200)
+    suggestTimerRef.current = setTimeout(() => doSuggest(val), 80)
   }
 
   function handleSuggestionClick(word: string) {
@@ -274,18 +289,18 @@ export default function Home() {
         
         {/* 搜索框 */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}>
-          <div className="flex items-stretch overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+          <div className="flex items-stretch rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
             <div className="relative" ref={engineRef}>
               <button
                 type="button"
                 onClick={() => setShowEngines(!showEngines)}
-                className="flex h-full min-w-[112px] items-center gap-2 border-r border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 hover:bg-[var(--color-surface-muted)]"
+                className="flex h-full min-w-[112px] items-center gap-2 rounded-l-xl border-r border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 hover:bg-[var(--color-surface-muted)]"
               >
                 {selectedEngine?.icon_url && <img src={selectedEngine.icon_url} alt="" className="w-4 h-4" />}
                 <span className="text-sm font-medium dark:text-gray-200">{selectedEngine?.name || t("home.search")}</span>
               </button>
               {showEngines && (
-                <div className="absolute top-full left-0 mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
+                <div className="absolute left-0 top-full z-50 mt-2 max-h-64 min-w-full overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">
                   {engines.map((engine) => (
                     <button
                       key={engine.id}
@@ -313,7 +328,7 @@ export default function Home() {
             />
             <button
               type="submit"
-              className="flex min-w-[108px] items-center justify-center gap-2 bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+              className="flex min-w-[108px] items-center justify-center gap-2 rounded-r-xl bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
             >
               <Search className="w-5 h-5" />
               {t("home.search")}

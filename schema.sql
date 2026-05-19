@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS user_categories (
     name TEXT NOT NULL,
     icon TEXT,
     color TEXT DEFAULT '#3b82f6',
+    type TEXT NOT NULL DEFAULT 'bookmark' CHECK (type IN ('bookmark', 'memo')),
     sort_order INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,

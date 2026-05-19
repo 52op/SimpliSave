@@ -152,7 +152,7 @@ export default function Bookmarks() {
   async function handleAddCategory() {
     if (!token || !categoryName.trim()) return
     try {
-      const res = await userCategoryApi.create(token, { name: categoryName, color: categoryColor })
+      const res = await userCategoryApi.create(token, { name: categoryName, color: categoryColor, type: "bookmark" })
       addCategory(res)
       setShowCategoryModal(false)
       setCategoryName("")
