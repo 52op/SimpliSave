@@ -30,7 +30,12 @@ export default function MemoViewer() {
     if (!id) return
     setLoading(true)
     try {
-      const res = await publicMemoApi.get(id)
+      let res
+      if (token) {
+        try { res = await memoApi.get(token, id) } catch { res = await publicMemoApi.get(id) }
+      } else {
+        res = await publicMemoApi.get(id)
+      }
       setMemo(res)
       if (!res.share_password) setVerified(true)
     } catch {
