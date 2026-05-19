@@ -27,8 +27,8 @@ jobs:
         run: |
           # 替换 database_id
           sed -i 's|database_id = ".*"|database_id = "${{ secrets.D1_DATABASE_ID }}"|' wrangler-workers.toml
-          # 添加 JWT_SECRET
-          echo 'JWT_SECRET = "${{ secrets.JWT_SECRET }}"' >> wrangler-workers.toml
+          # 在 [vars] 下添加 JWT_SECRET（否则会被放入 d1_databases 块）
+          sed -i '/^\[vars\]/a JWT_SECRET = "${{ secrets.JWT_SECRET }}"' wrangler-workers.toml
 
       - name: Deploy Workers API
         uses: cloudflare/wrangler-action@v3

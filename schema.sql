@@ -261,5 +261,6 @@ ALTER TABLE users ADD COLUMN show_github INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN show_twitter INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN show_weibo INTEGER DEFAULT 0;
 
--- Migration v4: Memo share password
+-- Migration v4: Memo public sharing
+ALTER TABLE memos ADD COLUMN is_public INTEGER DEFAULT 0;
 ALTER TABLE memos ADD COLUMN share_password TEXT;
