@@ -33,7 +33,7 @@ import {
 } from './api/imagebed';
 import { handleGetSiteSettings, handleUpdateSiteSettings } from './api/siteSettings';
 import { handleHotTags } from './api/hotTags';
-import { handleGetPublicMemo, handleVerifyPublicMemoPassword } from './api/publicMemos';
+import { handleGetPublicMemo, handleVerifyPublicMemoPassword, handleListPublicMemosByUser } from './api/publicMemos';
 import { handleGetPublicUser } from './api/publicUsers';
 
 interface Env {
@@ -69,7 +69,9 @@ export default {
     if (publicMemoVerifyMatch && request.method === 'POST') return handleVerifyPublicMemoPassword(request, env, publicMemoVerifyMatch[1]);
     if (publicMemoMatch && request.method === 'GET') return handleGetPublicMemo(request, env, publicMemoMatch[1]);
 
+    const publicUserMemosMatch = path.match(/^\/public\/users\/([^\/]+)\/memos$/);
     const publicUserMatch = path.match(/^\/public\/users\/([^\/]+)$/);
+    if (publicUserMemosMatch && request.method === 'GET') return handleListPublicMemosByUser(request, env, publicUserMemosMatch[1]);
     if (publicUserMatch && request.method === 'GET') return handleGetPublicUser(request, env, publicUserMatch[1]);
 
     return new Response('Not Found', { status: 404, headers: corsHeaders() });

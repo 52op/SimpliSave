@@ -1,28 +1,29 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { publicUserApi, cardGroupApi, publicMemoApi, memoApi } from "../services/api"
-import { User, CardGroup } from "../types"
-import { ArrowLeft, User as UserIcon, Globe, Github, Twitter, Quote, Link, Loader2, BookOpen } from "lucide-react"
-import Favicon from "../components/Favicon"
+import { publicUserApi } from "../services/api"
+import { ArrowLeft, User as UserIcon, Globe, Github, Quote, Loader2, BookOpen, FileText, Calendar, Tag } from "lucide-react"
+import type { Memo } from "../types"
 
 export default function UserPublicPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
 
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<any>(null)
+  const [memos, setMemos] = useState<Memo[]>([])
   const [loading, setLoading] = useState(true)
+  const [memosLoading, setMemosLoading] = useState(true)
   const [error, setError] = useState("")
 
   useEffect(() => {
     if (!id) return
     loadUser()
+    loadMemos()
   }, [id])
 
   async function loadUser() {
     if (!id) return
-    setLoading(true)
     try {
       const u = await publicUserApi.get(id)
       setUser(u)
@@ -30,6 +31,18 @@ export default function UserPublicPage() {
       setError(t("common.notFound") || "用户不存在")
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadMemos() {
+    if (!id) return
+    setMemosLoading(true)
+    try {
+      const res = await publicUserApi.listMemos(id)
+      setMemos(res || [])
+    } catch {
+    } finally {
+      setMemosLoading(false)
     }
   }
 
@@ -47,7 +60,7 @@ export default function UserPublicPage() {
     return (
       <div className="max-w-3xl mx-auto p-6">
         <button onClick={() => navigate("/")} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-6">
-          <ArrowLeft className="w-4 h-4" />{t("common.back") || "返回"}
+          <ArrowLeft className="w-4 h-4" />{t("common.back")}
         </button>
         <div className="text-center py-20">
           <UserIcon className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
@@ -60,10 +73,10 @@ export default function UserPublicPage() {
   return (
     <div className="max-w-3xl mx-auto p-6">
       <button onClick={() => navigate("/")} className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-6">
-        <ArrowLeft className="w-4 h-4" />{t("common.back") || "返回"}
+        <ArrowLeft className="w-4 h-4" />{t("common.back")}
       </button>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/30 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/30 overflow-hidden mb-8">
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-32" />
         <div className="px-8 pb-8">
           <div className="-mt-16 mb-6 flex items-end gap-4">
@@ -117,6 +130,44 @@ export default function UserPublicPage() {
           </div>
         </div>
       </div>
+
+      <div className="mb-4 flex items-center gap-2">
+        <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("memos.title")}</h2>
+      </div>
+
+      {memosLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+        </div>
+      ) : memos.length === 0 ? (
+        <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+          <BookOpen className="w-12 h-12 mx-auto mb-3" />
+          <p>{t("memos.noMemos")}</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {memos.map((memo) => (
+            <button
+              key={memo.id}
+              onClick={() => navigate(`/memo/${memo.id}`)}
+              className="w-full text-left bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-5 hover:shadow-md transition cursor-pointer"
+            >
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{memo.title}</h3>
+              {memo.content && (
+                <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: memo.content }} />
+              )}
+              <div className="flex items-center gap-3 mt-3 text-xs text-gray-400 dark:text-gray-500">
+                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(memo.created_at).toLocaleDateString()}</span>
+                {memo.tags && typeof memo.tags === "string" && JSON.parse(memo.tags).length > 0 && (
+                  <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{JSON.parse(memo.tags).slice(0, 3).join(", ")}</span>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

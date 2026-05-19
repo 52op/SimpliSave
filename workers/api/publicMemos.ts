@@ -1,5 +1,14 @@
 import { successResponse, errorResponse } from '../utils/response';
 
+export async function handleListPublicMemosByUser(request: Request, env: any, userId: string): Promise<Response> {
+  const memos = await env.DB.prepare(
+    `SELECT id, title, content, color, tags, created_at, updated_at
+     FROM memos WHERE user_id = ? AND is_public = 1 AND archived = 0
+     ORDER BY created_at DESC LIMIT 50`
+  ).bind(userId).all();
+  return successResponse(memos.results);
+}
+
 export async function handleGetPublicMemo(request: Request, env: any, id: string): Promise<Response> {
   const memo = await env.DB.prepare(
     'SELECT id, user_id, title, content, color, cover_image, category_id, tags, is_public, archived, created_at, updated_at FROM memos WHERE id = ? AND is_public = 1 AND archived = 0'
