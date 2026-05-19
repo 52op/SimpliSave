@@ -366,25 +366,25 @@ export default function Bookmarks() {
 
       <SectionCard className="mb-6">
       <FilterBar className="items-stretch">
-        <div className="relative min-w-0 flex-[2]">
+        <div className="relative min-w-0 w-full lg:basis-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input type="text" placeholder={t("bookmarks.search")} value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="ui-input h-11 w-full pl-10 pr-4" />
         </div>
         <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
-          className="ui-select h-11 min-w-[180px] px-4">
+          className="ui-select h-11 w-full px-4 sm:w-auto sm:min-w-[180px]">
           <option value="all">{t("bookmarks.allCategories")}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
         <button onClick={() => setShowFavoritesOnly(v => !v)}
-          className={`h-11 rounded-xl px-4 ${showFavoritesOnly ? "bg-yellow-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+          className={`h-11 w-full rounded-xl px-4 sm:w-auto ${showFavoritesOnly ? "bg-yellow-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
           仅收藏
         </button>
         <button onClick={() => setShowArchived(v => !v)}
-          className={`h-11 rounded-xl px-4 ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+          className={`h-11 w-full rounded-xl px-4 sm:w-auto ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
           {showArchived ? "查看未归档" : "查看归档"}
         </button>
       </FilterBar>
