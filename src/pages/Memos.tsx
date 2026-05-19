@@ -344,21 +344,21 @@ export default function Memos() {
       </SectionCard>
 
       <SectionCard className="mb-6">
-      <FilterBar>
-        <div className="relative flex-1">
+      <FilterBar className="items-stretch">
+        <div className="relative min-w-0 flex-[2]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input type="text" placeholder={t("memos.search")} value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="ui-input w-full pl-10 pr-4 py-2" />
+            className="ui-input h-11 w-full pl-10 pr-4" />
         </div>
         <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
-          className="ui-select px-4 py-2">
+          className="ui-select h-11 min-w-[180px] px-4">
           <option value="all">{t("bookmarks.allCategories")}</option>
           {categories.filter(c => c.type === "memo").map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
-        <button onClick={() => setShowPinnedOnly((prev) => !prev)} className={showPinnedOnly ? "ui-btn ui-btn-primary" : "ui-btn ui-btn-ghost"}>
+        <button onClick={() => setShowPinnedOnly((prev) => !prev)} className={`${showPinnedOnly ? "ui-btn ui-btn-primary" : "ui-btn ui-btn-ghost"} h-11`}>
           仅看置顶
         </button>
       </FilterBar>

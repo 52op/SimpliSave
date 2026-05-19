@@ -9,6 +9,7 @@ import Favicon from "../../components/Favicon"
 import ImageUploader from "../../components/ImageUploader"
 import EmptyState from "../../components/EmptyState"
 import PageHeader from "../../components/PageHeader"
+import Modal from "../../components/Modal"
 
 export default function AdminBookmarks() {
   const { t } = useTranslation()
@@ -379,14 +380,8 @@ export default function AdminBookmarks() {
           )}
 
           {/* 子链接编辑模态框 */}
-          {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-              <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center p-4 border-b">
-                  <h3 className="text-lg font-semibold">{editingBm ? t("admin.bookmarks.edit") : t("admin.bookmarks.add")}</h3>
-                  <button onClick={() => setShowModal(false)}><X className="w-5 h-5" /></button>
-                </div>
-                <div className="p-4 space-y-4">
+          <Modal show={showModal} title={editingBm ? t("admin.bookmarks.edit") : t("admin.bookmarks.add")} onClose={() => setShowModal(false)} widthClass="max-w-lg">
+            <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formTitle")}</label>
                     <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -446,10 +441,8 @@ export default function AdminBookmarks() {
                     <button onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">{t("common.cancel")}</button>
                     <button onClick={handleSave} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
                   </div>
-                </div>
-              </div>
             </div>
-          )}
+          </Modal>
         </>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
@@ -496,14 +489,8 @@ export default function AdminBookmarks() {
       )}
 
       {/* 卡片组编辑模态框 */}
-      {showGroupModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowGroupModal(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-semibold">{editingGroup ? "编辑卡片组" : "新建卡片组"}</h3>
-              <button onClick={() => setShowGroupModal(false)}><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-4 space-y-4">
+      <Modal show={showGroupModal} title={editingGroup ? "编辑卡片组" : "新建卡片组"} onClose={() => setShowGroupModal(false)} widthClass="max-w-lg">
+        <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">标题</label>
                 <input type="text" value={groupForm.title} onChange={(e) => setGroupForm({ ...groupForm, title: e.target.value })}
@@ -553,10 +540,8 @@ export default function AdminBookmarks() {
                 <button onClick={() => setShowGroupModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">取消</button>
                 <button onClick={handleSaveGroup} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
               </div>
-            </div>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

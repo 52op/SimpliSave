@@ -8,6 +8,7 @@ import { Search, Folder, Globe, Zap, Loader2, X, TrendingUp, ChevronDown, Chevro
 import Favicon from "../components/Favicon"
 import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
+import Modal from "../components/Modal"
 import { useNavigate } from "react-router-dom"
 
 const STORAGE_KEY = "preferredEngineId"
@@ -273,12 +274,12 @@ export default function Home() {
         
         {/* 搜索框 */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}>
-          <div className="flex shadow-sm">
+          <div className="flex items-stretch overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
             <div className="relative" ref={engineRef}>
               <button
                 type="button"
                 onClick={() => setShowEngines(!showEngines)}
-                className="px-4 py-3 bg-[var(--color-surface-2)] border border-r-0 border-[var(--color-border)] rounded-l-xl hover:bg-[var(--color-surface-muted)] flex items-center gap-2"
+                className="flex h-full min-w-[112px] items-center gap-2 border-r border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 hover:bg-[var(--color-surface-muted)]"
               >
                 {selectedEngine?.icon_url && <img src={selectedEngine.icon_url} alt="" className="w-4 h-4" />}
                 <span className="text-sm font-medium dark:text-gray-200">{selectedEngine?.name || t("home.search")}</span>
@@ -307,12 +308,12 @@ export default function Home() {
               onChange={handleInputChange}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               placeholder={`${t("home.searchIn")} ${selectedEngine?.name || ""}`}
-              className="flex-1 px-4 py-3 border border-[var(--color-border)] dark:bg-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-[var(--color-text-main)] outline-none focus:ring-0"
               autoComplete="off"
             />
             <button
               type="submit"
-              className="px-6 py-3 bg-blue-600 text-white rounded-r-xl hover:bg-blue-700 flex items-center gap-2"
+              className="flex min-w-[108px] items-center justify-center gap-2 bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
             >
               <Search className="w-5 h-5" />
               {t("home.search")}
@@ -339,33 +340,31 @@ export default function Home() {
         {/* 热搜词 */}
         {displayTags.length > 0 && (
           <div
-            className="mx-auto mt-5 max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/70 px-4 py-4 text-left"
+            className="mx-auto mt-5 max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/55 px-4 py-3"
             onMouseEnter={() => setTagPaused(true)}
             onMouseLeave={() => setTagPaused(false)}
           >
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
-                <TrendingUp className="w-4 h-4 text-red-500 shrink-0" />
-                <span>搜索热点</span>
-              </div>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <TrendingUp className="w-4 h-4 shrink-0 text-red-500" />
               {displayTags.length > TAG_GROUP_SIZE && (
                 <button
                   onClick={handleTagToggle}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-sm text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                  title={showAllTags ? "收起热点" : "展开全部"}
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                  title={showAllTags ? "收起" : "展开"}
+                  aria-label={showAllTags ? "收起" : "展开"}
                 >
-                  <span>{showAllTags ? "收起热点" : "展开全部"}</span>
                   {showAllTags ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
               )}
             </div>
             {!showAllTags && (
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {currentTags.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => handleTagClick(tag)}
-                    className="rounded-full bg-white px-3 py-1.5 text-sm text-gray-600 shadow-sm transition hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="truncate rounded-full bg-[var(--color-surface)] px-3 py-1.5 text-center text-sm text-gray-600 shadow-sm transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    title={tag}
                   >
                     {tag}
                   </button>
@@ -386,12 +385,13 @@ export default function Home() {
               </div>
             )}
             {showAllTags && (
-              <div className="flex max-h-56 flex-wrap gap-2 overflow-y-auto pr-1">
+              <div className="grid max-h-56 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
                 {displayTags.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => handleTagClick(tag)}
-                    className="rounded-full bg-white px-3 py-1.5 text-sm text-gray-600 shadow-sm transition hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="truncate rounded-full bg-[var(--color-surface)] px-3 py-1.5 text-center text-sm text-gray-600 shadow-sm transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    title={tag}
                   >
                     {tag}
                   </button>
@@ -513,14 +513,8 @@ export default function Home() {
       )}
 
       {/* 提交链接 Modal */}
-      {showSubmitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowSubmitModal(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-              <h3 className="text-lg font-semibold dark:text-gray-100">{t("home.submitLink")}</h3>
-              <button onClick={() => setShowSubmitModal(false)} className="dark:text-gray-400"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-4 space-y-4">
+      <Modal show={showSubmitModal} title={t("home.submitLink")} onClose={() => setShowSubmitModal(false)} widthClass="max-w-lg">
+        <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.url")}</label>
                 <div className="flex gap-2">
@@ -557,10 +551,8 @@ export default function Home() {
                   {submitting ? t("home.submitting") : t("home.submit")}
                 </button>
               </div>
-            </div>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

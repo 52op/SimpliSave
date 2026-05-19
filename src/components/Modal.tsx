@@ -1,7 +1,19 @@
 import { useRef, useEffect } from "react"
 import { X } from "lucide-react"
 
-export default function Modal({ show, title, children, onClose }: { show: boolean; title: string; children: React.ReactNode; onClose: () => void }) {
+export default function Modal({
+  show,
+  title,
+  children,
+  onClose,
+  widthClass = "max-w-lg",
+}: {
+  show: boolean
+  title: string
+  children: React.ReactNode
+  onClose: () => void
+  widthClass?: string
+}) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -37,7 +49,7 @@ export default function Modal({ show, title, children, onClose }: { show: boolea
   return (
     <div ref={overlayRef} className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}
       role="dialog" aria-modal="true" aria-label={title}>
-      <div ref={contentRef} tabIndex={-1} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto outline-none shadow-2xl"
+      <div ref={contentRef} tabIndex={-1} className={`bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl ${widthClass} w-full max-h-[90vh] overflow-y-auto outline-none shadow-2xl`}
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-4 border-b border-[var(--color-border)]">
           <h3 className="text-lg font-semibold text-[var(--color-text-main)]">{title}</h3>
