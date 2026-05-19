@@ -6,6 +6,17 @@ export interface User {
   email: string
   name: string
   avatar_url: string | null
+  bio: string | null
+  website: string | null
+  github: string | null
+  twitter: string | null
+  weibo: string | null
+  show_bio: number
+  show_website: number
+  show_github: number
+  show_twitter: number
+  show_weibo: number
+  role?: string
   created_at: string
   updated_at: string
 }
@@ -38,6 +49,7 @@ export interface Memo {
   category_id: string | null
   tags: string | string[]
   is_public: number
+  share_password: string | null
   archived: number
   created_at: string
   updated_at: string

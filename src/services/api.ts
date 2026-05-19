@@ -1,4 +1,4 @@
-﻿import type { CardGroup, CardGroupDetail, ImagebedConfig, ImagebedSettings, UploadTokenResponse, SiteSettings } from '../types';
+﻿import type { CardGroup, CardGroupDetail, ImagebedConfig, ImagebedSettings, UploadTokenResponse, SiteSettings, Memo } from '../types';
 
 // API 配置
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -156,4 +156,13 @@ export const siteSettingsApi = {
 
 export const hotTagsApi = {
   list: () => request<string[]>('GET', '/hot-tags'),
+};
+
+export const publicMemoApi = {
+  get: (id: string) => request<Memo>('GET', `/public-memos/${id}`),
+  verifyPassword: (id: string, password: string) => request<{ verified: boolean }>('POST', `/public-memos/${id}/verify`, { password }),
+};
+
+export const publicUserApi = {
+  get: (id: string) => request<any>('GET', `/public/users/${id}`),
 };

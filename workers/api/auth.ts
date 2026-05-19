@@ -100,25 +100,35 @@ export async function handleUpdateProfile(request: Request, env: any): Promise<R
   const payload = await verifyJWT(token, env);
   if (!payload) return errorResponse('Invalid token', 401);
   
-  const body = await request.json() as { name?: string; avatar_url?: string };
+  const body = await request.json() as any;
   const updates: string[] = [];
   const values: any[] = [];
-  
+
   if (body.name) { updates.push('name = ?'); values.push(body.name); }
-  if (body.avatar_url) { updates.push('avatar_url = ?'); values.push(body.avatar_url); }
-  
+  if (body.avatar_url !== undefined) { updates.push('avatar_url = ?'); values.push(body.avatar_url); }
+  if (body.bio !== undefined) { updates.push('bio = ?'); values.push(body.bio); }
+  if (body.website !== undefined) { updates.push('website = ?'); values.push(body.website); }
+  if (body.github !== undefined) { updates.push('github = ?'); values.push(body.github); }
+  if (body.twitter !== undefined) { updates.push('twitter = ?'); values.push(body.twitter); }
+  if (body.weibo !== undefined) { updates.push('weibo = ?'); values.push(body.weibo); }
+  if (body.show_bio !== undefined) { updates.push('show_bio = ?'); values.push(body.show_bio); }
+  if (body.show_website !== undefined) { updates.push('show_website = ?'); values.push(body.show_website); }
+  if (body.show_github !== undefined) { updates.push('show_github = ?'); values.push(body.show_github); }
+  if (body.show_twitter !== undefined) { updates.push('show_twitter = ?'); values.push(body.show_twitter); }
+  if (body.show_weibo !== undefined) { updates.push('show_weibo = ?'); values.push(body.show_weibo); }
+
   if (updates.length === 0) return errorResponse('No fields to update', 400);
-  
+
   updates.push('updated_at = CURRENT_TIMESTAMP');
   values.push(payload.userId);
-  
+
   await env.DB.prepare(
     `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
   ).bind(...values).run();
-  
+
   const user = await env.DB.prepare(
-    'SELECT id, email, name, avatar_url, role, created_at, updated_at FROM users WHERE id = ?'
+    'SELECT id, email, name, avatar_url, bio, website, github, twitter, weibo, show_bio, show_website, show_github, show_twitter, show_weibo, role, created_at, updated_at FROM users WHERE id = ?'
   ).bind(payload.userId).first();
-  
+
   return successResponse(user);
 }

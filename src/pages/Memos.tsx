@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useMemoStore } from "../stores/memoStore"
 import { memoApi, userCategoryApi, tagApi, imagebedApi } from "../services/api"
 import { Memo } from "../types"
-import { Plus, Search, Trash2, Edit2, Pin, PinOff } from "lucide-react"
+import { Plus, Search, Trash2, Edit2, Pin, PinOff, Globe, Lock, Eye } from "lucide-react"
 import Modal from "../components/Modal"
 import { compressImage, validateImageFile } from "../utils/imageCompress"
 import type { Editor } from "@tiptap/react"
@@ -109,6 +110,7 @@ function TagInput({ tags, onTagsChange, value, onChange, onAdd }: {
 
 export default function Memos() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const token = useAuthStore((s) => s.token)
   const { memos, categories, tags, setMemos, setCategories, setTags, addMemo, updateMemo, removeMemo, addCategory, addTag } = useMemoStore()
   const { toast, confirm } = useToast()
@@ -128,6 +130,8 @@ export default function Memos() {
   const [newTag, setNewTag] = useState("")
   const [categoryNameState, setCategoryNameState] = useState("")
   const [categoryColorState, setCategoryColorState] = useState("#3b82f6")
+  const [isPublic, setIsPublic] = useState(false)
+  const [sharePassword, setSharePassword] = useState("")
 
   const contentRef = useRef("")
 
@@ -189,6 +193,8 @@ export default function Memos() {
     setCategoryId("")
     setMemoTags([])
     setNewTag("")
+    setIsPublic(false)
+    setSharePassword("")
     editor?.commands.clearContent()
   }
 
@@ -205,6 +211,8 @@ export default function Memos() {
     setMemoColor(m.color || "#ffffff")
     setCategoryId(m.category_id || "")
     setMemoTags(typeof m.tags === "string" ? JSON.parse(m.tags || "[]") : (m.tags || []))
+    setIsPublic(!!m.is_public)
+    setSharePassword(m.share_password || "")
     setShowEditModal(true)
     setTimeout(() => editor?.commands.setContent(m.content || ""), 200)
   }
@@ -215,6 +223,7 @@ export default function Memos() {
       const res = await memoApi.create(token, {
         title, content: contentRef.current, color: memoColor,
         category_id: category_id || null, tags: memoTags,
+        is_public: isPublic ? 1 : 0, share_password: sharePassword || null,
       })
       addMemo(res)
       setShowAddModal(false)
@@ -230,6 +239,7 @@ export default function Memos() {
       const res = await memoApi.update(token, editingMemo.id, {
         title, content: contentRef.current, color: memoColor,
         category_id: category_id || null, tags: memoTags,
+        is_public: isPublic ? 1 : 0, share_password: sharePassword || null,
       })
       updateMemo(editingMemo.id, res)
       setShowEditModal(false)
@@ -353,8 +363,16 @@ export default function Memos() {
                     {m.is_pinned ? <Pin className="w-4 h-4 fill-current text-yellow-500" /> : <PinOff className="w-4 h-4" />}
                   </button>
                   {m.is_pinned && <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded flex-shrink-0">{t("memos.pinned")}</span>}
+                  {m.is_public ? (
+                    <span className="text-xs bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded flex-shrink-0 flex items-center gap-1">
+                      {m.share_password ? <Lock className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
+                      {t("memos.public") || "公开"}
+                    </span>
+                  ) : null}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{m.title}</h3>
+                    <button onClick={() => navigate(`/memo/${m.id}`)} className="text-left w-full">
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate hover:text-blue-600">{m.title}</h3>
+                    </button>
                     {m.category_id && (
                       <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded mt-1 inline-block">
                         {categories.find(c => c.id === m.category_id)?.name || t("common.noCategory")}
@@ -368,14 +386,17 @@ export default function Memos() {
                     })()}
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
+                    <button onClick={() => navigate(`/memo/${m.id}`)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600" title={t("common.view") || "查看"}><Eye className="w-4 h-4" /></button>
                     <button onClick={() => openEditMemo(m)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
                     <button onClick={() => handleDeleteMemo(m.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               </div>
               {m.content && (
-                <div className="text-sm text-gray-600 dark:text-gray-400 prose prose-sm max-w-none mb-1 line-clamp-3"
-                  dangerouslySetInnerHTML={{ __html: m.content }} />
+                <button onClick={() => navigate(`/memo/${m.id}`)} className="text-left w-full">
+                  <div className="text-sm text-gray-600 dark:text-gray-400 prose prose-sm max-w-none mb-1 line-clamp-3"
+                    dangerouslySetInnerHTML={{ __html: m.content }} />
+                </button>
               )}
               <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">{new Date(m.created_at).toLocaleDateString()}</div>
             </div>
@@ -416,6 +437,21 @@ export default function Memos() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.tags")}</label>
             <TagInput tags={memoTags} onTagsChange={setMemoTags} value={newTag} onChange={setNewTag} onAdd={() => {}} />
           </div>
+          <div className="border-t dark:border-gray-700 pt-4">
+            <label className="flex items-center gap-2 mb-3">
+              <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("memos.makePublic") || "公开分享"}</span>
+            </label>
+            {isPublic && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.sharePassword") || "访问密码（可选）"}</label>
+                <input type="text" value={sharePassword} onChange={(e) => setSharePassword(e.target.value)}
+                  placeholder={t("memos.passwordPlaceholder") || "留空则无需密码"}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
+            )}
+          </div>
           <div className="flex gap-2 pt-4">
             <button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
             <button onClick={handleAddMemo} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">{t("common.save")}</button>
@@ -454,6 +490,21 @@ export default function Memos() {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.tags")}</label>
             <TagInput tags={memoTags} onTagsChange={setMemoTags} value={newTag} onChange={setNewTag} onAdd={() => {}} />
+          </div>
+          <div className="border-t dark:border-gray-700 pt-4">
+            <label className="flex items-center gap-2 mb-3">
+              <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("memos.makePublic") || "公开分享"}</span>
+            </label>
+            {isPublic && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.sharePassword") || "访问密码（可选）"}</label>
+                <input type="text" value={sharePassword} onChange={(e) => setSharePassword(e.target.value)}
+                  placeholder={t("memos.passwordPlaceholder") || "留空则无需密码"}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
+            )}
           </div>
           <div className="flex gap-2 pt-4">
             <button onClick={() => { setShowEditModal(false); setEditingMemo(null) }} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>

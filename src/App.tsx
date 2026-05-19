@@ -22,6 +22,8 @@ const AdminSiteSettings = lazy(() => import("./pages/admin/AdminSiteSettings"))
 const CardGroupDetail = lazy(() => import("./pages/CardGroupDetail"))
 const SearchPage = lazy(() => import("./pages/Search"))
 const Profile = lazy(() => import("./pages/Profile"))
+const MemoViewer = lazy(() => import("./pages/MemoViewer"))
+const UserPublicPage = lazy(() => import("./pages/UserPublicPage"))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token)
@@ -114,6 +116,8 @@ export default function App() {
               <Route path="/admin/search-engines" element={<AdminRoute><AdminSearchEngines /></AdminRoute>} />
               <Route path="/admin/imagebeds" element={<AdminRoute><AdminImageBeds /></AdminRoute>} />
               <Route path="/admin/site-settings" element={<AdminRoute><AdminSiteSettings /></AdminRoute>} />
+              <Route path="/memo/:id" element={<MemoViewer />} />
+              <Route path="/u/:userId" element={<UserPublicPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>

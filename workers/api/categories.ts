@@ -34,14 +34,15 @@ export async function handleCreateUserCategory(request: Request, env: any): Prom
   const body = await request.json() as any;
   if (!body.name) return errorResponse('Name is required', 400);
 
+  const id = crypto.randomUUID();
+  const sortOrder = body.sort_order ?? 0;
   const result = await env.DB.prepare(
-    'INSERT INTO user_categories (user_id, name, icon, color, sort_order) VALUES (?, ?, ?, ?, ?)'
-  ).bind(userId, body.name, body.icon || null, body.color || '#3b82f6', body.sort_order || 0).run();
+    'INSERT INTO user_categories (id, user_id, name, icon, color, sort_order) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(id, userId, body.name, body.icon || null, body.color || '#3b82f6', sortOrder).run();
 
   if (!result.success) return errorResponse('Failed to create user category', 500);
 
-  const category = await env.DB.prepare('SELECT * FROM user_categories WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').bind(userId).first();
-  return successResponse(category, 201);
+  return successResponse({ id, user_id: userId, name: body.name, icon: body.icon || null, color: body.color || '#3b82f6', sort_order: sortOrder, created_at: new Date().toISOString() }, 201);
 }
 
 export async function handleUpdateUserCategory(request: Request, env: any, id: string): Promise<Response> {

@@ -33,6 +33,8 @@ import {
 } from './api/imagebed';
 import { handleGetSiteSettings, handleUpdateSiteSettings } from './api/siteSettings';
 import { handleHotTags } from './api/hotTags';
+import { handleGetPublicMemo, handleVerifyPublicMemoPassword } from './api/publicMemos';
+import { handleGetPublicUser } from './api/publicUsers';
 
 interface Env {
   DB: D1Database;
@@ -61,6 +63,14 @@ export default {
     if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
     if (path.startsWith('/site-settings')) return handleSiteSettings(request, env);
     if (path === '/hot-tags') return handleHotTags();
+
+    const publicMemoVerifyMatch = path.match(/^\/public-memos\/([^\/]+)\/verify$/);
+    const publicMemoMatch = path.match(/^\/public-memos\/([^\/]+)$/);
+    if (publicMemoVerifyMatch && request.method === 'POST') return handleVerifyPublicMemoPassword(request, env, publicMemoVerifyMatch[1]);
+    if (publicMemoMatch && request.method === 'GET') return handleGetPublicMemo(request, env, publicMemoMatch[1]);
+
+    const publicUserMatch = path.match(/^\/public\/users\/([^\/]+)$/);
+    if (publicUserMatch && request.method === 'GET') return handleGetPublicUser(request, env, publicUserMatch[1]);
 
     return new Response('Not Found', { status: 404, headers: corsHeaders() });
   }

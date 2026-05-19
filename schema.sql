@@ -248,3 +248,18 @@ CREATE TABLE IF NOT EXISTS site_settings (
 
 -- 插入默认站点设置
 INSERT OR IGNORE INTO site_settings (id) VALUES ('global');
+
+-- Migration v4: User public profile fields
+ALTER TABLE users ADD COLUMN bio TEXT;
+ALTER TABLE users ADD COLUMN website TEXT;
+ALTER TABLE users ADD COLUMN github TEXT;
+ALTER TABLE users ADD COLUMN twitter TEXT;
+ALTER TABLE users ADD COLUMN weibo TEXT;
+ALTER TABLE users ADD COLUMN show_bio INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN show_website INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN show_github INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN show_twitter INTEGER DEFAULT 0;
+ALTER TABLE users ADD COLUMN show_weibo INTEGER DEFAULT 0;
+
+-- Migration v4: Memo share password
+ALTER TABLE memos ADD COLUMN share_password TEXT;
