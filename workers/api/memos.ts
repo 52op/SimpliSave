@@ -27,13 +27,17 @@ export async function handleCreateMemo(request: Request, env: any): Promise<Resp
   
   const body = await request.json() as {
     title: string; content?: string; color?: string; category_id?: string; tags?: string[];
+    is_public?: number; share_password?: string;
   };
   
   if (!body.title) return errorResponse('Title is required', 400);
   
+  const isPublic = body.is_public ? 1 : 0;
+  const sharePassword = body.is_public ? (body.share_password || null) : null;
+  
   const result = await env.DB.prepare(
-    'INSERT INTO memos (user_id, title, content, color, category_id, tags) VALUES (?, ?, ?, ?, ?, ?)'
-  ).bind(userId, body.title, body.content || '', body.color || '#ffffff', body.category_id || null, JSON.stringify(body.tags || [])).run();
+    'INSERT INTO memos (user_id, title, content, color, category_id, tags, is_public, share_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(userId, body.title, body.content || '', body.color || '#ffffff', body.category_id || null, JSON.stringify(body.tags || []), isPublic, sharePassword).run();
   
   if (!result.success) return errorResponse('Failed to create memo', 500);
   
@@ -64,7 +68,8 @@ export async function handleUpdateMemo(request: Request, env: any, id: string): 
   if (body.category_id) { updates.push('category_id = ?'); values.push(body.category_id); }
   if (body.tags) { updates.push('tags = ?'); values.push(JSON.stringify(body.tags)); }
   if (body.is_pinned !== undefined) { updates.push('is_pinned = ?'); values.push(body.is_pinned); }
-  if (body.is_public !== undefined) { updates.push('is_public = ?'); values.push(body.is_public); }
+  if (body.is_public !== undefined) { updates.push('is_public = ?'); values.push(body.is_public ? 1 : 0); }
+  if (body.share_password !== undefined) { updates.push('share_password = ?'); values.push(body.share_password || null); }
   if (body.archived !== undefined) { updates.push('archived = ?'); values.push(body.archived); }
   
   if (updates.length === 0) return errorResponse('No fields to update', 400);

@@ -117,7 +117,7 @@ export default function App() {
               <Route path="/admin/imagebeds" element={<AdminRoute><AdminImageBeds /></AdminRoute>} />
               <Route path="/admin/site-settings" element={<AdminRoute><AdminSiteSettings /></AdminRoute>} />
               <Route path="/memo/:id" element={<MemoViewer />} />
-              <Route path="/u/:userId" element={<UserPublicPage />} />
+              <Route path="/u/:id" element={<UserPublicPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
