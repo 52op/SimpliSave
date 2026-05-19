@@ -1,5 +1,5 @@
 // Type definitions for SimpliSave
-// ???????? snake_case ????/??????
+// 接口字段保持 snake_case，前端展示层再做映射与兜底处理
 
 export type ThemeMode = "light" | "dark" | "system"
 export type TagList = string[]

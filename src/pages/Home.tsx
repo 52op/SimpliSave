@@ -253,7 +253,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6">
-      <PageHeader title="SimpliSave" description="?????????????????????????????????????" />
+      <PageHeader title="SimpliSave" description="集中管理常用网址、公开导航与快速搜索，打造更清爽高效个人工作台。" />
         <div className="flex justify-center items-center py-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -464,7 +464,7 @@ export default function Home() {
           <p className="text-sm text-gray-400 dark:text-gray-500">{t("home.loginToAdd")}</p>
         </div>
       ) : pageError ? (
-        <EmptyState title="??????" description={pageError} tone="error" />
+        <EmptyState title="加载失败" description={pageError} tone="error" />
       ) : (
         <div className="space-y-8">
           {Object.entries(groupedGroups).map(([catId, items]) => {

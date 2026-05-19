@@ -87,8 +87,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div className="ui-card max-w-sm w-full p-6">
             <p className="text-[var(--color-text-main)] mb-6">{confirmMsg}</p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => handleConfirm(false)} className="ui-btn ui-btn-ghost text-sm">??</button>
-              <button onClick={() => handleConfirm(true)} className="ui-btn ui-btn-danger text-sm">??</button>
+              <button onClick={() => handleConfirm(false)} className="ui-btn ui-btn-ghost text-sm">取消</button>
+              <button onClick={() => handleConfirm(true)} className="ui-btn ui-btn-danger text-sm">确认</button>
             </div>
           </div>
         </div>

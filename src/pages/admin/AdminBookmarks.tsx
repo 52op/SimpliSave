@@ -64,14 +64,14 @@ export default function AdminBookmarks() {
       const res = await cardGroupApi.list({})
       setGroups(res)
       setPageError("")
-    } catch (err: any) { setPageError(err?.message || "???????") }
+    } catch (err: any) { setPageError(err?.message || "加载卡片组失败") }
   }
 
   async function loadCategories() {
     try {
       const res = await publicCategoryApi.list()
       setCategories(res)
-    } catch (err: any) { setPageError(err?.message || "??????") }
+    } catch (err: any) { setPageError(err?.message || "加载分类失败") }
   }
 
   async function loadBookmarks() {
@@ -85,8 +85,8 @@ export default function AdminBookmarks() {
       setBookmarks(res)
       setPageError("")
     } catch (err: any) {
-      setPageError(err?.message || "???????")
-      toast(err?.message || "???????", "error")
+      setPageError(err?.message || "加载书签失败")
+      toast(err?.message || "加载书签失败", "error")
     } finally {
       setLoading(false)
     }
@@ -234,9 +234,9 @@ export default function AdminBookmarks() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <PageHeader title={t("admin.bookmarks.title")} description="????????????????????????" actions={
+      <PageHeader title={t("admin.bookmarks.title")} description="统一维护卡片组、公开链接与分类结构，提升导航页组织效率。" actions={
         <div className="flex gap-2">
-          <button onClick={openAddGroup} className="ui-btn ui-btn-primary bg-green-600 hover:bg-green-700 text-white"><Plus className="w-4 h-4" />?????</button>
+          <button onClick={openAddGroup} className="ui-btn ui-btn-primary bg-green-600 hover:bg-green-700 text-white"><Plus className="w-4 h-4" />新建卡片组</button>
           {selectedGroupId && (
             <button onClick={openAdd} className="ui-btn ui-btn-primary"><Plus className="w-4 h-4" />{t("admin.bookmarks.add")}</button>
           )}

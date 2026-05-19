@@ -62,11 +62,11 @@ const RegisterPage = () => {
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.password")}</label>
-            <input type="password" name="password" required value={formData.password} onChange={handleChange} className="ui-input px-4 py-3" placeholder="????????" />
+            <input type="password" name="password" required value={formData.password} onChange={handleChange} className="ui-input px-4 py-3" placeholder="请输入密码" />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.confirmPassword")}</label>
-            <input type="password" name="confirmPassword" required value={formData.confirmPassword} onChange={handleChange} className="ui-input px-4 py-3" placeholder="????????" />
+            <input type="password" name="confirmPassword" required value={formData.confirmPassword} onChange={handleChange} className="ui-input px-4 py-3" placeholder="请再次输入密码" />
           </div>
           <button type="submit" disabled={loading} className="ui-btn ui-btn-primary w-full py-3 disabled:opacity-50">
             {loading ? t("auth.creatingAccount") || "Creating account..." : t("auth.register")}

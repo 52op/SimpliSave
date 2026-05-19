@@ -36,8 +36,8 @@ export default function AdminSubmissions() {
       setSubmissions(res)
       setPageError("")
     } catch (err: any) {
-      setPageError(err?.message || "????????")
-      toast(err?.message || "????????", "error")
+      setPageError(err?.message || "加载提交列表失败")
+      toast(err?.message || "加载提交列表失败", "error")
     } finally {
       setLoading(false)
     }
