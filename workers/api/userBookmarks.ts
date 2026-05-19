@@ -20,31 +20,22 @@ export async function handleListUserBookmarks(request: Request, env: any): Promi
   const favorites = url.searchParams.get('favorites') === '1';
   const archived = url.searchParams.get('archived') === '1';
 
-  let sql = `SELECT ub.*, uc.name as category_name, uc.color as category_color
-             FROM user_bookmarks ub
-             LEFT JOIN user_categories uc ON ub.category_id = uc.id
-             WHERE ub.user_id = ?`;
-  const params: any[] = [userId];
+  let sql = 'SELECT * FROM user_bookmarks WHERE user_id = ? AND archived = ?';
+  const params: any[] = [userId, archived ? 1 : 0];
 
-  if (archived) {
-    sql += ' AND ub.archived = 1';
-  } else {
-    sql += ' AND ub.archived = 0';
-  }
-  if (favorites) {
-    sql += ' AND ub.is_favorite = 1';
-  }
   if (categoryId) {
-    sql += ' AND ub.category_id = ?';
+    sql += ' AND category_id = ?';
     params.push(categoryId);
   }
+  if (favorites) {
+    sql += ' AND is_favorite = 1';
+  }
   if (q) {
-    sql += ' AND (ub.title LIKE ? OR ub.url LIKE ? OR ub.description LIKE ?)';
+    sql += ' AND (title LIKE ? OR url LIKE ? OR description LIKE ?)';
     params.push(`%${q}%`, `%${q}%`, `%${q}%`);
   }
 
-  sql += ' ORDER BY ub.is_favorite DESC, ub.created_at DESC';
-
+  sql += ' ORDER BY is_favorite DESC, created_at DESC';
   const result = await env.DB.prepare(sql).bind(...params).all();
   return successResponse(result.results);
 }

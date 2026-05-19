@@ -1,4 +1,5 @@
-﻿import type { CardGroup, CardGroupDetail, ImagebedConfig, ImagebedSettings, UploadTokenResponse, SiteSettings, Memo } from '../types';
+﻿import type { CardGroup, CardGroupDetail, ImagebedConfig, ImagebedSettings, UploadTokenResponse, SiteSettings, Memo, Bookmark, PublicBookmark, User } from '../types';
+import { normalizeBookmark, normalizeMemo, normalizePublicBookmark, normalizeUser, serializeTags } from '../utils/data';
 
 // API 配置
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -10,23 +11,31 @@ function getHeaders(token?: string): Record<string, string> {
   return headers;
 }
 
-async function request<T>(method: string, path: string, body?: any, token?: string): Promise<T> {
+async function request<T>(method: string, path: string, body?: any, token?: string, signal?: AbortSignal): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: getHeaders(token),
     body: body ? JSON.stringify(body) : undefined,
+    signal,
   });
-  const data = await res.json();
+  const raw = await res.text();
+  const data = raw ? JSON.parse(raw) : {};
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data.data as T;
 }
 
 export const authApi = {
-  login: (email: string, password: string) => request<{ user: any; token: string }>('POST', '/auth/login', { email, password }),
-  register: (email: string, username: string, password: string) => request<{ user: any; token: string }>('POST', '/auth/register', { email, username, password }),
+  login: async (email: string, password: string) => {
+    const result = await request<{ user: User; token: string }>('POST', '/auth/login', { email, password })
+    return { ...result, user: normalizeUser(result.user)! }
+  },
+  register: async (email: string, username: string, password: string) => {
+    const result = await request<{ user: User; token: string }>('POST', '/auth/register', { email, username, password })
+    return { ...result, user: normalizeUser(result.user)! }
+  },
   logout: (token: string) => request<void>('POST', '/auth/logout', undefined, token),
-  me: (token: string) => request<any>('GET', '/auth/me', undefined, token),
-  updateProfile: (token: string, data: any) => request<any>('PUT', '/auth/profile', data, token),
+  me: async (token: string) => normalizeUser(await request<User>('GET', '/auth/me', undefined, token))!,
+  updateProfile: async (token: string, data: any) => normalizeUser(await request<User>('PUT', '/auth/profile', data, token))!,
 };
 
 // 公开导航 API
@@ -36,12 +45,12 @@ export const publicBookmarkApi = {
     if (params?.category_id) search.set('category_id', params.category_id);
     if (params?.q) search.set('q', params.q);
     if (params?.group_id) search.set('group_id', params.group_id);
-    return request<any[]>('GET', `/public-bookmarks${search.toString() ? `?${search.toString()}` : ''}`);
+    return request<PublicBookmark[]>('GET', `/public-bookmarks${search.toString() ? `?${search.toString()}` : ''}`).then((items) => items.map(normalizePublicBookmark));
   },
-  create: (token: string, data: any) => request<any>('POST', '/public-bookmarks', data, token),
-  get: (token: string, id: string) => request<any>('GET', `/public-bookmarks/${id}`, undefined, token),
-  getById: (token: string, id: string) => request<any>('GET', `/public-bookmarks/${id}`, undefined, token),
-  update: (token: string, id: string, data: any) => request<any>('PUT', `/public-bookmarks/${id}`, data, token),
+  create: (token: string, data: any) => request<PublicBookmark>('POST', '/public-bookmarks', { ...data, tags: serializeTags(data.tags) }, token).then(normalizePublicBookmark),
+  get: (token: string, id: string) => request<PublicBookmark>('GET', `/public-bookmarks/${id}`, undefined, token).then(normalizePublicBookmark),
+  getById: (token: string, id: string) => request<PublicBookmark>('GET', `/public-bookmarks/${id}`, undefined, token).then(normalizePublicBookmark),
+  update: (token: string, id: string, data: any) => request<PublicBookmark>('PUT', `/public-bookmarks/${id}`, { ...data, tags: serializeTags(data.tags) }, token).then(normalizePublicBookmark),
   delete: (token: string, id: string) => request<void>('DELETE', `/public-bookmarks/${id}`, undefined, token),
 };
 
@@ -67,11 +76,11 @@ export const userBookmarkApi = {
     if (params?.q) search.set('q', params.q);
     if (params?.favorites) search.set('favorites', '1');
     if (params?.archived) search.set('archived', '1');
-    return request<any[]>('GET', `/user-bookmarks${search.toString() ? `?${search.toString()}` : ''}`, undefined, token);
+    return request<Bookmark[]>('GET', `/user-bookmarks${search.toString() ? `?${search.toString()}` : ''}`, undefined, token).then((items) => items.map(normalizeBookmark));
   },
-  create: (token: string, data: any) => request<any>('POST', '/user-bookmarks', data, token),
-  get: (token: string, id: string) => request<any>('GET', `/user-bookmarks/${id}`, undefined, token),
-  update: (token: string, id: string, data: any) => request<any>('PUT', `/user-bookmarks/${id}`, data, token),
+  create: (token: string, data: any) => request<Bookmark>('POST', '/user-bookmarks', { ...data, tags: serializeTags(data.tags) }, token).then(normalizeBookmark),
+  get: (token: string, id: string) => request<Bookmark>('GET', `/user-bookmarks/${id}`, undefined, token).then(normalizeBookmark),
+  update: (token: string, id: string, data: any) => request<Bookmark>('PUT', `/user-bookmarks/${id}`, { ...data, tags: serializeTags(data.tags) }, token).then(normalizeBookmark),
   delete: (token: string, id: string) => request<void>('DELETE', `/user-bookmarks/${id}`, undefined, token),
   export: (token: string) => fetch(`${BASE_URL}/user-bookmarks/export`, { headers: getHeaders(token) }),
   exportHtml: (token: string) => fetch(`${BASE_URL}/user-bookmarks/export-html`, { headers: getHeaders(token) }),
@@ -102,10 +111,10 @@ export const userCategoryApi = {
 };
 
 export const memoApi = {
-  list: (token: string) => request<any[]>('GET', '/memos', undefined, token),
-  create: (token: string, data: any) => request<any>('POST', '/memos', data, token),
-  get: (token: string, id: string) => request<any>('GET', `/memos/${id}`, undefined, token),
-  update: (token: string, id: string, data: any) => request<any>('PUT', `/memos/${id}`, data, token),
+  list: (token: string) => request<Memo[]>('GET', '/memos', undefined, token).then((items) => items.map(normalizeMemo)),
+  create: (token: string, data: any) => request<Memo>('POST', '/memos', { ...data, tags: serializeTags(data.tags) }, token).then(normalizeMemo),
+  get: (token: string, id: string) => request<Memo>('GET', `/memos/${id}`, undefined, token).then(normalizeMemo),
+  update: (token: string, id: string, data: any) => request<Memo>('PUT', `/memos/${id}`, { ...data, tags: serializeTags(data.tags) }, token).then(normalizeMemo),
   delete: (token: string, id: string) => request<void>('DELETE', `/memos/${id}`, undefined, token),
   pin: (token: string, id: string) => request<any>('POST', `/memos/${id}/pin`, undefined, token),
 };
@@ -159,7 +168,7 @@ export const hotTagsApi = {
 };
 
 export const publicMemoApi = {
-  get: (id: string) => request<Memo>('GET', `/public-memos/${id}`),
+  get: (id: string) => request<Memo>('GET', `/public-memos/${id}`).then(normalizeMemo),
   verifyPassword: (id: string, password: string) => request<{ verified: boolean }>('POST', `/public-memos/${id}/verify`, { password }),
 };
 

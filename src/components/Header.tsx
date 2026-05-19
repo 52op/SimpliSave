@@ -61,23 +61,23 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b dark:border-gray-700 sticky top-0 z-50 shadow-sm">
+    <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-6">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="lg:hidden p-2 rounded-md text-[var(--color-text-main)] hover:bg-[var(--color-surface-2)]"
               aria-label={sidebarOpen ? "关闭菜单" : "打开菜单"}
               aria-expanded={sidebarOpen}
             >
-              {sidebarOpen ? <X className="w-5 h-5 dark:text-gray-300" /> : <Menu className="w-5 h-5 dark:text-gray-300" />}
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">S</span>
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">SimpliSave</span>
+              <span className="text-xl font-bold text-[var(--color-text-main)]">SimpliSave</span>
             </Link>
             <nav className="hidden md:flex gap-1">
               {navs.map((n) => (
@@ -86,8 +86,8 @@ export default function Header() {
                   to={n.p}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition flex items-center gap-1.5 ${
                     loc.pathname === n.p
-                      ? "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
-                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
+                      : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)]"
                   }`}
                 >
                   {n.icon}
@@ -96,16 +96,16 @@ export default function Header() {
               ))}
               {isAdmin && (
                 <div className="relative" onMouseEnter={openAdminMenu} onMouseLeave={closeAdminMenu}>
-                  <button className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-1.5">
+                  <button className="px-3 py-2 rounded-md text-sm font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] flex items-center gap-1.5">
                     <Shield className="w-4 h-4" />
                     管理
                   </button>
                   {adminDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[140px]" onMouseEnter={openAdminMenu} onMouseLeave={closeAdminMenu}>
+                    <div className="absolute top-full left-0 mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-lg py-1 min-w-[140px]" onMouseEnter={openAdminMenu} onMouseLeave={closeAdminMenu}>
                       {adminNavs.map((n) => (
                         <Link key={n.p} to={n.p}
                           onClick={() => setAdminDropdownOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-text-main)] hover:bg-[var(--color-surface-2)]">
                           {n.icon}
                           {n.l}
                         </Link>
@@ -119,12 +119,12 @@ export default function Header() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSearchOpen(true)}
-              className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-1.5"
+              className="p-2 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] text-sm flex items-center gap-1.5"
               title={t("search.title") || "搜索 (Ctrl+K)"}
               aria-label="搜索"
             >
               <Search className="w-4 h-4" />
-              <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono text-gray-500 dark:text-gray-400">Ctrl+K</kbd>
+              <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 bg-[var(--color-surface-2)] rounded text-xs font-mono text-[var(--color-text-muted)]">Ctrl+K</kbd>
             </button>
             {searchOpen && <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />}
             <button

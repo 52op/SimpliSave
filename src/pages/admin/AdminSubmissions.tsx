@@ -6,6 +6,8 @@ import { submissionApi, cardGroupApi } from "../../services/api"
 import { Submission, CardGroup } from "../../types"
 import { Check, X, Clock, ExternalLink, Globe } from "lucide-react"
 import Favicon from "../../components/Favicon"
+import EmptyState from "../../components/EmptyState"
+import PageHeader from "../../components/PageHeader"
 
 export default function AdminSubmissions() {
   const { t } = useTranslation()
@@ -13,6 +15,7 @@ export default function AdminSubmissions() {
   const { toast, confirm } = useToast()
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
+  const [pageError, setPageError] = useState("")
   const [filterStatus, setFilterStatus] = useState<"pending" | "approved" | "rejected">("pending")
   const [rejectReason, setRejectReason] = useState("")
   const [rejectingId, setRejectingId] = useState<string | null>(null)
@@ -31,8 +34,10 @@ export default function AdminSubmissions() {
     try {
       const res = await submissionApi.list(token, filterStatus)
       setSubmissions(res)
-    } catch (err) {
-      console.error(err)
+      setPageError("")
+    } catch (err: any) {
+      setPageError(err?.message || "????????")
+      toast(err?.message || "????????", "error")
     } finally {
       setLoading(false)
     }
@@ -79,13 +84,16 @@ export default function AdminSubmissions() {
         ))}
       </div>
 
-      {loading ? (
+      {pageError ? (
+        <EmptyState title="加载失败" description={pageError} tone="error" />
+      ) : loading ? (
         <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>
       ) : submissions.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 text-gray-500 dark:text-gray-400">
-          <Clock className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-          <p>暂无{filterStatus === "pending" ? "待审核" : filterStatus === "approved" ? "已通过" : "已拒绝"}的提交</p>
-        </div>
+        <EmptyState
+          title={`暂无${filterStatus === "pending" ? "待审核" : filterStatus === "approved" ? "已通过" : "已拒绝"}提交`}
+          description="可切换筛选状态查看其他结果。"
+          icon={<Clock className="w-6 h-6" />}
+        />
       ) : (
         <div className="space-y-4">
           {submissions.map((s) => (

@@ -1,14 +1,10 @@
-﻿import { create } from "zustand"
+import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { authApi } from "../services/api"
+import type { AuthState, User } from "../types"
+import { normalizeUser } from "../utils/data"
 
-type User = { id: string; email: string; name: string; role?: string }
-
-type AuthStore = {
-  user: User | null
-  token: string | null
-  loading: boolean
-  error: string | null
+type AuthStore = AuthState & {
   setUser: (user: User | null) => void
   setToken: (token: string | null) => void
   setLoading: (loading: boolean) => void
@@ -17,16 +13,17 @@ type AuthStore = {
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
   clearError: () => void
+  validateSession: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       loading: false,
       error: null,
-      setUser: (user) => set({ user }),
+      setUser: (user) => set({ user: normalizeUser(user) }),
       setToken: (token) => set({ token }),
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
@@ -34,24 +31,39 @@ export const useAuthStore = create<AuthStore>()(
         set({ loading: true, error: null })
         try {
           const result = await authApi.login(email, password)
-          set({ user: result.user, token: result.token, loading: false })
+          set({ user: normalizeUser(result.user), token: result.token, loading: false })
         } catch (error: any) {
-          set({ error: error.message || "Login failed", loading: false })
+          const message = error.message || "Login failed"
+          set({ error: message, loading: false, token: null, user: null })
+          throw error
         }
       },
       register: async (name, email, password) => {
         set({ loading: true, error: null })
         try {
           const result = await authApi.register(email, name, password)
-          set({ user: result.user, token: result.token, loading: false })
+          set({ user: normalizeUser(result.user), token: result.token, loading: false })
         } catch (error: any) {
-          set({ error: error.message || "Registration failed", loading: false })
+          const message = error.message || "Registration failed"
+          set({ error: message, loading: false, token: null, user: null })
+          throw error
         }
       },
       logout: () => {
-        set({ user: null, token: null, error: null })
+        set({ user: null, token: null, error: null, loading: false })
       },
       clearError: () => set({ error: null }),
+      validateSession: async () => {
+        const token = get().token
+        if (!token) return
+        set({ loading: true })
+        try {
+          const user = await authApi.me(token)
+          set({ user: normalizeUser(user), loading: false, error: null })
+        } catch {
+          set({ user: null, token: null, loading: false, error: null })
+        }
+      },
     }),
     {
       name: "auth-storage",

@@ -14,6 +14,10 @@ import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
 import Image from "@tiptap/extension-image"
+import EmptyState from "../components/EmptyState"
+import PageHeader from "../components/PageHeader"
+import SectionCard from "../components/SectionCard"
+import FilterBar from "../components/FilterBar"
 
 const MEMO_COLORS = [
   "#ffffff", "#fff7ed", "#fef3c7", "#dcfce7", "#dbeafe",
@@ -122,6 +126,8 @@ export default function Memos() {
   const [editingMemo, setEditingMemo] = useState<Memo | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [showPinnedOnly, setShowPinnedOnly] = useState(false)
+  const [pageError, setPageError] = useState("")
 
   const [title, setTitle] = useState("")
   const [memoColor, setMemoColor] = useState("#ffffff")
@@ -166,8 +172,10 @@ export default function Memos() {
       setMemos(memoRes)
       setCategories(catRes)
       setTags(tagRes)
-    } catch (err) {
-      console.error("Failed to load data:", err)
+      setPageError("")
+    } catch (err: any) {
+      setPageError(err?.message || "加载备忘录失败")
+      toast(err?.message || "加载备忘录失败", "error")
     } finally {
       setLoading(false)
     }
@@ -179,7 +187,8 @@ export default function Memos() {
       const contentMatch = (m.content || "").toLowerCase().includes(searchQuery.toLowerCase())
       const matchesSearch = titleMatch || contentMatch
       const matchesCategory = selectedCategory === "all" || m.category_id === selectedCategory
-      return matchesSearch && matchesCategory
+      const matchesPinned = !showPinnedOnly || !!m.is_pinned
+      return matchesSearch && matchesCategory && matchesPinned
     })
     .sort((a, b) => {
       if (a.is_pinned !== b.is_pinned) return b.is_pinned - a.is_pinned
@@ -319,40 +328,54 @@ export default function Memos() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{t("memos.title")}</h1>
-        <div className="flex gap-2">
-          <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
+      <PageHeader title={t("memos.title")} description="记录灵感与资料，支持富文本、置顶和公开分享。" />
+
+      <SectionCard className="mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex gap-2">
+            <button onClick={() => setShowCategoryModal(true)} className="ui-btn ui-btn-ghost">
             {t("categories.add")}
           </button>
-          <button onClick={openAddMemo} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
+            <button onClick={openAddMemo} className="ui-btn ui-btn-primary bg-green-600 hover:bg-green-700 text-white">
             <Plus className="w-4 h-4" />{t("memos.add")}
           </button>
         </div>
-      </div>
+        </div>
+      </SectionCard>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <SectionCard className="mb-6">
+      <FilterBar>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input type="text" placeholder={t("memos.search")} value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            className="ui-input w-full pl-10 pr-4 py-2" />
         </div>
         <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+          className="ui-select px-4 py-2">
           <option value="all">{t("bookmarks.allCategories")}</option>
           {categories.filter(c => c.type === "memo").map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
-      </div>
+        <button onClick={() => setShowPinnedOnly((prev) => !prev)} className={showPinnedOnly ? "ui-btn ui-btn-primary" : "ui-btn ui-btn-ghost"}>
+          仅看置顶
+        </button>
+      </FilterBar>
+      </SectionCard>
 
-      {sortedMemos.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30">
-          <p className="text-gray-500 dark:text-gray-400 mb-2">{t("memos.noMemos")}</p>
-          <button onClick={openAddMemo} className="text-blue-600 hover:text-blue-700 font-medium">{t("memos.addFirst")}</button>
-        </div>
-      ) : (
+      {pageError ? (
+        <EmptyState title="加载失败" description={pageError} tone="error" />
+      ) : null}
+
+      {!pageError && sortedMemos.length === 0 ? (
+        <EmptyState
+          title={searchQuery || selectedCategory !== "all" || showPinnedOnly ? "没有匹配备忘录" : t("memos.noMemos")}
+          description={searchQuery || selectedCategory !== "all" || showPinnedOnly ? "试试切换分类、关键词或取消置顶筛选。" : "可先新建一条备忘录，支持富文本和图片。"}
+          icon={<Pin className="w-6 h-6" />}
+          action={!searchQuery && selectedCategory === "all" && !showPinnedOnly ? <button onClick={openAddMemo} className="ui-btn ui-btn-primary">{t("memos.addFirst")}</button> : undefined}
+        />
+      ) : !pageError ? (
         <div className="space-y-4">
           {sortedMemos.map((m) => (
             <div key={m.id} className="rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition border-l-4"
@@ -402,7 +425,7 @@ export default function Memos() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
       <Modal show={showAddModal} title={t("memos.add")} onClose={() => setShowAddModal(false)}>
         <div className="space-y-4">

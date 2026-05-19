@@ -145,12 +145,12 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
   if (!open) return null
 
   return (
-    <div ref={modalRef} className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-start justify-center pt-[15vh]"
+    <div ref={modalRef} className="fixed inset-0 bg-black/55 backdrop-blur-sm z-[100] flex items-start justify-center pt-[15vh]"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
       role="dialog" aria-modal="true" aria-label="搜索">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
-        <div className="flex items-center gap-3 px-4 py-3 border-b dark:border-gray-700">
-          <Search className="w-5 h-5 text-gray-400 shrink-0" />
+      <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)]">
+          <Search className="w-5 h-5 text-[var(--color-text-muted)] shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -158,10 +158,10 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t("search.placeholder") || "搜索链接、卡片组、备忘录..."}
-            className="flex-1 outline-none text-base dark:bg-gray-800 dark:text-gray-100"
+            className="flex-1 outline-none text-base bg-transparent text-[var(--color-text-main)] placeholder:text-[var(--color-text-muted)]"
             aria-label="搜索输入"
           />
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600" aria-label="关闭搜索">
+          <button onClick={onClose} className="p-1 text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]" aria-label="关闭搜索">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -174,14 +174,14 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
           )}
 
           {!loading && query && results.length === 0 && (
-            <div className="text-center py-8 text-gray-400">{t("common.noResults") || "无结果"}</div>
+            <div className="text-center py-8 text-[var(--color-text-muted)]">{t("common.noResults") || "无结果"}</div>
           )}
 
           {!loading && results.length > 0 && results.map((r, i) => (
             <div key={`${r.type}-${r.id}`}
               role="option"
               aria-selected={i === selectedIndex}
-              className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-50 dark:border-gray-700 last:border-0
+              className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[var(--color-border)] last:border-0
                 ${i === selectedIndex ? "bg-blue-50 dark:bg-blue-900/30" : "hover:bg-gray-50 dark:hover:bg-gray-700/50"}`}
               onClick={() => handleSelect(r)}
               onMouseEnter={() => setSelectedIndex(i)}
@@ -195,26 +195,26 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{r.title}</span>
-                  <span className="text-xs text-gray-400 shrink-0">
+                  <span className="font-medium text-sm text-[var(--color-text-main)] truncate">{r.title}</span>
+                  <span className="text-xs text-[var(--color-text-muted)] shrink-0">
                     {r.type === "bookmark" ? "公开链接" : r.type === "group" ? "卡片组" : r.type === "private" ? "私有链接" : "备忘录"}
                   </span>
                 </div>
-                {r.description && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{r.description}</p>}
+                {r.description && <p className="text-xs text-[var(--color-text-muted)] truncate mt-0.5">{r.description}</p>}
               </div>
-              <ExternalLink className="w-4 h-4 text-gray-300 shrink-0" />
+              <ExternalLink className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" />
             </div>
           ))}
 
           {!loading && query && results.length > 0 && (
-            <div className="px-4 py-2 text-xs text-gray-400 border-t dark:border-gray-700">
+            <div className="px-4 py-2 text-xs text-[var(--color-text-muted)] border-t border-[var(--color-border)]">
               共 {results.length} 条结果 · 上下键导航 · Enter 打开
             </div>
           )}
 
           {!query && (
-            <div className="text-center py-8 text-gray-400 text-sm">
-              <p className="mb-2">按 <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono">Enter</kbd> 搜索全部公开内容</p>
+            <div className="text-center py-8 text-[var(--color-text-muted)] text-sm">
+              <p className="mb-2">按 <kbd className="px-1.5 py-0.5 bg-[var(--color-surface-2)] rounded text-xs font-mono">Enter</kbd> 搜索全部公开内容</p>
               <p>提示：Ctrl+K 随时打开搜索</p>
             </div>
           )}

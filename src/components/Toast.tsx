@@ -58,16 +58,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }
 
   const bgMap = {
-    success: "bg-green-50 border-green-200",
-    error: "bg-red-50 border-red-200",
-    info: "bg-blue-50 border-blue-200",
+    success: "bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-900",
+    error: "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900",
+    info: "bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900",
   }
 
   return (
     <ToastContext.Provider value={{ toast, confirm }}>
       {children}
 
-      {/* Toast container */}
       <div className="fixed top-4 right-4 z-[200] flex flex-col gap-2">
         {toasts.map((t) => (
           <div
@@ -75,22 +74,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className={`flex items-center gap-2 px-4 py-3 rounded-lg border shadow-lg min-w-[280px] max-w-sm animate-slide-in ${bgMap[t.type]}`}
           >
             {iconMap[t.type]}
-            <span className="text-sm text-gray-800 flex-1">{t.message}</span>
-            <button onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))} className="text-gray-400 hover:text-gray-600">
+            <span className="text-sm text-[var(--color-text-main)] flex-1">{t.message}</span>
+            <button onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))} className="text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]">
               <X className="w-4 h-4" />
             </button>
           </div>
         ))}
       </div>
 
-      {/* Confirm dialog */}
       {confirmMsg && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[300] p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
-            <p className="text-gray-800 mb-6">{confirmMsg}</p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[300] p-4">
+          <div className="ui-card max-w-sm w-full p-6">
+            <p className="text-[var(--color-text-main)] mb-6">{confirmMsg}</p>
             <div className="flex gap-3 justify-end">
-              <button onClick={() => handleConfirm(false)} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">取消</button>
-              <button onClick={() => handleConfirm(true)} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">确定</button>
+              <button onClick={() => handleConfirm(false)} className="ui-btn ui-btn-ghost text-sm">??</button>
+              <button onClick={() => handleConfirm(true)} className="ui-btn ui-btn-danger text-sm">??</button>
             </div>
           </div>
         </div>

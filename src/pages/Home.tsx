@@ -6,6 +6,8 @@ import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEng
 import { CardGroup, Category, SearchEngine } from "../types"
 import { Search, Folder, Globe, Zap, Loader2, X, TrendingUp, ChevronDown, ChevronUp } from "lucide-react"
 import Favicon from "../components/Favicon"
+import EmptyState from "../components/EmptyState"
+import PageHeader from "../components/PageHeader"
 import { useNavigate } from "react-router-dom"
 
 const STORAGE_KEY = "preferredEngineId"
@@ -55,6 +57,7 @@ export default function Home() {
   const [showAllTags, setShowAllTags] = useState(false)
   const [tagGroupIndex, setTagGroupIndex] = useState(0)
   const [tagPaused, setTagPaused] = useState(false)
+  const [pageError, setPageError] = useState("")
   const engineRef = useRef<HTMLDivElement>(null)
   const suggestRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -250,6 +253,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6">
+      <PageHeader title="SimpliSave" description="?????????????????????????????????????" />
         <div className="flex justify-center items-center py-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -263,24 +267,27 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto dark:text-gray-300">
       {/* 搜索区域 */}
-      <div className="text-center py-12 mb-8">
+      <div className="ui-card text-center py-10 px-4 mb-8">
+        <div className="mx-auto mb-4 inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-sm text-blue-700 dark:text-blue-300">
+          Ctrl+K / / 快速搜索 · 收藏 · 备忘录
+        </div>
         <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">SimpliSave</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8">{t("app.description")}</p>
         
         {/* 搜索框 */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}>
-          <div className="flex">
+          <div className="flex shadow-sm">
             <div className="relative" ref={engineRef}>
               <button
                 type="button"
                 onClick={() => setShowEngines(!showEngines)}
-                className="px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-r-0 border-gray-300 dark:border-gray-600 rounded-l-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2"
+                className="px-4 py-3 bg-[var(--color-surface-2)] border border-r-0 border-[var(--color-border)] rounded-l-xl hover:bg-[var(--color-surface-muted)] flex items-center gap-2"
               >
                 {selectedEngine?.icon_url && <img src={selectedEngine.icon_url} alt="" className="w-4 h-4" />}
                 <span className="text-sm font-medium dark:text-gray-200">{selectedEngine?.name || t("home.search")}</span>
               </button>
               {showEngines && (
-                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                <div className="absolute top-full left-0 mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto">
                   {engines.map((engine) => (
                     <button
                       key={engine.id}
@@ -303,19 +310,19 @@ export default function Home() {
               onChange={handleInputChange}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               placeholder={`${t("home.searchIn")} ${selectedEngine?.name || ""}`}
-              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="flex-1 px-4 py-3 border border-[var(--color-border)] dark:bg-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               autoComplete="off"
             />
             <button
               type="submit"
-              className="px-6 py-3 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 flex items-center gap-2"
+              className="px-6 py-3 bg-blue-600 text-white rounded-r-xl hover:bg-blue-700 flex items-center gap-2"
             >
               <Search className="w-5 h-5" />
               {t("home.search")}
             </button>
           </div>
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50 overflow-hidden">
+            <div className="absolute left-0 right-0 top-full mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg z-50 overflow-hidden">
               {suggestions.map((word, i) => (
                 <button
                   key={i}
@@ -456,6 +463,8 @@ export default function Home() {
           <p className="text-gray-500 dark:text-gray-400 mb-2">{t("home.noGroups")}</p>
           <p className="text-sm text-gray-400 dark:text-gray-500">{t("home.loginToAdd")}</p>
         </div>
+      ) : pageError ? (
+        <EmptyState title="??????" description={pageError} tone="error" />
       ) : (
         <div className="space-y-8">
           {Object.entries(groupedGroups).map(([catId, items]) => {

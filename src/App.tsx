@@ -6,6 +6,8 @@ import { Helmet } from "react-helmet-async"
 import { siteSettingsApi } from "./services/api"
 import type { SiteSettings } from "./types"
 import Header from "./components/Header"
+import { useThemeStore } from "./stores/themeStore"
+import { useAuthStore } from "./stores/authStore"
 import "./index.css"
 
 const Home = lazy(() => import("./pages/Home"))
@@ -49,10 +51,14 @@ function LoadingFallback() {
 export default function App() {
   const { t, i18n } = useTranslation()
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null)
+  const initTheme = useThemeStore((s) => s.initTheme)
+  const validateSession = useAuthStore((s) => s.validateSession)
 
   useEffect(() => {
+    initTheme()
+    validateSession().catch(() => {})
     siteSettingsApi.get().then(setSiteSettings).catch(() => {})
-  }, [])
+  }, [initTheme, validateSession])
 
   // GA
   useEffect(() => {

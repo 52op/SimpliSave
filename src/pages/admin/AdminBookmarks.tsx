@@ -7,6 +7,8 @@ import { PublicBookmark, Category, CardGroup } from "../../types"
 import { Plus, Trash2, Edit2, X, ExternalLink, Globe, FolderOpen, Search, Star } from "lucide-react"
 import Favicon from "../../components/Favicon"
 import ImageUploader from "../../components/ImageUploader"
+import EmptyState from "../../components/EmptyState"
+import PageHeader from "../../components/PageHeader"
 
 export default function AdminBookmarks() {
   const { t } = useTranslation()
@@ -17,6 +19,7 @@ export default function AdminBookmarks() {
   const [bookmarks, setBookmarks] = useState<PublicBookmark[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [pageError, setPageError] = useState("")
 
   // 子链接搜索筛选
   const [bmSearchInput, setBmSearchInput] = useState("")
@@ -60,14 +63,15 @@ export default function AdminBookmarks() {
     try {
       const res = await cardGroupApi.list({})
       setGroups(res)
-    } catch (err) { console.error(err) }
+      setPageError("")
+    } catch (err: any) { setPageError(err?.message || "???????") }
   }
 
   async function loadCategories() {
     try {
       const res = await publicCategoryApi.list()
       setCategories(res)
-    } catch (err) { console.error(err) }
+    } catch (err: any) { setPageError(err?.message || "??????") }
   }
 
   async function loadBookmarks() {
@@ -79,8 +83,10 @@ export default function AdminBookmarks() {
       if (bmSearch) params.q = bmSearch
       const res = await publicBookmarkApi.list(params)
       setBookmarks(res)
-    } catch (err) {
-      console.error(err)
+      setPageError("")
+    } catch (err: any) {
+      setPageError(err?.message || "???????")
+      toast(err?.message || "???????", "error")
     } finally {
       setLoading(false)
     }
@@ -228,8 +234,15 @@ export default function AdminBookmarks() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{t("admin.bookmarks.title")}</h1>
+      <PageHeader title={t("admin.bookmarks.title")} description="????????????????????????" actions={
+        <div className="flex gap-2">
+          <button onClick={openAddGroup} className="ui-btn ui-btn-primary bg-green-600 hover:bg-green-700 text-white"><Plus className="w-4 h-4" />?????</button>
+          {selectedGroupId && (
+            <button onClick={openAdd} className="ui-btn ui-btn-primary"><Plus className="w-4 h-4" />{t("admin.bookmarks.add")}</button>
+          )}
+        </div>
+      } />
+      <div className="ui-card p-4 mb-6">
         <div className="flex gap-2">
           <button onClick={openAddGroup} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
             <Plus className="w-4 h-4" />新建卡片组
@@ -243,7 +256,7 @@ export default function AdminBookmarks() {
       </div>
 
       {/* 选择/搜索卡片组 */}
-      <div className="mb-6 space-y-3">
+      <div className="ui-card p-4 mb-6 space-y-3">
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 shrink-0">选择卡片组：</label>
           <select

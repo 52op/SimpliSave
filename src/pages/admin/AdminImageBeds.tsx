@@ -6,6 +6,9 @@ import { useImagebedStore } from "../../stores/imagebedStore"
 import { imagebedApi } from "../../services/api"
 import { ImagebedConfig } from "../../types"
 import { Plus, Trash2, Edit2, X, Server, Settings, ToggleLeft, ToggleRight } from "lucide-react"
+import EmptyState from "../../components/EmptyState"
+import PageHeader from "../../components/PageHeader"
+import SectionCard from "../../components/SectionCard"
 
 export default function AdminImageBeds() {
   const { t } = useTranslation()
@@ -14,6 +17,7 @@ export default function AdminImageBeds() {
   const { configs, settings, loadConfigs, loadSettings, createConfig, updateConfig, deleteConfig, toggleConfig, updateSettings } = useImagebedStore()
 
   const [loading, setLoading] = useState(true)
+  const [pageError, setPageError] = useState("")
   const [showConfigModal, setShowConfigModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [editing, setEditing] = useState<ImagebedConfig | null>(null)
@@ -39,8 +43,10 @@ export default function AdminImageBeds() {
     setLoading(true)
     try {
       await Promise.all([loadConfigs(token), loadSettings(token)])
-    } catch (err) {
-      console.error(err)
+      setPageError("")
+    } catch (err: any) {
+      setPageError(err?.message || "加载图床配置失败")
+      toast(err?.message || "加载图床配置失败", "error")
     } finally {
       setLoading(false)
     }
@@ -168,27 +174,29 @@ export default function AdminImageBeds() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">图床管理</h1>
+      <PageHeader title="图床管理" description="管理上传目标与压缩策略，统一控制图标、封面、备忘录和头像图片处理。" actions={
         <div className="flex gap-2">
-          <button onClick={openSettings} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 flex items-center gap-2">
+          <button onClick={openSettings} className="ui-btn ui-btn-ghost">
             <Settings className="w-4 h-4" /> 尺寸设置
           </button>
-          <button onClick={openAdd} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+          <button onClick={openAdd} className="ui-btn ui-btn-primary">
             <Plus className="w-4 h-4" /> 添加图床
           </button>
         </div>
-      </div>
+      } />
+      {pageError ? <EmptyState title="加载失败" description={pageError} tone="error" /> : null}
 
-      {configs.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30">\n          <Server className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 mb-2">暂无图床配置</p>
-          <button onClick={openAdd} className="text-blue-600 hover:text-blue-700 font-medium">添加第一个图床</button>
-        </div>
-      ) : (
+      {!pageError && configs.length === 0 ? (
+        <EmptyState
+          title="暂无图床配置"
+          description="可先添加一个上传目标，再统一配置图片尺寸和压缩策略。"
+          icon={<Server className="w-6 h-6" />}
+          action={<button onClick={openAdd} className="ui-btn ui-btn-primary">添加第一个图床</button>}
+        />
+      ) : !pageError ? (
         <div className="space-y-4">
           {configs.map((config) => (
-            <div key={config.id} className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-4">
+            <SectionCard key={config.id}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
@@ -224,10 +232,10 @@ export default function AdminImageBeds() {
                   </button>
                 </div>
               </div>
-            </div>
+            </SectionCard>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Config Modal */}
       {showConfigModal && (

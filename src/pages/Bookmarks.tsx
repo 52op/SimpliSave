@@ -9,6 +9,10 @@ import { Plus, Search, Star, Trash2, Edit2, Folder, X, Loader2, Upload, Download
 import Favicon from "../components/Favicon"
 import Modal from "../components/Modal"
 import ImageUploader from "../components/ImageUploader"
+import EmptyState from "../components/EmptyState"
+import PageHeader from "../components/PageHeader"
+import SectionCard from "../components/SectionCard"
+import FilterBar from "../components/FilterBar"
 
 export default function Bookmarks() {
   const { t } = useTranslation()
@@ -30,6 +34,7 @@ export default function Bookmarks() {
   const [submittingShare, setSubmittingShare] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [batchLoading, setBatchLoading] = useState(false)
+  const [pageError, setPageError] = useState("")
 
   const [formData, setFormData] = useState({
     title: "", url: "", description: "", icon_url: "", category_id: "", tags: [] as string[], is_favorite: 0,
@@ -51,8 +56,10 @@ export default function Bookmarks() {
       setBookmarks(bmRes)
       setCategories(catRes)
       setTags(tagRes)
-    } catch (err) {
-      console.error("Failed to load data:", err)
+      setPageError("")
+    } catch (err: any) {
+      setPageError(err?.message || "加载收藏失败")
+      toast(err?.message || "加载收藏失败", "error")
     } finally {
       setLoading(false)
     }
@@ -331,11 +338,10 @@ export default function Bookmarks() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">私人收藏夹</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">管理你自己的收藏，可申请分享到公开导航</p>
-        </div>
+      <PageHeader title="私人收藏夹" description="管理你自己的收藏，可申请分享到公开导航。" />
+
+      <SectionCard className="mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex flex-wrap gap-2">
           <label className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2 cursor-pointer">
             <Upload className="w-4 h-4" />{importing ? "导入中..." : "导入HTML"}
@@ -355,17 +361,19 @@ export default function Bookmarks() {
             <Plus className="w-4 h-4" />{t("bookmarks.add")}
           </button>
         </div>
-      </div>
+        </div>
+      </SectionCard>
 
-      <div className="flex flex-col lg:flex-row gap-4 mb-6">
+      <SectionCard className="mb-6">
+      <FilterBar>
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
           <input type="text" placeholder={t("bookmarks.search")} value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            className="ui-input w-full pl-10 pr-4 py-2" />
         </div>
         <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+          className="ui-select px-4 py-2">
           <option value="all">{t("bookmarks.allCategories")}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
@@ -379,9 +387,14 @@ export default function Bookmarks() {
           className={`px-4 py-2 rounded-lg ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
           {showArchived ? "查看未归档" : "查看归档"}
         </button>
-      </div>
+      </FilterBar>
+      </SectionCard>
 
-      {filteredBookmarks.length > 0 && (
+      {pageError ? (
+        <EmptyState title="加载失败" description={pageError} tone="error" />
+      ) : null}
+
+      {!pageError && filteredBookmarks.length > 0 && (
         <div className="flex items-center gap-2 mb-3 px-1">
           <button onClick={toggleSelectAll} className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600">
             {selectedIds.size === filteredBookmarks.length ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
@@ -407,13 +420,14 @@ export default function Bookmarks() {
         </div>
       )}
 
-      {filteredBookmarks.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30">
-          <Folder className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 mb-2">暂无私人收藏</p>
-          <button onClick={openAddModal} className="text-blue-600 hover:text-blue-700 font-medium">添加第一个收藏</button>
-        </div>
-      ) : (
+      {!pageError && filteredBookmarks.length === 0 ? (
+        <EmptyState
+          title={searchQuery || selectedCategory !== "all" ? "没有匹配收藏" : "暂无私人收藏"}
+          description={searchQuery || selectedCategory !== "all" ? "试试切换分类或更换关键词。" : "可先新增收藏，或导入浏览器书签。"}
+          icon={<Folder className="w-6 h-6" />}
+          action={searchQuery || selectedCategory !== "all" ? undefined : <button onClick={openAddModal} className="ui-btn ui-btn-primary">添加第一个收藏</button>}
+        />
+      ) : !pageError ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredBookmarks.map((b) => {
             const tagsArray = typeof b.tags === "string" ? JSON.parse(b.tags || "[]") : b.tags
@@ -452,7 +466,7 @@ export default function Bookmarks() {
             )
           })}
         </div>
-      )}
+      ) : null}
 
       {/* Add Modal */}
       <Modal show={showAddModal} title={t("bookmarks.add")} onClose={() => setShowAddModal(false)}>

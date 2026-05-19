@@ -1,5 +1,8 @@
-﻿// Type definitions for SimpliSave
-// 注意：字段名使用 snake_case 与数据库/后端保持一致
+// Type definitions for SimpliSave
+// ???????? snake_case ????/??????
+
+export type ThemeMode = "light" | "dark" | "system"
+export type TagList = string[]
 
 export interface User {
   id: string
@@ -29,7 +32,7 @@ export interface Bookmark {
   description: string | null
   icon_url: string | null
   category_id: string | null
-  tags: string | string[]
+  tags: TagList
   is_favorite: number
   visit_count: number
   is_public: number
@@ -43,11 +46,11 @@ export interface Memo {
   user_id: string
   title: string
   content: string
-  is_pinned: number
   color: string
   cover_image: string | null
   category_id: string | null
-  tags: string | string[]
+  tags: TagList
+  is_pinned: number
   is_public: number
   share_password: string | null
   archived: number
@@ -97,7 +100,7 @@ export interface PublicBookmark {
   group_id: string | null
   group_title: string | null
   category_id: string | null
-  tags: string | string[]
+  tags: TagList
   sort_order: number
   status: string
   visit_count: number
@@ -134,7 +137,7 @@ export interface CardGroupDetail extends CardGroup {
 export interface AuthState {
   user: User | null
   token: string | null
-  isLoading: boolean
+  loading: boolean
   error: string | null
 }
 
@@ -144,6 +147,17 @@ export interface BookmarkState {
   tags: Tag[]
   isLoading: boolean
   error: string | null
+  setBookmarks: (bookmarks: Bookmark[]) => void
+  setCategories: (categories: Category[]) => void
+  setTags: (tags: Tag[]) => void
+  setLoading: (isLoading: boolean) => void
+  setError: (error: string | null) => void
+  addBookmark: (bookmark: Bookmark) => void
+  updateBookmark: (id: string, updates: Partial<Bookmark>) => void
+  removeBookmark: (id: string) => void
+  addCategory: (category: Category) => void
+  addTag: (tag: Tag) => void
+  clearError: () => void
 }
 
 export interface MemoState {
@@ -152,6 +166,17 @@ export interface MemoState {
   tags: Tag[]
   isLoading: boolean
   error: string | null
+  setMemos: (memos: Memo[]) => void
+  setCategories: (categories: Category[]) => void
+  setTags: (tags: Tag[]) => void
+  setLoading: (isLoading: boolean) => void
+  setError: (error: string | null) => void
+  addMemo: (memo: Memo) => void
+  updateMemo: (id: string, updates: Partial<Memo>) => void
+  removeMemo: (id: string) => void
+  addCategory: (category: Category) => void
+  addTag: (tag: Tag) => void
+  clearError: () => void
 }
 
 export interface SearchEngine {
@@ -168,7 +193,7 @@ export interface SearchEngine {
   updated_at: string
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   error?: string

@@ -14,10 +14,30 @@ async function getUserId(request: Request, env: any): Promise<string | null> {
 export async function handleListMemos(request: Request, env: any): Promise<Response> {
   const userId = await getUserId(request, env);
   if (!userId) return errorResponse('Unauthorized', 401);
-  
-  const memos = await env.DB.prepare(
-    'SELECT * FROM memos WHERE user_id = ? AND archived = 0 ORDER BY is_pinned DESC, created_at DESC'
-  ).bind(userId).all();
+
+  const url = new URL(request.url);
+  const categoryId = url.searchParams.get('category_id');
+  const q = url.searchParams.get('q');
+  const pinnedOnly = url.searchParams.get('pinned') === '1';
+  const archived = url.searchParams.get('archived') === '1';
+
+  let sql = 'SELECT * FROM memos WHERE user_id = ? AND archived = ?';
+  const params: any[] = [userId, archived ? 1 : 0];
+
+  if (categoryId) {
+    sql += ' AND category_id = ?';
+    params.push(categoryId);
+  }
+  if (pinnedOnly) {
+    sql += ' AND is_pinned = 1';
+  }
+  if (q) {
+    sql += ' AND (title LIKE ? OR content LIKE ?)';
+    params.push(`%${q}%`, `%${q}%`);
+  }
+
+  sql += ' ORDER BY is_pinned DESC, created_at DESC';
+  const memos = await env.DB.prepare(sql).bind(...params).all();
   return successResponse(memos.results);
 }
 
