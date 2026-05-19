@@ -4,12 +4,14 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
-import { Search, ExternalLink, Folder, Globe, Zap, Send, Loader2, X, TrendingUp, ChevronDown, ChevronUp } from "lucide-react"
+import { Search, Folder, Globe, Zap, Loader2, X, TrendingUp, ChevronDown, ChevronUp } from "lucide-react"
 import Favicon from "../components/Favicon"
 import { useNavigate } from "react-router-dom"
 
 const STORAGE_KEY = "preferredEngineId"
-const MAX_VISIBLE_TAGS = 8
+const TAG_GROUP_SIZE = 3
+const MAX_TAGS = 12
+const ROTATE_INTERVAL = 4000
 
 function jsonp(url: string, callbackName: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
@@ -51,10 +53,13 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hotTags, setHotTags] = useState<string[]>([])
   const [showAllTags, setShowAllTags] = useState(false)
+  const [tagGroupIndex, setTagGroupIndex] = useState(0)
+  const [tagPaused, setTagPaused] = useState(false)
   const engineRef = useRef<HTMLDivElement>(null)
   const suggestRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const tagTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     loadData()
@@ -83,6 +88,31 @@ export default function Home() {
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
   }, [showSuggestions])
+
+  const displayTags = hotTags.slice(0, MAX_TAGS)
+  const totalGroups = Math.ceil(displayTags.length / TAG_GROUP_SIZE)
+  const currentTags = showAllTags
+    ? displayTags
+    : displayTags.slice(tagGroupIndex * TAG_GROUP_SIZE, tagGroupIndex * TAG_GROUP_SIZE + TAG_GROUP_SIZE)
+
+  useEffect(() => {
+    if (showAllTags || tagPaused || totalGroups < 2) return
+    tagTimerRef.current = setInterval(() => {
+      setTagGroupIndex((prev) => (prev + 1) % totalGroups)
+    }, ROTATE_INTERVAL)
+    return () => clearInterval(tagTimerRef.current)
+  }, [showAllTags, tagPaused, totalGroups])
+
+  function handleTagClick(tag: string) {
+    setTagPaused(true)
+    setSearchQuery(tag)
+    handleSearchDirect(tag)
+  }
+
+  function handleTagToggle() {
+    setShowAllTags((p) => !p)
+    setTagPaused(true)
+  }
 
   const doSuggest = useCallback(async (q: string) => {
     if (!q.trim()) { setSuggestions([]); setShowSuggestions(false); return }
@@ -303,28 +333,60 @@ export default function Home() {
         </form>
 
         {/* 热搜词 */}
-        {hotTags.length > 0 && (
-          <div className="flex justify-center items-center gap-2 mt-4">
-            <TrendingUp className="w-4 h-4 text-red-500 shrink-0" />
-            <div className="flex gap-2 flex-wrap justify-center">
-              {(showAllTags ? hotTags : hotTags.slice(0, MAX_VISIBLE_TAGS)).map((tag) => (
+        {displayTags.length > 0 && (
+          <div
+            className="flex flex-col items-center mt-4"
+            onMouseEnter={() => setTagPaused(true)}
+            onMouseLeave={() => setTagPaused(false)}
+          >
+            <div className="flex items-center gap-2 h-8">
+              <TrendingUp className="w-4 h-4 text-red-500 shrink-0" />
+              <div className="flex gap-2 justify-center" style={{ width: showAllTags ? 'auto' : '480px' }}>
+                {currentTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => handleTagClick(tag)}
+                    className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition whitespace-nowrap"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+              {displayTags.length > TAG_GROUP_SIZE && (
                 <button
-                  key={tag}
-                  onClick={() => { setSearchQuery(tag); handleSearchDirect(tag) }}
-                  className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                  onClick={handleTagToggle}
+                  className="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+                  title={showAllTags ? "收起" : "展开全部"}
                 >
-                  {tag}
+                  {showAllTags ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
-              ))}
+              )}
             </div>
-            {hotTags.length > MAX_VISIBLE_TAGS && (
-              <button
-                onClick={() => setShowAllTags(!showAllTags)}
-                className="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
-                title={showAllTags ? "收起" : "展开全部"}
-              >
-                {showAllTags ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
+            {!showAllTags && totalGroups > 1 && (
+              <div className="flex gap-1.5 mt-2">
+                {Array.from({ length: totalGroups }).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setTagGroupIndex(i); setTagPaused(true) }}
+                    className={`w-2 h-2 rounded-full transition ${
+                      i === tagGroupIndex ? "bg-red-500" : "bg-gray-300 dark:bg-gray-600"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+            {showAllTags && (
+              <div className="flex gap-2 flex-wrap justify-center mt-2">
+                {displayTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => handleTagClick(tag)}
+                    className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
         )}
