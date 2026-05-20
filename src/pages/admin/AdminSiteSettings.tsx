@@ -51,8 +51,8 @@ export default function AdminSiteSettings() {
       })
       setPageError("")
     } catch (err: any) {
-      setPageError(err?.message || "加载站点设置失败")
-      toast(err?.message || "加载站点设置失败", "error")
+      setPageError(err?.message || t("admin.siteSettings.loadFailed"))
+      toast(err?.message || t("admin.siteSettings.loadFailed"), "error")
     }
     finally { setLoading(false) }
   }
@@ -91,72 +91,72 @@ export default function AdminSiteSettings() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <PageHeader title="站点设置" description="统一管理站点品牌、SEO、页脚和自定义 Head 注入内容。" />
-      {pageError ? <EmptyState title="加载失败" description={pageError} tone="error" /> : null}
+      <PageHeader title={t("admin.siteSettings.title")} description={t("admin.siteSettings.desc")} />
+      {pageError ? <EmptyState title={t("common.error")} description={pageError} tone="error" /> : null}
       <SectionCard className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo</label>
-            <ImageUploader type="cover" value={form.logo_url} onChange={(url) => setForm({ ...form, logo_url: url })} aspectRatio={1} className="w-24 h-24" placeholder="点击上传 Logo" />
-            <input type="text" value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder="或输入 Logo URL" className="ui-input w-full mt-2 px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("admin.siteSettings.logo")}</label>
+            <ImageUploader type="cover" value={form.logo_url} onChange={(url) => setForm({ ...form, logo_url: url })} aspectRatio={1} className="w-24 h-24" />
+            <input type="text" value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder={t("admin.siteSettings.logoPlaceholder")} className="ui-input w-full mt-2 px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Favicon</label>
-            <ImageUploader type="icon" value={form.favicon_url} onChange={(url) => setForm({ ...form, favicon_url: url })} aspectRatio={1} className="w-16 h-16" placeholder="点击上传 Favicon" />
-            <input type="text" value={form.favicon_url} onChange={(e) => setForm({ ...form, favicon_url: e.target.value })} placeholder="或输入 Favicon URL" className="ui-input w-full mt-2 px-3 py-2 text-sm" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("admin.siteSettings.favicon")}</label>
+            <ImageUploader type="icon" value={form.favicon_url} onChange={(url) => setForm({ ...form, favicon_url: url })} aspectRatio={1} className="w-16 h-16" />
+            <input type="text" value={form.favicon_url} onChange={(e) => setForm({ ...form, favicon_url: e.target.value })} placeholder={t("admin.siteSettings.faviconPlaceholder")} className="ui-input w-full mt-2 px-3 py-2 text-sm" />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">站点名称</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.siteName")}</label>
           <input type="text" value={form.site_name} onChange={(e) => setForm({ ...form, site_name: e.target.value })}
             className="ui-input w-full px-3 py-2" />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">站点描述</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.description")}</label>
           <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
             rows={2} className="ui-textarea w-full px-3 py-2" />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">关键词（逗号分隔）</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.keywords")}</label>
           <input type="text" value={form.keywords} onChange={(e) => setForm({ ...form, keywords: e.target.value })}
             className="ui-input w-full px-3 py-2" />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">页脚 HTML</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.footerHtml")}</label>
           <textarea value={form.footer_html} onChange={(e) => setForm({ ...form, footer_html: e.target.value })}
             rows={2} className="ui-textarea w-full px-3 py-2" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Google Analytics ID</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.gaId")}</label>
             <input type="text" value={form.ga_id} onChange={(e) => setForm({ ...form, ga_id: e.target.value })}
-              placeholder="G-XXXXXXXXXX"
+              placeholder={t("admin.siteSettings.gaPlaceholder")}
               className="ui-input w-full px-3 py-2" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">备案号</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.beian")}</label>
             <input type="text" value={form.beian} onChange={(e) => setForm({ ...form, beian: e.target.value })}
-              placeholder="京ICP备XXXXXXXX号"
+              placeholder={t("admin.siteSettings.beianPlaceholder")}
               className="ui-input w-full px-3 py-2" />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">自定义 Head HTML</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.customHead")}</label>
           <textarea value={form.custom_head_html} onChange={(e) => setForm({ ...form, custom_head_html: e.target.value })}
-            rows={3} placeholder="<meta ...> / <link ...>"
+            rows={3} placeholder={t("admin.siteSettings.customHeadPlaceholder")}
             className="ui-textarea w-full px-3 py-2 font-mono text-sm" />
         </div>
 
         <button onClick={handleSave} disabled={saving}
           className="ui-btn ui-btn-primary w-full disabled:opacity-50 flex items-center justify-center gap-2">
           <Save className="w-4 h-4" />
-          {saving ? "保存中..." : "保存设置"}
+          {saving ? t("admin.siteSettings.saving") : t("admin.siteSettings.save")}
         </button>
       </SectionCard>
     </div>

@@ -34,8 +34,8 @@ export default function AdminSearchEngines() {
       setEngines(res)
       setPageError("")
     } catch (err: any) {
-      setPageError(err?.message || "加载搜索引擎失败")
-      toast(err?.message || "加载搜索引擎失败", "error")
+      setPageError(err?.message || t("admin.searchEngines.loadFailed"))
+      toast(err?.message || t("admin.searchEngines.loadFailed"), "error")
     } finally { setLoading(false) }
   }
 
@@ -66,7 +66,7 @@ export default function AdminSearchEngines() {
   }
 
   async function handleDelete(id: string) {
-    if (!token || !await confirm("确定要删除这个搜索引擎吗？")) return
+    if (!token || !await confirm(t("admin.searchEngines.confirmDelete"))) return
     try {
       await searchEngineApi.delete(token, id)
       setEngines(engines.filter((item) => item.id !== id))
@@ -98,17 +98,17 @@ export default function AdminSearchEngines() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <PageHeader
-        title="搜索引擎管理"
-        description="统一配置首页搜索入口与站内搜索能力。"
-        actions={<button onClick={openAdd} className="ui-btn ui-btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />添加搜索引擎</button>}
+        title={t("admin.searchEngines.title")}
+        description={t("admin.searchEngines.desc")}
+        actions={<button onClick={openAdd} className="ui-btn ui-btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />{t("admin.searchEngines.add")}</button>}
       />
 
-      {pageError ? <EmptyState title="加载失败" description={pageError} tone="error" /> : null}
+      {pageError ? <EmptyState title={t("common.error")} description={pageError} tone="error" /> : null}
 
       {loading ? (
         <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>
       ) : !pageError && engines.length === 0 ? (
-        <EmptyState title="暂无搜索引擎" description="可先添加一个搜索引擎，或配置站内搜索入口。" icon={<Search className="w-6 h-6" />} action={<button onClick={openAdd} className="ui-btn ui-btn-primary">添加搜索引擎</button>} />
+        <EmptyState title={t("admin.searchEngines.noData")} description={t("admin.searchEngines.noDataDesc")} icon={<Search className="w-6 h-6" />} action={<button onClick={openAdd} className="ui-btn ui-btn-primary">{t("admin.searchEngines.add")}</button>} />
       ) : (
         <div className="space-y-2">
           {engines.map((engine) => (
@@ -125,7 +125,7 @@ export default function AdminSearchEngines() {
                   <span className="font-medium text-[var(--color-text-main)]">{engine.name}</span>
                   <span className="text-xs text-[var(--color-text-muted)] ml-2">#{engine.sort_order}</span>
                   {engine.is_site_search ? (
-                    <span className="ml-2 text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">站内搜索</span>
+                    <span className="ml-2 text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">{t("admin.searchEngines.siteSearch")}</span>
                   ) : (
                     <span className="ml-2 text-xs text-[var(--color-text-muted)]">{engine.url}?{engine.param}=...</span>
                   )}
@@ -140,38 +140,38 @@ export default function AdminSearchEngines() {
         </div>
       )}
 
-      <Modal show={showModal} title={editing ? "编辑搜索引擎" : "添加搜索引擎"} onClose={() => setShowModal(false)}>
+      <Modal show={showModal} title={editing ? t("admin.searchEngines.edit") : t("admin.searchEngines.add")} onClose={() => setShowModal(false)}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">名称</label>
+            <label className="block text-sm font-medium mb-1">{t("admin.searchEngines.formName")}</label>
             <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="百度" className="ui-input w-full px-3 py-2" />
+              placeholder={t("admin.searchEngines.formNamePlaceholder")} className="ui-input w-full px-3 py-2" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">搜索URL</label>
+            <label className="block text-sm font-medium mb-1">{t("admin.searchEngines.formUrl")}</label>
             <input type="text" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })}
-              placeholder="https://www.baidu.com/s" className="ui-input w-full px-3 py-2" />
+              placeholder={t("admin.searchEngines.formUrlPlaceholder")} className="ui-input w-full px-3 py-2" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">查询参数名</label>
+            <label className="block text-sm font-medium mb-1">{t("admin.searchEngines.formParam")}</label>
             <input type="text" value={form.param} onChange={(e) => setForm({ ...form, param: e.target.value })}
-              placeholder="wd" className="ui-input w-full px-3 py-2" />
+              placeholder={t("admin.searchEngines.formParamPlaceholder")} className="ui-input w-full px-3 py-2" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">图标</label>
+            <label className="block text-sm font-medium mb-1">{t("admin.searchEngines.formIcon")}</label>
             <div className="flex gap-2">
               <ImageUploader type="icon" value={form.icon_url} onChange={(url) => setForm({ ...form, icon_url: url })} className="w-12 h-12 shrink-0" />
               <input type="text" value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })}
-                placeholder="https://example.com/favicon.ico" className="ui-input flex-1 px-3 py-2 text-sm" />
+                placeholder={t("admin.searchEngines.formIconPlaceholder")} className="ui-input flex-1 px-3 py-2 text-sm" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">颜色</label>
+            <label className="block text-sm font-medium mb-1">{t("admin.searchEngines.formColor")}</label>
             <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })}
               className="w-full h-10 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface)]" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">排序</label>
+            <label className="block text-sm font-medium mb-1">{t("admin.searchEngines.formSort")}</label>
             <input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })}
               className="ui-input w-full px-3 py-2" />
           </div>
@@ -179,11 +179,11 @@ export default function AdminSearchEngines() {
             <input type="checkbox" checked={form.is_site_search}
               onChange={(e) => setForm({ ...form, is_site_search: e.target.checked })}
               className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500" />
-            站内搜索（跳转到本站搜索页面）
+            {t("admin.searchEngines.siteSearchHint")}
           </label>
           <div className="flex gap-2 pt-2">
-            <button onClick={() => setShowModal(false)} className="flex-1 ui-btn ui-btn-ghost">取消</button>
-            <button onClick={handleSave} className="flex-1 ui-btn ui-btn-primary">保存</button>
+            <button onClick={() => setShowModal(false)} className="flex-1 ui-btn ui-btn-ghost">{t("common.cancel")}</button>
+            <button onClick={handleSave} className="flex-1 ui-btn ui-btn-primary">{t("common.save")}</button>
           </div>
         </div>
       </Modal>

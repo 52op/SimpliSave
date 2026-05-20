@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { submissionApi, cardGroupApi } from "../../services/api"
 import { Submission, CardGroup } from "../../types"
-import { Check, X, Clock, ExternalLink, Globe } from "lucide-react"
+import { Check, X, Clock, ExternalLink, Globe, Send } from "lucide-react"
 import Favicon from "../../components/Favicon"
 import EmptyState from "../../components/EmptyState"
 import PageHeader from "../../components/PageHeader"
@@ -73,13 +73,13 @@ export default function AdminSubmissions() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">审核链接</h1>
+      <PageHeader title={t("admin.submissions.title")} />
 
       <div className="flex gap-2 mb-6">
         {(["pending", "approved", "rejected"] as const).map((s) => (
           <button key={s} onClick={() => setFilterStatus(s)}
             className={`px-4 py-2 rounded-lg font-medium ${filterStatus === s ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200"}`}>
-            {s === "pending" ? "待审核" : s === "approved" ? "已通过" : "已拒绝"}
+            {t(`admin.submissions.${s}`)}
           </button>
         ))}
       </div>
@@ -90,8 +90,8 @@ export default function AdminSubmissions() {
         <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>
       ) : submissions.length === 0 ? (
         <EmptyState
-          title={`暂无${filterStatus === "pending" ? "待审核" : filterStatus === "approved" ? "已通过" : "已拒绝"}提交`}
-          description="可切换筛选状态查看其他结果。"
+          title={t("admin.submissions.noData", { status: t(`admin.submissions.${filterStatus}`) })}
+          description={t("admin.submissions.noDataDesc")}
           icon={<Clock className="w-6 h-6" />}
         />
       ) : (
@@ -104,7 +104,7 @@ export default function AdminSubmissions() {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-medium text-gray-900 dark:text-gray-100">{s.title}</h3>
                     <span className={`text-xs px-2 py-0.5 rounded ${statusColors[s.status]}`}>
-                      {s.status === "pending" ? "待审核" : s.status === "approved" ? "已通过" : "已拒绝"}
+                      {t(`admin.submissions.status${s.status.charAt(0).toUpperCase()}${s.status.slice(1)}`)}
                     </span>
                   </div>
                   <a href={s.url} target="_blank" rel="noopener noreferrer"
@@ -112,9 +112,9 @@ export default function AdminSubmissions() {
                     <ExternalLink className="w-3 h-3" />{s.url}
                   </a>
                   {s.description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{s.description}</p>}
-                  {s.admin_note && <p className="text-xs text-red-500 mt-1">备注: {s.admin_note}</p>}
+                  {s.admin_note && <p className="text-xs text-red-500 mt-1">{t("admin.submissions.note", { note: s.admin_note })}</p>}
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                    提交者: {(s as any).user_name || (s as any).user_email || s.user_id} · {new Date(s.created_at).toLocaleString()}
+                    {t("admin.submissions.submitter", { info: (s as any).user_name || (s as any).user_email || s.user_id })} · {new Date(s.created_at).toLocaleString()}
                   </p>
                 </div>
 
@@ -125,16 +125,16 @@ export default function AdminSubmissions() {
                       onChange={(e) => setTargetGroupMap(prev => ({ ...prev, [s.id]: e.target.value }))}
                       className="text-xs border rounded px-1 py-0.5"
                     >
-                      <option value="">创建新卡片组</option>
+                      <option value="">{t("admin.submissions.createGroup")}</option>
                       {groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
                     </select>
                     <button onClick={() => handleApprove(s.id)}
                       className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1 text-sm">
-                      <Check className="w-4 h-4" />通过
+                      <Check className="w-4 h-4" />{t("admin.submissions.approve")}
                     </button>
                     <button onClick={() => setRejectingId(s.id)}
                       className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1 text-sm">
-                      <X className="w-4 h-4" />拒绝
+                      <X className="w-4 h-4" />{t("admin.submissions.reject")}
                     </button>
                   </div>
                 )}
@@ -144,12 +144,12 @@ export default function AdminSubmissions() {
               {rejectingId === s.id && (
                 <div className="mt-3 flex gap-2">
                   <input type="text" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="拒绝原因（可选）"
+                    placeholder={t("admin.submissions.rejectReason")}
                     className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
                   <button onClick={() => handleReject(s.id)}
-                    className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">确认拒绝</button>
+                    className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">{t("admin.submissions.confirmReject")}</button>
                   <button onClick={() => { setRejectingId(null); setRejectReason("") }}
-                    className="px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">取消</button>
+                    className="px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm">{t("admin.submissions.cancel")}</button>
                 </div>
               )}
             </div>

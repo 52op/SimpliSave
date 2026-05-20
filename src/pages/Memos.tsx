@@ -55,7 +55,13 @@ function isInTimeRange(dateStr: string, filter: string): boolean {
   }
 }
 
-const TIME_FILTERS = ["all", "today", "7days", "month", "year"] as const
+const TIME_FILTERS: { value: string; labelKey: string }[] = [
+  { value: "all", labelKey: "memos.filterAll" },
+  { value: "today", labelKey: "memos.filterToday" },
+  { value: "7days", labelKey: "memos.filter7Days" },
+  { value: "month", labelKey: "memos.filterMonth" },
+  { value: "year", labelKey: "memos.filterYear" },
+]
 
 export default function Memos() {
   const { t } = useTranslation()
@@ -73,6 +79,7 @@ export default function Memos() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [showPinnedOnly, setShowPinnedOnly] = useState(false)
   const [timeFilter, setTimeFilter] = useState<string>("all")
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [pageError, setPageError] = useState("")
 
   const [categoryNameState, setCategoryNameState] = useState("")
@@ -108,7 +115,9 @@ export default function Memos() {
       const matchesCategory = selectedCategory === "all" || m.category_id === selectedCategory
       const matchesPinned = !showPinnedOnly || !!m.is_pinned
       const matchesTime = isInTimeRange(m.created_at, timeFilter)
-      return matchesSearch && matchesCategory && matchesPinned && matchesTime
+      const mDate = m.created_at.slice(0, 10)
+      const matchesDateRange = !dateRange.start || !dateRange.end || (mDate >= dateRange.start && mDate <= dateRange.end)
+      return matchesSearch && matchesCategory && matchesPinned && matchesTime && matchesDateRange
     })
     .sort((a, b) => {
       if (a.is_pinned !== b.is_pinned) return b.is_pinned - a.is_pinned
@@ -236,12 +245,22 @@ export default function Memos() {
           <button onClick={() => setShowPinnedOnly((prev) => !prev)} className={`${showPinnedOnly ? "ui-btn ui-btn-primary" : "ui-btn ui-btn-ghost"} h-11 w-full sm:w-auto`}>
             {t("memos.pinnedOnly")}
           </button>
+          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            <input type="date" value={dateRange.start} onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
+              className="ui-input h-11 px-2 text-sm w-full sm:w-[140px]" />
+            <span className="text-gray-400 text-sm flex-shrink-0">—</span>
+            <input type="date" value={dateRange.end} onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
+              className="ui-input h-11 px-2 text-sm w-full sm:w-[140px]" />
+            {(dateRange.start || dateRange.end) && (
+              <button onClick={() => setDateRange({ start: "", end: "" })} className="text-gray-400 hover:text-red-500 flex-shrink-0 p-1">×</button>
+            )}
+          </div>
         </FilterBar>
         <div className="flex gap-2 mt-3 flex-wrap">
           {TIME_FILTERS.map((f) => (
-            <button key={f} onClick={() => setTimeFilter(f)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition ${timeFilter === f ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-              {t(`memos.filter${f.charAt(0).toUpperCase()}${f.slice(1)}`)}
+            <button key={f.value} onClick={() => setTimeFilter(f.value)}
+              className={`px-3 py-1.5 text-sm rounded-lg transition ${timeFilter === f.value ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+              {t(f.labelKey)}
             </button>
           ))}
         </div>
@@ -253,10 +272,10 @@ export default function Memos() {
 
       {!pageError && filteredMemos.length === 0 ? (
         <EmptyState
-          title={searchQuery || selectedCategory !== "all" || showPinnedOnly || timeFilter !== "all" ? t("memos.noMatchTitle") : t("memos.noMemos")}
-          description={searchQuery || selectedCategory !== "all" || showPinnedOnly || timeFilter !== "all" ? t("memos.noMatchDesc") : t("memos.pageDesc")}
+          title={searchQuery || selectedCategory !== "all" || showPinnedOnly || timeFilter !== "all" || dateRange.start || dateRange.end ? t("memos.noMatchTitle") : t("memos.noMemos")}
+          description={searchQuery || selectedCategory !== "all" || showPinnedOnly || timeFilter !== "all" || dateRange.start || dateRange.end ? t("memos.noMatchDesc") : t("memos.pageDesc")}
           icon={<FileText className="w-6 h-6" />}
-          action={!searchQuery && selectedCategory === "all" && !showPinnedOnly && timeFilter === "all" ? <button onClick={() => setShowAddModal(true)} className="ui-btn ui-btn-primary">{t("memos.addFirst")}</button> : undefined}
+          action={!searchQuery && selectedCategory === "all" && !showPinnedOnly && timeFilter === "all" && !dateRange.start && !dateRange.end ? <button onClick={() => setShowAddModal(true)} className="ui-btn ui-btn-primary">{t("memos.addFirst")}</button> : undefined}
         />
       ) : !pageError ? (
         <div className="space-y-8">

@@ -33,8 +33,8 @@ export default function AdminCategories() {
       setCategories(res)
       setPageError("")
     } catch (err: any) {
-      setPageError(err?.message || "加载分类失败")
-      toast(err?.message || "加载分类失败", "error")
+      setPageError(err?.message || t("admin.categories.loadFailed"))
+      toast(err?.message || t("admin.categories.loadFailed"), "error")
     } finally {
       setLoading(false)
     }
@@ -112,13 +112,13 @@ export default function AdminCategories() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <PageHeader title={t("categories.title")} description="维护公开分类，支持颜色、图标和顺序调整。" actions={<button onClick={openAdd} className="ui-btn ui-btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />{t("categories.add")}</button>} />
-      {pageError ? <EmptyState title="加载失败" description={pageError} tone="error" /> : null}
+      <PageHeader title={t("categories.title")} description={t("admin.categories.desc")} actions={<button onClick={openAdd} className="ui-btn ui-btn-primary flex items-center gap-2"><Plus className="w-4 h-4" />{t("categories.add")}</button>} />
+      {pageError ? <EmptyState title={t("common.error")} description={pageError} tone="error" /> : null}
 
       {loading ? (
         <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>
       ) : !pageError && categories.length === 0 ? (
-        <EmptyState title="暂无分类" description="可先添加一个公开分类，再用于卡片组整理。" icon={<Folder className="w-6 h-6" />} action={<button onClick={openAdd} className="ui-btn ui-btn-primary">{t("categories.add")}</button>} />
+        <EmptyState title={t("admin.categories.noData")} description={t("admin.categories.noDataDesc")} icon={<Folder className="w-6 h-6" />} action={<button onClick={openAdd} className="ui-btn ui-btn-primary">{t("categories.add")}</button>} />
       ) : (
         <div className="space-y-2">
           {categories.map((category, index) => (
@@ -130,13 +130,13 @@ export default function AdminCategories() {
                 <span className="text-xs text-[var(--color-text-muted)]">#{category.sort_order}</span>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => openEdit(category)} className="p-1 text-[var(--color-text-muted)] hover:text-blue-600" title="编辑"><Edit2 className="w-4 h-4" /></button>
-                <button onClick={() => handleDelete(category.id)} className="p-1 text-[var(--color-text-muted)] hover:text-red-600" title="删除"><Trash2 className="w-4 h-4" /></button>
+                <button onClick={() => openEdit(category)} className="p-1 text-[var(--color-text-muted)] hover:text-blue-600" title={t("common.edit")}><Edit2 className="w-4 h-4" /></button>
+                <button onClick={() => handleDelete(category.id)} className="p-1 text-[var(--color-text-muted)] hover:text-red-600" title={t("common.delete")}><Trash2 className="w-4 h-4" /></button>
                 <span className="text-[var(--color-border)] mx-1">|</span>
                 <button onClick={() => handleMoveUp(index)} disabled={index === 0}
-                  className="p-1 text-[var(--color-text-muted)] hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed" title="上移"><ArrowUp className="w-4 h-4" /></button>
+                  className="p-1 text-[var(--color-text-muted)] hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed" title={t("common.prevPage")}><ArrowUp className="w-4 h-4" /></button>
                 <button onClick={() => handleMoveDown(index)} disabled={index === categories.length - 1}
-                  className="p-1 text-[var(--color-text-muted)] hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed" title="下移"><ArrowDown className="w-4 h-4" /></button>
+                  className="p-1 text-[var(--color-text-muted)] hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed" title={t("common.nextPage")}><ArrowDown className="w-4 h-4" /></button>
               </div>
             </SectionCard>
           ))}
@@ -150,7 +150,7 @@ export default function AdminCategories() {
             <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="ui-input w-full px-3 py-2" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">{t("categories.icon")} (HTML/SVG 或图片)</label>
+            <label className="block text-sm font-medium mb-1">{t("categories.icon")} {t("admin.categories.iconHint")}</label>
             <div className="flex gap-2">
               <ImageUploader type="icon" value={form.icon && form.icon.startsWith('http') ? form.icon : ''} onChange={(url) => setForm({ ...form, icon: url })} className="w-10 h-10 shrink-0" />
               <input type="text" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })}
@@ -162,7 +162,7 @@ export default function AdminCategories() {
             <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-full h-10 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface)]" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">排序</label>
+            <label className="block text-sm font-medium mb-1">{t("admin.categories.sortOrder")}</label>
             <input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })} className="ui-input w-full px-3 py-2" />
           </div>
           <div className="flex gap-2 pt-2">

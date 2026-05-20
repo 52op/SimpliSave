@@ -45,8 +45,8 @@ export default function AdminImageBeds() {
       await Promise.all([loadConfigs(token), loadSettings(token)])
       setPageError("")
     } catch (err: any) {
-      setPageError(err?.message || "加载图床配置失败")
-      toast(err?.message || "加载图床配置失败", "error")
+      setPageError(err?.message || t("admin.imagebeds.loadFailed"))
+      toast(err?.message || t("admin.imagebeds.loadFailed"), "error")
     } finally {
       setLoading(false)
     }
@@ -90,7 +90,7 @@ export default function AdminImageBeds() {
   }
 
   async function handleDelete(id: string) {
-    if (!token || !await confirm("确定要删除这个图床配置吗？")) return
+    if (!token || !await confirm(t("admin.imagebeds.confirmDelete"))) return
     try {
       await deleteConfig(token, id)
     } catch (err: any) {
@@ -174,24 +174,24 @@ export default function AdminImageBeds() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <PageHeader title="图床管理" description="管理上传目标与压缩策略，统一控制图标、封面、备忘录和头像图片处理。" actions={
+      <PageHeader title={t("admin.imagebeds.title")} description={t("admin.imagebeds.desc")} actions={
         <div className="flex gap-2">
           <button onClick={openSettings} className="ui-btn ui-btn-ghost">
-            <Settings className="w-4 h-4" /> 尺寸设置
+            <Settings className="w-4 h-4" /> {t("admin.imagebeds.settings")}
           </button>
           <button onClick={openAdd} className="ui-btn ui-btn-primary">
-            <Plus className="w-4 h-4" /> 添加图床
+            <Plus className="w-4 h-4" /> {t("admin.imagebeds.add")}
           </button>
         </div>
       } />
-      {pageError ? <EmptyState title="加载失败" description={pageError} tone="error" /> : null}
+      {pageError ? <EmptyState title={t("common.error")} description={pageError} tone="error" /> : null}
 
       {!pageError && configs.length === 0 ? (
         <EmptyState
-          title="暂无图床配置"
-          description="可先添加一个上传目标，再统一配置图片尺寸和压缩策略。"
+          title={t("admin.imagebeds.noData")}
+          description={t("admin.imagebeds.noDataDesc")}
           icon={<Server className="w-6 h-6" />}
-          action={<button onClick={openAdd} className="ui-btn ui-btn-primary">添加第一个图床</button>}
+          action={<button onClick={openAdd} className="ui-btn ui-btn-primary">{t("admin.imagebeds.noDataAction")}</button>}
         />
       ) : !pageError ? (
         <div className="space-y-4">
@@ -202,25 +202,25 @@ export default function AdminImageBeds() {
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="font-medium text-gray-900 dark:text-gray-100">{config.name}</h3>
                     {config.is_default === 1 && (
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">默认</span>
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{t("admin.imagebeds.defaultBadge")}</span>
                     )}
                     {config.enabled === 0 && (
-                      <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded">已禁用</span>
+                      <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded">{t("admin.imagebeds.disabledBadge")}</span>
                     )}
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-                    <p>端点: {config.endpoint}</p>
-                    <p>Bucket: {config.bucket}</p>
-                    {config.region && <p>Region: {config.region}</p>}
-                    {config.custom_domain && <p>自定义域名: {config.custom_domain}</p>}
-                    <p className="text-xs text-gray-400 dark:text-gray-500">路径模板: {config.path_template}</p>
+                    <p>{t("admin.imagebeds.endpoint", { value: config.endpoint })}</p>
+                    <p>{t("admin.imagebeds.bucket", { value: config.bucket })}</p>
+                    {config.region && <p>{t("admin.imagebeds.region", { value: config.region })}</p>}
+                    {config.custom_domain && <p>{t("admin.imagebeds.customDomain", { value: config.custom_domain })}</p>}
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{t("admin.imagebeds.pathTemplate", { value: config.path_template })}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleToggle(config.id, config.enabled ? 0 : 1)}
                     className={`p-2 rounded-lg ${config.enabled ? 'text-green-600 hover:bg-green-50' : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                    title={config.enabled ? '禁用' : '启用'}
+                    title={config.enabled ? t("admin.imagebeds.disable") : t("admin.imagebeds.enable")}
                   >
                     {config.enabled ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
                   </button>
@@ -242,80 +242,80 @@ export default function AdminImageBeds() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{editing ? '编辑图床' : '添加图床'}</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{editing ? t("admin.imagebeds.edit") : t("admin.imagebeds.add")}</h3>
               <button onClick={() => { setShowConfigModal(false); setEditing(null); resetForm() }} className="text-gray-400 dark:text-gray-500 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">账户名称</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formName")}</label>
                 <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="例如: Backblaze B2"
+                  placeholder={t("admin.imagebeds.formNamePlaceholder")}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Application Key ID</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formAccessKey")}</label>
                 <input type="text" value={form.access_key} onChange={(e) => setForm({ ...form, access_key: e.target.value })}
-                  placeholder="例如: 003da8b2c75455c0000000001"
+                  placeholder={t("admin.imagebeds.formAccessKeyPlaceholder")}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Application Key</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formSecretKey")}</label>
                 <input type="password" value={form.secret_key} onChange={(e) => setForm({ ...form, secret_key: e.target.value })}
-                  placeholder="例如: K003+UCBMmt..."
+                  placeholder={t("admin.imagebeds.formSecretKeyPlaceholder")}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bucket 名称</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formBucket")}</label>
                 <input type="text" value={form.bucket} onChange={(e) => setForm({ ...form, bucket: e.target.value })}
-                  placeholder="例如: my-bucket"
+                  placeholder={t("admin.imagebeds.formBucketPlaceholder")}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">区域名称</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formRegion")}</label>
                 <input type="text" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })}
-                  placeholder="例如: us-west-004"
+                  placeholder={t("admin.imagebeds.formRegionPlaceholder")}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">终端 URL</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formEndpoint")}</label>
                 <input type="text" value={form.endpoint} onChange={(e) => setForm({ ...form, endpoint: e.target.value })}
-                  placeholder="例如: https://s3.us-west-004.backblazeb2.com"
+                  placeholder={t("admin.imagebeds.formEndpointPlaceholder")}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">自定义域名</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formCustomDomain")}</label>
                 <input type="text" value={form.custom_domain} onChange={(e) => setForm({ ...form, custom_domain: e.target.value })}
-                  placeholder="例如: https://files.example.com"
+                  placeholder={t("admin.imagebeds.formCustomDomainPlaceholder")}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">路径模板</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formPathTemplate")}</label>
                 <input type="text" value={form.path_template} onChange={(e) => setForm({ ...form, path_template: e.target.value })}
                   placeholder="{year}/{month}/{day}/{time}_{md5}.{ext}"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">支持变量: {"{year}"}, {"{month}"}, {"{day}"}, {"{time}"}, {"{filename}"}, {"{ext}"}, {"{md5}"}, {"{uuid}"}, {"{type}"}, {"{user_id}"}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{t("admin.imagebeds.formPathTemplateHint")}</p>
               </div>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={form.enabled === 1} onChange={(e) => setForm({ ...form, enabled: e.target.checked ? 1 : 0 })} />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">启用</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{t("admin.imagebeds.formEnabled")}</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={form.is_default === 1} onChange={(e) => setForm({ ...form, is_default: e.target.checked ? 1 : 0 })} />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">设为默认</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{t("admin.imagebeds.formDefault")}</span>
                 </label>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">排序</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formSort")}</label>
                 <input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
             </div>
             <div className="flex gap-2 pt-4">
-              <button onClick={() => { setShowConfigModal(false); setEditing(null); resetForm() }} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
-              <button onClick={handleSaveConfig} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
+              <button onClick={() => { setShowConfigModal(false); setEditing(null); resetForm() }} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
+              <button onClick={handleSaveConfig} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
             </div>
           </div>
         </div>
@@ -326,101 +326,101 @@ export default function AdminImageBeds() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">图片尺寸设置</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">{t("admin.imagebeds.formSettingsTitle")}</h3>
               <button onClick={() => setShowSettingsModal(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-6">
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">图标设置</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">{t("admin.imagebeds.iconSection")}</h4>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">最大宽度</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.maxWidth")}</label>
                     <input type="number" value={settingsForm.icon_max_width} onChange={(e) => setSettingsForm({ ...settingsForm, icon_max_width: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">最大高度</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.maxHeight")}</label>
                     <input type="number" value={settingsForm.icon_max_height} onChange={(e) => setSettingsForm({ ...settingsForm, icon_max_height: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">质量 (1-100)</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.quality")}</label>
                     <input type="number" value={settingsForm.icon_quality} onChange={(e) => setSettingsForm({ ...settingsForm, icon_quality: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">封面设置</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">{t("admin.imagebeds.coverSection")}</h4>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">最大宽度</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.maxWidth")}</label>
                     <input type="number" value={settingsForm.cover_max_width} onChange={(e) => setSettingsForm({ ...settingsForm, cover_max_width: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">最大高度</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.maxHeight")}</label>
                     <input type="number" value={settingsForm.cover_max_height} onChange={(e) => setSettingsForm({ ...settingsForm, cover_max_height: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">质量 (1-100)</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.quality")}</label>
                     <input type="number" value={settingsForm.cover_quality} onChange={(e) => setSettingsForm({ ...settingsForm, cover_quality: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">备忘录图片设置</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">{t("admin.imagebeds.memoSection")}</h4>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">最大宽度</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.maxWidth")}</label>
                     <input type="number" value={settingsForm.memo_max_width} onChange={(e) => setSettingsForm({ ...settingsForm, memo_max_width: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">最大高度</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.maxHeight")}</label>
                     <input type="number" value={settingsForm.memo_max_height} onChange={(e) => setSettingsForm({ ...settingsForm, memo_max_height: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">质量 (1-100)</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.quality")}</label>
                     <input type="number" value={settingsForm.memo_quality} onChange={(e) => setSettingsForm({ ...settingsForm, memo_quality: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">头像设置</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">{t("admin.imagebeds.avatarSection")}</h4>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">最大宽度</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.maxWidth")}</label>
                     <input type="number" value={settingsForm.avatar_max_width} onChange={(e) => setSettingsForm({ ...settingsForm, avatar_max_width: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">最大高度</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.maxHeight")}</label>
                     <input type="number" value={settingsForm.avatar_max_height} onChange={(e) => setSettingsForm({ ...settingsForm, avatar_max_height: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">质量 (1-100)</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.quality")}</label>
                     <input type="number" value={settingsForm.avatar_quality} onChange={(e) => setSettingsForm({ ...settingsForm, avatar_quality: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">通用设置</h4>
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">{t("admin.imagebeds.generalSection")}</h4>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">最大文件大小 (MB)</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.maxFileSize")}</label>
                     <input type="number" value={settingsForm.max_file_size_mb} onChange={(e) => setSettingsForm({ ...settingsForm, max_file_size_mb: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">允许的图片格式</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">{t("admin.imagebeds.allowedFormats")}</label>
                     <input type="text" value={settingsForm.allowed_formats} onChange={(e) => setSettingsForm({ ...settingsForm, allowed_formats: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg" />
                   </div>
                   <label className="flex items-center gap-2">
                     <input type="checkbox" checked={settingsForm.convert_to_webp === 1} onChange={(e) => setSettingsForm({ ...settingsForm, convert_to_webp: e.target.checked ? 1 : 0 })} />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">自动转换为 WebP 格式</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{t("admin.imagebeds.convertToWebp")}</span>
                   </label>
                 </div>
               </div>
             </div>
             <div className="flex gap-2 pt-4">
-              <button onClick={() => setShowSettingsModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
-              <button onClick={handleSaveSettings} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
+              <button onClick={() => setShowSettingsModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
+              <button onClick={handleSaveSettings} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
             </div>
           </div>
         </div>

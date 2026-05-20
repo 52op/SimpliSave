@@ -43,11 +43,11 @@ export default function Header() {
 
   const adminNavs = [
     { p: "/admin/categories", l: t("categories.title"), icon: <Star className="w-4 h-4" /> },
-    { p: "/admin/submissions", l: "审核链接", icon: <Send className="w-4 h-4" /> },
+    { p: "/admin/submissions", l: t("admin.submissions.title"), icon: <Send className="w-4 h-4" /> },
     { p: "/admin/bookmarks", l: t("admin.bookmarks.title"), icon: <Globe className="w-4 h-4" /> },
-    { p: "/admin/search-engines", l: "搜索引擎", icon: <Search className="w-4 h-4" /> },
-    { p: "/admin/imagebeds", l: "图床管理", icon: <Image className="w-4 h-4" /> },
-    { p: "/admin/site-settings", l: "站点设置", icon: <Settings className="w-4 h-4" /> },
+    { p: "/admin/search-engines", l: t("admin.searchEngines.title"), icon: <Search className="w-4 h-4" /> },
+    { p: "/admin/imagebeds", l: t("admin.imagebeds.title"), icon: <Image className="w-4 h-4" /> },
+    { p: "/admin/site-settings", l: t("admin.siteSettings.title"), icon: <Settings className="w-4 h-4" /> },
   ]
 
   function openAdminMenu() {
@@ -68,7 +68,7 @@ export default function Header() {
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="lg:hidden p-2 rounded-md text-[var(--color-text-main)] hover:bg-[var(--color-surface-2)]"
-              aria-label={sidebarOpen ? "关闭菜单" : "打开菜单"}
+              aria-label={sidebarOpen ? t("common.close") : t("common.open")}
               aria-expanded={sidebarOpen}
             >
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -98,7 +98,7 @@ export default function Header() {
                 <div className="relative" onMouseEnter={openAdminMenu} onMouseLeave={closeAdminMenu}>
                   <button className="px-3 py-2 rounded-md text-sm font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] flex items-center gap-1.5">
                     <Shield className="w-4 h-4" />
-                    管理
+                    {t("nav.admin")}
                   </button>
                   {adminDropdownOpen && (
                     <div className="absolute top-full left-0 mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-lg py-1 min-w-[140px]" onMouseEnter={openAdminMenu} onMouseLeave={closeAdminMenu}>
@@ -120,8 +120,8 @@ export default function Header() {
             <button
               onClick={() => setSearchOpen(true)}
               className="p-2 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] text-sm flex items-center gap-1.5"
-              title={t("search.title") || "搜索 (Ctrl+K)"}
-              aria-label="搜索"
+              title={t("search.title")}
+              aria-label={t("search.title")}
             >
               <Search className="w-4 h-4" />
               <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 bg-[var(--color-surface-2)] rounded text-xs font-mono text-[var(--color-text-muted)]">Ctrl+K</kbd>
@@ -130,15 +130,15 @@ export default function Header() {
             <button
               onClick={toggleDark}
               className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-              title={dark ? "切换亮色模式" : "切换深色模式"}
-              aria-label={dark ? "切换亮色模式" : "切换深色模式"}
+              title={dark ? t("common.lightMode") : t("common.darkMode")}
+              aria-label={dark ? t("common.lightMode") : t("common.darkMode")}
             >
               {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <button
               onClick={toggleLang}
               className="p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm flex items-center gap-1"
-              title="切换语言"
+              title={t("common.switchLang")}
             >
               <span className="text-sm font-medium">{i18n.language === "zh" ? "EN" : "中"}</span>
             </button>
@@ -210,13 +210,13 @@ export default function Header() {
               className="flex items-center gap-2 px-3 py-3 rounded-md text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <User className="w-4 h-4" />
-              个人资料
+              {t("profile.title")}
             </Link>
           )}
           {isAdmin && (
             <>
               <div className="border-t dark:border-gray-700 my-2" />
-              <p className="px-3 text-xs text-gray-400 font-medium">管理</p>
+              <p className="px-3 text-xs text-gray-400 font-medium">{t("nav.admin")}</p>
               {adminNavs.map((n) => (
                 <Link
                   key={n.p}

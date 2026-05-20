@@ -72,14 +72,14 @@ export default function AdminBookmarks() {
       const res = await cardGroupApi.list({})
       setGroups(res)
       setPageError("")
-    } catch (err: any) { setPageError(err?.message || "加载卡片组失败") }
+    } catch (err: any) { setPageError(err?.message || t("common.error")) }
   }
 
   async function loadCategories() {
     try {
       const res = await publicCategoryApi.list()
       setCategories(res)
-    } catch (err: any) { setPageError(err?.message || "加载分类失败") }
+    } catch (err: any) { setPageError(err?.message || t("common.error")) }
   }
 
   async function loadBookmarks() {
@@ -93,8 +93,8 @@ export default function AdminBookmarks() {
       setBookmarks(res)
       setPageError("")
     } catch (err: any) {
-      setPageError(err?.message || "加载书签失败")
-      toast(err?.message || "加载书签失败", "error")
+      setPageError(err?.message || t("common.error"))
+      toast(err?.message || t("common.error"), "error")
     } finally {
       setLoading(false)
     }
@@ -242,9 +242,9 @@ export default function AdminBookmarks() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <PageHeader title={t("admin.bookmarks.title")} description="统一维护卡片组、公开链接与分类结构，提升导航页组织效率。" actions={
+      <PageHeader title={t("admin.bookmarks.title")} description={t("admin.bookmarks.pageDesc")} actions={
         <div className="flex gap-2">
-          <button onClick={openAddGroup} className="ui-btn ui-btn-primary bg-green-600 hover:bg-green-700 text-white"><Plus className="w-4 h-4" />新建卡片组</button>
+          <button onClick={openAddGroup} className="ui-btn ui-btn-primary bg-green-600 hover:bg-green-700 text-white"><Plus className="w-4 h-4" />{t("admin.bookmarks.createGroup")}</button>
           {selectedGroupId && (
             <button onClick={openAdd} className="ui-btn ui-btn-primary"><Plus className="w-4 h-4" />{t("admin.bookmarks.add")}</button>
           )}
@@ -253,13 +253,13 @@ export default function AdminBookmarks() {
       {/* 选择/搜索卡片组 */}
       <div className="ui-card p-4 mb-6 space-y-3">
         <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-600 dark:text-gray-400 shrink-0">选择卡片组：</label>
+          <label className="text-sm font-medium text-gray-600 dark:text-gray-400 shrink-0">{t("admin.bookmarks.selectGroup")}</label>
           <select
             value={selectedGroupId}
             onChange={(e) => { setSelectedGroupId(e.target.value); setPage(1) }}
             className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           >
-            <option value="">-- 请选择卡片组 --</option>
+            <option value="">{t("admin.bookmarks.groupPlaceholder")}</option>
             {groups.map(g => (
               <option key={g.id} value={g.id}>{g.title}</option>
             ))}
@@ -267,7 +267,7 @@ export default function AdminBookmarks() {
           {selectedGroup && (
             <button onClick={() => openEditGroup(selectedGroup)}
               className="px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50 text-sm">
-              编辑卡片组
+              {t("admin.bookmarks.editGroup")}
             </button>
           )}
         </div>
@@ -275,13 +275,13 @@ export default function AdminBookmarks() {
           <div className="flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-              <input type="text" value={groupSearch} onChange={(e) => setGroupSearch(e.target.value)}
-                placeholder="搜索卡片组..."
+                <input type="text" value={groupSearch} onChange={(e) => setGroupSearch(e.target.value)}
+                placeholder={t("admin.bookmarks.groupSearch")}
                 className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
-            </div>
-            <select value={groupCategoryFilter} onChange={(e) => setGroupCategoryFilter(e.target.value)}
-              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
-              <option value="">全部分类</option>
+              </div>
+              <select value={groupCategoryFilter} onChange={(e) => setGroupCategoryFilter(e.target.value)}
+                className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <option value="">{t("admin.bookmarks.allCategories")}</option>
               {categories.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -296,7 +296,7 @@ export default function AdminBookmarks() {
             <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
               <FolderOpen className="w-5 h-5 text-blue-600" />
               <span className="font-medium text-blue-800">{selectedGroup.title}</span>
-              <span className="text-sm text-blue-500">({bookmarks.length} 个子链接)</span>
+              <span className="text-sm text-blue-500">({t("admin.bookmarks.subLinks", { count: bookmarks.length })})</span>
             </div>
           )}
 
@@ -318,14 +318,14 @@ export default function AdminBookmarks() {
           ) : paged.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 text-gray-500 dark:text-gray-400">
               <Globe className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>暂无子链接</p>
+              <p>{t("admin.bookmarks.noSubLinks")}</p>
             </div>
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">ID</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("admin.bookmarks.id")}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.title")}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.url")}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.category")}</th>
@@ -371,11 +371,11 @@ export default function AdminBookmarks() {
             <div className="flex items-center justify-center gap-2 mt-6">
               <button onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">上一页</button>
-              <span className="text-sm text-gray-500 dark:text-gray-400">第 {page}/{totalPages} 页</span>
+                className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">{t("common.prevPage")}</button>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{t("common.pageNum", { page, total: totalPages })}</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">下一页</button>
+                className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">{t("common.nextPage")}</button>
             </div>
           )}
 
@@ -409,21 +409,21 @@ export default function AdminBookmarks() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">所属卡片组</label>
+                    <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formCardGroup")}</label>
                     <select value={formNewGroup ? "_new" : formGroupId} onChange={(e) => {
                       if (e.target.value === "_new") { setFormNewGroup("new"); setFormGroupId("") }
                       else { setFormGroupId(e.target.value); setFormNewGroup("") }
                     }}
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                      <option value="">{selectedGroup ? selectedGroup.title : "-- 选择卡片组 --"}</option>
-                      <option value="_new">➕ 新建卡片组</option>
+                      <option value="">{selectedGroup ? selectedGroup.title : t("admin.bookmarks.formSelectGroup")}</option>
+                      <option value="_new">{t("admin.bookmarks.formCreateGroup")}</option>
                       {groups.filter(g => g.id !== selectedGroupId).map(g => (
                         <option key={g.id} value={g.id}>{g.title}</option>
                       ))}
                     </select>
                     {!!formNewGroup && (
                       <input type="text" value={formNewGroup === "new" ? "" : formNewGroup} onChange={(e) => setFormNewGroup(e.target.value)}
-                        placeholder="输入新卡片组名称"
+                        placeholder={t("admin.bookmarks.formNewGroupPlaceholder")}
                         className="w-full mt-2 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                     )}
                   </div>
@@ -449,18 +449,18 @@ export default function AdminBookmarks() {
           {filteredGroups.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <FolderOpen className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>{groupSearch || groupCategoryFilter ? "未找到匹配的卡片组" : "暂无卡片组，请先创建"}</p>
+              <p>{groupSearch || groupCategoryFilter ? t("admin.bookmarks.noGroupsMatch") : t("admin.bookmarks.noGroupsCreate")}</p>
             </div>
           ) : (
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">标题</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">分类</th>
-                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">描述</th>
-                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">推荐</th>
-                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">访问次数</th>
-                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">操作</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("admin.bookmarks.groupTableTitle")}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("admin.bookmarks.groupTableCategory")}</th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("admin.bookmarks.groupTableDescription")}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("admin.bookmarks.groupTableFeatured")}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("admin.bookmarks.groupTableVisits")}</th>
+                  <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("admin.bookmarks.groupTableActions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -489,21 +489,21 @@ export default function AdminBookmarks() {
       )}
 
       {/* 卡片组编辑模态框 */}
-      <Modal show={showGroupModal} title={editingGroup ? "编辑卡片组" : "新建卡片组"} onClose={() => setShowGroupModal(false)} widthClass="max-w-lg">
+      <Modal show={showGroupModal} title={editingGroup ? t("admin.bookmarks.editGroup") : t("admin.bookmarks.createGroup")} onClose={() => setShowGroupModal(false)} widthClass="max-w-lg">
         <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">标题</label>
+                <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.groupTableTitle")}</label>
                 <input type="text" value={groupForm.title} onChange={(e) => setGroupForm({ ...groupForm, title: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">描述</label>
+                <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.groupTableDescription")}</label>
                 <textarea value={groupForm.description} onChange={(e) => setGroupForm({ ...groupForm, description: e.target.value })}
                   rows={2}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">图标</label>
+                <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formIcon")}</label>
                 <div className="flex gap-2">
                   <ImageUploader type="icon" value={groupForm.icon_url} onChange={(url) => setGroupForm({ ...groupForm, icon_url: url })} className="w-12 h-12 shrink-0" />
                   <input type="text" value={groupForm.icon_url} onChange={(e) => setGroupForm({ ...groupForm, icon_url: e.target.value })}
@@ -512,21 +512,21 @@ export default function AdminBookmarks() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">分类</label>
+                <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.groupTableCategory")}</label>
                 <select value={groupNewCategory ? "_new" : groupCategoryId} onChange={(e) => {
                   if (e.target.value === "_new") setGroupNewCategory("new")
                   else { setGroupCategoryId(e.target.value); setGroupNewCategory("") }
                 }}
                   className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                  <option value="">无分类</option>
-                  <option value="_new">➕ 新建分类</option>
+                  <option value="">{t("admin.bookmarks.formNoCategory")}</option>
+                  <option value="_new">{t("admin.bookmarks.formCreateCategory")}</option>
                   {categories.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
                 {!!groupNewCategory && (
                   <input type="text" value={groupNewCategory === "new" ? "" : groupNewCategory} onChange={(e) => setGroupNewCategory(e.target.value)}
-                    placeholder="输入新分类名称"
+                    placeholder={t("admin.bookmarks.formNewCategoryPlaceholder")}
                     className="w-full mt-2 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                 )}
               </div>
@@ -534,11 +534,11 @@ export default function AdminBookmarks() {
                 <input type="checkbox" checked={groupForm.is_featured} onChange={(e) => setGroupForm({ ...groupForm, is_featured: e.target.checked })}
                   className="rounded border-gray-300 dark:border-gray-600 text-yellow-500 focus:ring-yellow-500" />
                 <Star className="w-4 h-4 text-yellow-500" />
-                置顶到首页常用推荐
+                {t("admin.bookmarks.formFeatured")}
               </label>
               <div className="flex gap-2 pt-2">
-                <button onClick={() => setShowGroupModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">取消</button>
-                <button onClick={handleSaveGroup} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
+                <button onClick={() => setShowGroupModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">{t("common.cancel")}</button>
+                <button onClick={handleSaveGroup} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
               </div>
         </div>
       </Modal>
