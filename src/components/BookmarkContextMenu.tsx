@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react"
+import { useTranslation } from "react-i18next"
 import { ExternalLink, Copy, Edit2, Trash2, Move, Star, Archive } from "lucide-react"
 
 interface Props {
@@ -20,6 +21,7 @@ export default function BookmarkContextMenu({
   x, y, isFavorite, isArchived, onClose,
   onOpenInNewTab, onCopyUrl, onEdit, onDelete, onMove, onToggleFavorite, onToggleArchive,
 }: Props) {
+  const { t } = useTranslation()
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -40,15 +42,15 @@ export default function BookmarkContextMenu({
   const menuY = Math.min(y, window.innerHeight - 320)
 
   const items = [
-    { icon: ExternalLink, label: '新标签页打开', onClick: onOpenInNewTab },
-    { icon: Copy, label: '复制链接', onClick: onCopyUrl },
+    { icon: ExternalLink, label: t("bookmarks.openInNewTab"), onClick: onOpenInNewTab },
+    { icon: Copy, label: t("bookmarks.copyUrl"), onClick: onCopyUrl },
     { divider: true },
-    { icon: Edit2, label: '编辑', onClick: onEdit },
-    { icon: Move, label: '移动到...', onClick: onMove },
-    { icon: Star, label: isFavorite ? '取消收藏' : '收藏', onClick: onToggleFavorite },
-    { icon: Archive, label: isArchived ? '取消归档' : '归档', onClick: onToggleArchive },
+    { icon: Edit2, label: t("bookmarks.edit"), onClick: onEdit },
+    { icon: Move, label: t("bookmarks.batchMoveTo"), onClick: onMove },
+    { icon: Star, label: isFavorite ? t("bookmarks.unfavorite") : t("bookmarks.favorite"), onClick: onToggleFavorite },
+    { icon: Archive, label: isArchived ? t("bookmarks.unarchive") : t("bookmarks.archived"), onClick: onToggleArchive },
     { divider: true },
-    { icon: Trash2, label: '删除', onClick: onDelete, danger: true },
+    { icon: Trash2, label: t("bookmarks.delete"), onClick: onDelete, danger: true },
   ]
 
   return (

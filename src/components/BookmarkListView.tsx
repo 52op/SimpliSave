@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { Star, Edit2, Trash2, Archive, Share2, Loader2, ExternalLink, GripVertical, CheckSquare, Square, ArrowUpDown, ArrowUp, ArrowDown, Move } from "lucide-react"
 import Favicon from "./Favicon"
 import type { Bookmark } from "../types"
@@ -22,17 +23,17 @@ interface Props {
   submittingShare: string | null
 }
 
-function formatDate(d: string): string {
+function formatDate(d: string, t: (key: string, opts?: any) => string): string {
   if (!d) return ''
   const date = new Date(d)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   const days = Math.floor(diff / 86400000)
-  if (days === 0) return '今天'
-  if (days === 1) return '昨天'
-  if (days < 7) return `${days}天前`
-  if (days < 30) return `${Math.floor(days / 7)}周前`
-  if (days < 365) return `${Math.floor(days / 30)}月前`
+  if (days === 0) return t("bookmarks.today")
+  if (days === 1) return t("bookmarks.yesterday")
+  if (days < 7) return t("bookmarks.daysAgo", { days })
+  if (days < 30) return t("bookmarks.weeksAgo", { weeks: Math.floor(days / 7) })
+  if (days < 365) return t("bookmarks.monthsAgo", { months: Math.floor(days / 30) })
   return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
 
@@ -41,6 +42,7 @@ export default function BookmarkListView({
   onOpenEdit, onDelete, onToggleFavorite, onToggleArchive, onShare,
   onDragStart, onMoveToCategory, submittingShare,
 }: Props) {
+  const { t } = useTranslation()
   const [sortField, setSortField] = useState<SortField>('title')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; bookmark: Bookmark } | null>(null)
@@ -94,15 +96,15 @@ export default function BookmarkListView({
             </th>
             <th className="w-6 px-1 py-2" />
             <th className="px-2 py-2 text-left cursor-pointer select-none" onClick={() => toggleSort('title')}>
-              <div className="flex items-center gap-1"><SortIcon field="title" />标题</div>
+              <div className="flex items-center gap-1"><SortIcon field="title" />{t("bookmarks.columnTitle")}</div>
             </th>
             <th className="px-2 py-2 text-left hidden md:table-cell cursor-pointer select-none" onClick={() => toggleSort('url')}>
-              <div className="flex items-center gap-1"><SortIcon field="url" />链接</div>
+              <div className="flex items-center gap-1"><SortIcon field="url" />{t("bookmarks.columnUrl")}</div>
             </th>
             <th className="px-2 py-2 text-left hidden sm:table-cell cursor-pointer select-none w-24" onClick={() => toggleSort('created_at')}>
-              <div className="flex items-center gap-1"><SortIcon field="created_at" />收藏时间</div>
+              <div className="flex items-center gap-1"><SortIcon field="created_at" />{t("bookmarks.columnCreatedAt")}</div>
             </th>
-            <th className="w-24 px-2 py-2 text-right">操作</th>
+            <th className="w-24 px-2 py-2 text-right">{t("bookmarks.columnActions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -157,7 +159,7 @@ export default function BookmarkListView({
                   <span className="text-gray-400 dark:text-gray-500 truncate max-w-[250px] inline-block align-bottom">{b.url}</span>
                 </td>
                 <td className="px-2 py-2.5 hidden sm:table-cell whitespace-nowrap text-gray-500 dark:text-gray-400 text-xs">
-                  {formatDate(b.created_at)}
+                  {formatDate(b.created_at, t)}
                 </td>
                 <td className="px-2 py-2.5 text-right">
                   <div className="flex items-center justify-end gap-0.5">
@@ -190,30 +192,30 @@ export default function BookmarkListView({
       </table>
 
       {sorted.length === 0 && (
-        <div className="py-12 text-center text-gray-400 dark:text-gray-500 text-sm">暂无书签</div>
+        <div className="py-12 text-center text-gray-400 dark:text-gray-500 text-sm">{t("bookmarks.empty")}</div>
       )}
 
       {selectedIds.size > 0 && (
         <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-3">
-          <span className="text-sm text-gray-500">{selectedIds.size} 项已选</span>
+          <span className="text-sm text-gray-500">{t("bookmarks.selectedCount", { count: selectedIds.size })}</span>
           <button onClick={onMoveToCategory} className="px-3 py-1.5 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 flex items-center gap-1.5">
-            <Move className="w-3.5 h-3.5" />移动到...
+            <Move className="w-3.5 h-3.5" />{t("bookmarks.batchMoveTo")}
           </button>
           <button onClick={() => {
             selectedIds.forEach(id => {
               const b = bookmarks.find(x => x.id === id)
               if (b) onToggleFavorite(id, b.is_favorite)
             })
-          }} className="px-3 py-1.5 text-xs bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/50">收藏</button>
+          }} className="px-3 py-1.5 text-xs bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900/50">{t("bookmarks.favorite")}</button>
           <button onClick={() => {
             selectedIds.forEach(id => {
               const b = bookmarks.find(x => x.id === id)
               if (b) onToggleArchive(id, b.archived)
             })
-          }} className="px-3 py-1.5 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50">归档</button>
+          }} className="px-3 py-1.5 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50">{t("bookmarks.archived")}</button>
           <button onClick={() => {
             selectedIds.forEach(id => onDelete(id))
-          }} className="px-3 py-1.5 text-xs bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50">删除</button>
+          }} className="px-3 py-1.5 text-xs bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50">{t("bookmarks.delete")}</button>
         </div>
       )}
 

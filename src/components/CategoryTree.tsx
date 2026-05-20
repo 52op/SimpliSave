@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react"
+import { useTranslation } from "react-i18next"
 import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import type { Category, Bookmark } from "../types"
 
@@ -49,6 +50,7 @@ function TreeNode({
   onRename: (id: string, name: string) => void
   onDelete: (id: string) => void
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(true)
   const [dragOver, setDragOver] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -119,13 +121,13 @@ function TreeNode({
           {showMenu && (
             <div className="absolute right-0 top-6 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[120px]" onClick={e => e.stopPropagation()}>
               <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left" onClick={() => { onAddSub(category.id); setShowMenu(false) }}>
-                <Plus className="w-3.5 h-3.5" />添加子分类
+                <Plus className="w-3.5 h-3.5" />{t("bookmarks.addSubcategory")}
               </button>
               <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left" onClick={() => { setEditName(category.name); setEditing(true); setShowMenu(false) }}>
-                <Pencil className="w-3.5 h-3.5" />重命名
+                <Pencil className="w-3.5 h-3.5" />{t("bookmarks.rename")}
               </button>
               <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left" onClick={() => { onDelete(category.id); setShowMenu(false) }}>
-                <Trash2 className="w-3.5 h-3.5" />删除
+                <Trash2 className="w-3.5 h-3.5" />{t("common.delete")}
               </button>
             </div>
           )}
@@ -148,6 +150,7 @@ export default function CategoryTree({
   categories, bookmarks, selectedCategoryId, onSelectCategory, onDropBookmark,
   onAddSubCategory, onRenameCategory, onDeleteCategory,
 }: Props) {
+  const { t } = useTranslation()
   const roots = buildTree(categories)
 
   function buildTree(cats: Category[]): TreeNode[] {
@@ -182,7 +185,7 @@ export default function CategoryTree({
         onDrop={handleRootDrop}
       >
         <FolderOpen className="w-4 h-4" />
-        <span className="font-medium">全部书签</span>
+        <span className="font-medium">{t("bookmarks.allBookmarks")}</span>
         <span className="text-xs text-gray-400">{bookmarks.length}</span>
       </div>
       {roots.map(node => (

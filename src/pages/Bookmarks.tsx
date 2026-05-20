@@ -65,8 +65,9 @@ export default function Bookmarks() {
       setTags(tagRes)
       setPageError("")
     } catch (err: any) {
-      setPageError(err?.message || "加载收藏失败")
-      toast(err?.message || "加载收藏失败", "error")
+      const msg = err?.message || t("bookmarks.loadFailed")
+      setPageError(msg)
+      toast(msg, "error")
     } finally {
       setLoading(false)
     }
@@ -89,7 +90,7 @@ export default function Bookmarks() {
       const meta = await fetchMetaApi.fetch(formData.url)
       setFormData(prev => ({ ...prev, title: meta.title || prev.title, description: meta.description || prev.description, icon_url: meta.icon || prev.icon_url }))
     } catch (err: any) {
-      toast("抓取失败: " + (err.message || "请手动填写"), "error")
+      toast(t("bookmarks.fetchFailed", { msg: err.message || t("bookmarks.fetchManual") }), "error")
     } finally {
       setFetching(false)
     }
@@ -208,7 +209,7 @@ export default function Bookmarks() {
         user_bookmark_id: bookmark.id, title: bookmark.title, url: bookmark.url,
         description: bookmark.description, icon_url: bookmark.icon_url, tags: tagsArray,
       })
-      toast("提交成功，等待管理员审核", "success")
+      toast(t("bookmarks.shareSuccess"), "success")
     } catch (err: any) {
       toast(err.message || t("common.error"), "error")
     } finally {
@@ -257,10 +258,10 @@ export default function Bookmarks() {
         return
       }
       const result = await userBookmarkApi.importHtml(token, html)
-      toast(`导入完成：${result.imported}/${result.total}`, "success")
+      toast(t("bookmarks.importResult", { imported: result.imported, total: result.total }), "success")
       await loadData()
     } catch (err: any) {
-      toast(err.message || "导入失败", "error")
+      toast(err.message || t("bookmarks.importFailed"), "error")
     } finally {
       setImporting(false)
     }
@@ -273,10 +274,10 @@ export default function Bookmarks() {
     setImportHtmlContent("")
     try {
       const result = await userBookmarkApi.importHtml(token, importHtmlContent, renameMap)
-      toast(`导入完成：${result.imported}/${result.total}`, "success")
+      toast(t("bookmarks.importResult", { imported: result.imported, total: result.total }), "success")
       await loadData()
     } catch (err: any) {
-      toast(err.message || "导入失败", "error")
+      toast(err.message || t("bookmarks.importFailed"), "error")
     } finally {
       setImporting(false)
     }
@@ -321,9 +322,9 @@ export default function Bookmarks() {
       await loadData()
       setSelectedIds(new Set())
       setShowMoveModal(false)
-      toast("移动完成", "success")
+      toast(t("bookmarks.moveSuccess"), "success")
     } catch (err: any) {
-      toast(err.message || "移动失败", "error")
+      toast(err.message || t("bookmarks.moveFailed"), "error")
     } finally {
       setBatchLoading(false)
     }
@@ -336,7 +337,7 @@ export default function Bookmarks() {
       updateBookmark(bookmarkId, { category_id: targetCategoryId } as any)
       await loadData()
     } catch (err: any) {
-      toast(err.message || "移动失败", "error")
+      toast(err.message || t("bookmarks.moveFailed"), "error")
     }
   }
 
@@ -367,7 +368,7 @@ export default function Bookmarks() {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
-      <PageHeader title="私人收藏夹" description="管理你的收藏，可申请分享到公开导航。支持导入浏览器书签 HTML。" />
+      <PageHeader title={t("bookmarks.pageTitle")} description={t("bookmarks.pageDesc")} />
 
       {/* Toolbar */}
       <SectionCard className="mb-4">
@@ -379,18 +380,18 @@ export default function Bookmarks() {
             {sidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <label className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 cursor-pointer text-sm">
-            <Upload className="w-4 h-4" />{importing ? "导入中..." : "导入HTML"}
+            <Upload className="w-4 h-4" />{importing ? t("bookmarks.importing") : t("bookmarks.importLabel")}
             <input type="file" accept=".html,text/html" className="hidden" disabled={importing}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.currentTarget.value = "" }} />
           </label>
           <button onClick={handleExportHtml} className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm">
-            <Download className="w-4 h-4" />导出HTML
+            <Download className="w-4 h-4" />{t("bookmarks.exportHtml")}
           </button>
           <button onClick={handleExport} className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm">
-            <Download className="w-4 h-4" />导出JSON
+            <Download className="w-4 h-4" />{t("bookmarks.exportJson")}
           </button>
           <button onClick={() => setShowCategoryModal(true)} className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm">
-            <Folder className="w-4 h-4" />分类
+            <Folder className="w-4 h-4" />{t("bookmarks.sidebarCategories")}
           </button>
           <button onClick={() => openAddModal()} className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1.5 text-sm">
             <Plus className="w-4 h-4" />{t("bookmarks.add")}
@@ -398,23 +399,23 @@ export default function Bookmarks() {
           <div className="flex-1" />
           <button onClick={() => setShowFavoritesOnly(v => !v)}
             className={`px-3 py-2 rounded-lg text-sm ${showFavoritesOnly ? "bg-yellow-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-            仅收藏
+            {t("bookmarks.starred")}
           </button>
           <button onClick={() => setShowArchived(v => !v)}
             className={`px-3 py-2 rounded-lg text-sm ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-            {showArchived ? "未归档" : "归档"}
+            {showArchived ? t("bookmarks.unarchivedFilter") : t("bookmarks.archivedFilter")}
           </button>
         </div>
         <div className="mt-3 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="搜索标题、链接或描述..." value={searchQuery}
+          <input type="text" placeholder={t("bookmarks.searchPlaceholder")} value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800" />
         </div>
       </SectionCard>
 
       {pageError ? (
-        <EmptyState title="加载失败" description={pageError} tone="error" />
+        <EmptyState title={t("bookmarks.loadFailed")} description={pageError} tone="error" />
       ) : (
         <div className="flex gap-4">
           {/* Sidebar - Category Tree */}
@@ -422,7 +423,7 @@ export default function Bookmarks() {
             <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 ${sidebarOpen ? '' : 'hidden lg:block'}`}
               style={{ height: 'calc(100vh - 220px)' }}>
               <div className="flex items-center justify-between mb-2 px-1">
-                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">分类</span>
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">{t("bookmarks.sidebarCategories")}</span>
                 <button onClick={() => setShowCategoryModal(true)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-500">
                   <Plus className="w-4 h-4" />
                 </button>
@@ -437,12 +438,12 @@ export default function Bookmarks() {
                 onRenameCategory={async (id, name) => {
                   if (!token) return
                   try { await userCategoryApi.update(token, id, { name }); await loadData() }
-                  catch (err: any) { toast(err.message || "重命名失败", "error") }
+                  catch (err: any) { toast(err.message || t("bookmarks.renameFailed"), "error") }
                 }}
                 onDeleteCategory={async (id) => {
-                  if (!token || !await confirm("确定删除此分类？分类下的书签将变为未分类状态。")) return
+                  if (!token || !await confirm(t("bookmarks.deleteCategoryConfirm"))) return
                   try { await userCategoryApi.delete(token, id); await loadData() }
-                  catch (err: any) { toast(err.message || "删除失败", "error") }
+                  catch (err: any) { toast(err.message || t("bookmarks.deleteFailed"), "error") }
                 }}
               />
             </div>
@@ -453,7 +454,7 @@ export default function Bookmarks() {
             <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setSidebarOpen(false)}>
               <div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">分类</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("bookmarks.sidebarCategories")}</span>
                   <button onClick={() => setSidebarOpen(false)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-5 h-5" /></button>
                 </div>
                 <CategoryTree
@@ -466,12 +467,12 @@ export default function Bookmarks() {
                   onRenameCategory={async (id, name) => {
                     if (!token) return
                     try { await userCategoryApi.update(token, id, { name }); await loadData() }
-                    catch (err: any) { toast(err.message || "重命名失败", "error") }
+                    catch (err: any) { toast(err.message || t("bookmarks.renameFailed"), "error") }
                   }}
                   onDeleteCategory={async (id) => {
-                    if (!token || !await confirm("确定删除此分类？")) return
+                    if (!token || !await confirm(t("bookmarks.deleteCategoryConfirmShort"))) return
                     try { await userCategoryApi.delete(token, id); await loadData() }
-                    catch (err: any) { toast(err.message || "删除失败", "error") }
+                    catch (err: any) { toast(err.message || t("bookmarks.deleteFailed"), "error") }
                   }}
                 />
               </div>
@@ -498,10 +499,10 @@ export default function Bookmarks() {
 
               {filteredBookmarks.length === 0 && !pageError && (
                 <EmptyState
-                  title={searchQuery || selectedCategory !== "all" ? "没有匹配收藏" : "暂无私人收藏"}
-                  description={searchQuery || selectedCategory !== "all" ? "试试切换分类或更换关键词。" : "可先新增收藏，或导入浏览器书签。"}
+                  title={searchQuery || selectedCategory !== "all" ? t("bookmarks.noMatchTitle") : t("bookmarks.noBookmarks")}
+                  description={searchQuery || selectedCategory !== "all" ? t("bookmarks.noMatchDesc") : t("bookmarks.noBookmarksDesc")}
                   icon={<Folder className="w-6 h-6" />}
-                  action={searchQuery || selectedCategory !== "all" ? undefined : <button onClick={() => openAddModal()} className="ui-btn ui-btn-primary">添加第一个收藏</button>}
+                  action={searchQuery || selectedCategory !== "all" ? undefined : <button onClick={() => openAddModal()} className="ui-btn ui-btn-primary">{t("bookmarks.addFirstBtn")}</button>}
                 />
               )}
             </div>
@@ -519,11 +520,11 @@ export default function Bookmarks() {
       )}
 
       {/* Move to Category Modal */}
-      <Modal show={showMoveModal} title="移动到分类" onClose={() => setShowMoveModal(false)}>
+      <Modal show={showMoveModal} title={t("bookmarks.moveToCategory")} onClose={() => setShowMoveModal(false)}>
         <div className="space-y-1 max-h-80 overflow-y-auto">
           <button onClick={() => handleBatchMove(null)}
             className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">
-            不分类
+            {t("bookmarks.noCategory")}
           </button>
           {getCategoryOptions().map(({ id, label }) => (
             <button key={id} onClick={() => handleBatchMove(id)}
@@ -543,7 +544,7 @@ export default function Bookmarks() {
               <input type="url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} placeholder={t("bookmarks.urlPlaceholder")}
                 className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
               <button onClick={handleFetchMeta} disabled={fetching || !formData.url.trim()} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1">
-                {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : "🔍"}{fetching ? "抓取中..." : "抓取"}
+                {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : "🔍"}{fetching ? t("bookmarks.fetching") : t("bookmarks.fetch")}
               </button>
             </div>
           </div>
@@ -585,7 +586,7 @@ export default function Bookmarks() {
       <Modal show={showCategoryModal} title={t("categories.add")} onClose={() => setShowCategoryModal(false)}>
         <div className="space-y-4">
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.name")}</label><input type="text" value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder={t("categories.namePlaceholder")} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">父分类</label><select value={categoryParentId} onChange={(e) => setCategoryParentId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">无（顶级分类）</option>{getCategoryOptions().map(({ id, label }) => <option key={id} value={id}>{label}</option>)}</select></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.parentCategory")}</label><select value={categoryParentId} onChange={(e) => setCategoryParentId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("bookmarks.topLevel")}</option>{getCategoryOptions().map(({ id, label }) => <option key={id} value={id}>{label}</option>)}</select></div>
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.color")}</label><input type="color" value={categoryColor} onChange={(e) => setCategoryColor(e.target.value)} className="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg" /></div>
           <div className="flex gap-2 pt-4"><button onClick={() => setShowCategoryModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button><button onClick={() => handleAddCategory()} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
         </div>
