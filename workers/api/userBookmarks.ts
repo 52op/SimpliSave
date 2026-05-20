@@ -1,6 +1,6 @@
 // User bookmarks API handlers
 import { verifyJWT } from '../utils/jwt';
-import { successResponse, errorResponse } from '../utils/response';
+import { successResponse, errorResponse, corsHeaders } from '../utils/response';
 
 async function getUserId(request: Request, env: any): Promise<string | null> {
   const authHeader = request.headers.get('Authorization');
@@ -149,7 +149,8 @@ export async function handleExportUserBookmarks(request: Request, env: any): Pro
   }, null, 2), {
     headers: {
       'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="simplisave-bookmarks-${Date.now()}.json"`
+      'Content-Disposition': `attachment; filename="simplisave-bookmarks-${Date.now()}.json"`,
+      ...corsHeaders(),
     }
   });
 }

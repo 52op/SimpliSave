@@ -1,5 +1,5 @@
 // Bookmark HTML import/export utilities for D1
-import { successResponse, errorResponse } from '../utils/response';
+import { successResponse, errorResponse, corsHeaders } from '../utils/response';
 import { verifyJWT } from '../utils/jwt';
 
 async function getUserId(request: Request, env: any): Promise<string | null> {
@@ -314,7 +314,8 @@ export async function handleExportUserBookmarksHtml(request: Request, env: any):
   return new Response(html, {
     headers: {
       'Content-Type': 'text/html; charset=UTF-8',
-      'Content-Disposition': `attachment; filename="simplisave-bookmarks-${Date.now()}.html"`
+      'Content-Disposition': `attachment; filename="simplisave-bookmarks-${Date.now()}.html"`,
+      ...corsHeaders(),
     }
   });
 }
