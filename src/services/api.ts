@@ -158,6 +158,22 @@ export const fetchMetaApi = {
   fetch: (url: string) => request<any>('GET', `/fetch-meta?url=${encodeURIComponent(url)}`),
 };
 
+async function uploadFile(token: string, path: string, body: Blob, contentType: string): Promise<any> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': contentType,
+    },
+    body,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `Upload failed: ${res.status}` }));
+    throw new Error(err.error || err.message || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 export const imagebedApi = {
   listConfigs: (token: string) => request<ImagebedConfig[]>('GET', '/imagebed/configs', undefined, token),
   createConfig: (token: string, data: any) => request<ImagebedConfig>('POST', '/imagebed/configs', data, token),
@@ -167,6 +183,7 @@ export const imagebedApi = {
   getSettings: (token: string) => request<ImagebedSettings>('GET', '/imagebed/settings', undefined, token),
   updateSettings: (token: string, data: any) => request<ImagebedSettings>('PUT', '/imagebed/settings', data, token),
   getUploadToken: (token: string, type: string, filename: string) => request<UploadTokenResponse>('POST', '/imagebed/upload-token', { type, filename }, token),
+  upload: (token: string, file: Blob, type: string, filename: string) => uploadFile(token, `/imagebed/upload?type=${encodeURIComponent(type)}&filename=${encodeURIComponent(filename)}`, file, file.type),
   getAvailable: (token: string) => request<ImagebedConfig[]>('GET', '/imagebed/available', undefined, token),
 };
 

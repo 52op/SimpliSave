@@ -1,5 +1,6 @@
 import { verifyJWT } from '../utils/jwt';
 import { successResponse, errorResponse } from '../utils/response';
+import { s3PutObject } from '../utils/s3';
 
 async function getUserId(request: Request, env: any): Promise<string | null> {
   const authHeader = request.headers.get('Authorization');
@@ -42,7 +43,7 @@ export async function handleListImagebedConfigs(request: Request, env: any): Pro
   if (role !== 'admin') return errorResponse('Admin only', 403);
 
   const configs = await env.DB.prepare(
-    'SELECT id, name, endpoint, bucket, region, custom_domain, path_template, enabled, is_default, sort_order, created_at, updated_at FROM imagebed_configs ORDER BY sort_order ASC, created_at DESC'
+    'SELECT id, name, endpoint, bucket, region, custom_domain, path_template, include_bucket, enabled, is_default, sort_order, created_at, updated_at FROM imagebed_configs ORDER BY sort_order ASC, created_at DESC'
   ).all();
   return successResponse(configs.results);
 }
@@ -57,17 +58,18 @@ export async function handleCreateImagebedConfig(request: Request, env: any): Pr
   }
 
   const result = await env.DB.prepare(
-    `INSERT INTO imagebed_configs (name, endpoint, access_key, secret_key, bucket, region, custom_domain, path_template, enabled, is_default, sort_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO imagebed_configs (name, endpoint, access_key, secret_key, bucket, region, custom_domain, path_template, include_bucket, enabled, is_default, sort_order)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(
     body.name, body.endpoint, body.access_key, body.secret_key, body.bucket,
     body.region || null, body.custom_domain || null, body.path_template || '{year}/{month}/{day}/{time}_{md5}.{ext}',
+    body.include_bucket !== undefined ? body.include_bucket : 1,
     body.enabled !== undefined ? body.enabled : 1, body.is_default || 0, body.sort_order || 0
   ).run();
 
   if (!result.success) return errorResponse('Failed to create imagebed config', 500);
 
-  const config = await env.DB.prepare('SELECT id, name, endpoint, bucket, region, custom_domain, path_template, enabled, is_default, sort_order, created_at, updated_at FROM imagebed_configs ORDER BY created_at DESC LIMIT 1').first();
+  const config = await env.DB.prepare('SELECT id, name, endpoint, bucket, region, custom_domain, path_template, include_bucket, enabled, is_default, sort_order, created_at, updated_at FROM imagebed_configs ORDER BY created_at DESC LIMIT 1').first();
   return successResponse(config, 201);
 }
 
@@ -87,6 +89,7 @@ export async function handleUpdateImagebedConfig(request: Request, env: any, id:
   if (body.region !== undefined) { updates.push('region = ?'); values.push(body.region); }
   if (body.custom_domain !== undefined) { updates.push('custom_domain = ?'); values.push(body.custom_domain); }
   if (body.path_template) { updates.push('path_template = ?'); values.push(body.path_template); }
+  if (body.include_bucket !== undefined) { updates.push('include_bucket = ?'); values.push(body.include_bucket); }
   if (body.enabled !== undefined) { updates.push('enabled = ?'); values.push(body.enabled); }
   if (body.is_default !== undefined) { updates.push('is_default = ?'); values.push(body.is_default); }
   if (body.sort_order !== undefined) { updates.push('sort_order = ?'); values.push(body.sort_order); }
@@ -97,7 +100,7 @@ export async function handleUpdateImagebedConfig(request: Request, env: any, id:
 
   await env.DB.prepare(`UPDATE imagebed_configs SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
 
-  const config = await env.DB.prepare('SELECT id, name, endpoint, bucket, region, custom_domain, path_template, enabled, is_default, sort_order, created_at, updated_at FROM imagebed_configs WHERE id = ?').bind(id).first();
+  const config = await env.DB.prepare('SELECT id, name, endpoint, bucket, region, custom_domain, path_template, include_bucket, enabled, is_default, sort_order, created_at, updated_at FROM imagebed_configs WHERE id = ?').bind(id).first();
   return successResponse(config);
 }
 
@@ -119,7 +122,7 @@ export async function handleToggleImagebedConfig(request: Request, env: any, id:
 
   await env.DB.prepare('UPDATE imagebed_configs SET enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').bind(enabled, id).run();
 
-  const config = await env.DB.prepare('SELECT id, name, endpoint, bucket, region, custom_domain, path_template, enabled, is_default, sort_order, created_at, updated_at FROM imagebed_configs WHERE id = ?').bind(id).first();
+  const config = await env.DB.prepare('SELECT id, name, endpoint, bucket, region, custom_domain, path_template, include_bucket, enabled, is_default, sort_order, created_at, updated_at FROM imagebed_configs WHERE id = ?').bind(id).first();
   return successResponse(config);
 }
 
@@ -199,11 +202,12 @@ export async function handleGetUploadToken(request: Request, env: any): Promise<
   const randomIndex = Math.floor(Math.random() * configs.results.length);
   const config = configs.results[randomIndex];
 
-  const finalExt = (config.convert_to_webp !== 0 && ext !== 'gif') ? 'webp' : ext;
+  const finalExt = (ext !== 'gif') ? 'webp' : ext;
   const objectKey = parsePathTemplate(config.path_template, filename, finalExt, type, userId);
 
-  const baseUrl = config.custom_domain || `${config.endpoint}/${config.bucket}`;
-  const publicUrl = `${baseUrl.replace(/\/+$/, '')}/${objectKey}`;
+  const uploadPath = config.include_bucket ? `${config.bucket}/${objectKey}` : objectKey;
+  const baseUrl = config.custom_domain || config.endpoint;
+  const publicUrl = `${baseUrl.replace(/\/+$/, '')}/${uploadPath}`;
 
   return successResponse({
     upload_url: `${config.endpoint}/${config.bucket}/${objectKey}`,
@@ -221,7 +225,53 @@ export async function handleGetAvailableImagebeds(request: Request, env: any): P
   if (!userId) return errorResponse('Unauthorized', 401);
 
   const configs = await env.DB.prepare(
-    'SELECT id, name, endpoint, bucket, region, custom_domain, path_template, is_default FROM imagebed_configs WHERE enabled = 1 ORDER BY is_default DESC, sort_order ASC'
+    'SELECT id, name, endpoint, bucket, region, custom_domain, path_template, include_bucket, is_default FROM imagebed_configs WHERE enabled = 1 ORDER BY is_default DESC, sort_order ASC'
   ).all();
   return successResponse(configs.results);
+}
+
+export async function handleUploadImage(request: Request, env: any): Promise<Response> {
+  const userId = await getUserId(request, env);
+  if (!userId) return errorResponse('Unauthorized', 401);
+
+  const url = new URL(request.url);
+  const type = url.searchParams.get('type') || 'memo';
+  const filename = url.searchParams.get('filename') || `upload_${Date.now()}.bin`;
+
+  const body = await request.arrayBuffer();
+  if (!body || body.byteLength === 0) return errorResponse('Empty file', 400);
+
+  const contentType = request.headers.get('Content-Type') || 'application/octet-stream';
+
+  const configs = await env.DB.prepare(
+    'SELECT * FROM imagebed_configs WHERE enabled = 1 ORDER BY is_default DESC, sort_order ASC'
+  ).all();
+
+  if (!configs.results || configs.results.length === 0) {
+    return errorResponse('No enabled imagebed configs found', 404);
+  }
+
+  const randomIndex = Math.floor(Math.random() * configs.results.length);
+  const config: any = configs.results[randomIndex];
+
+  const ext = filename.split('.').pop()?.toLowerCase() || 'bin';
+  const finalExt = (ext !== 'gif') ? 'webp' : ext;
+  const objectKey = parsePathTemplate(config.path_template, filename, finalExt, type, userId);
+
+  const s3Response = await s3PutObject(
+    config.endpoint, config.access_key, config.secret_key,
+    config.region || 'auto', config.bucket, objectKey,
+    body, contentType,
+  );
+
+  if (!s3Response.ok) {
+    const errText = await s3Response.text();
+    return errorResponse(`S3 upload failed: ${s3Response.status} ${errText}`, 502);
+  }
+
+  const uploadPath = config.include_bucket ? `${config.bucket}/${objectKey}` : objectKey;
+  const baseUrl = config.custom_domain || config.endpoint;
+  const publicUrl = `${baseUrl.replace(/\/+$/, '')}/${uploadPath}`;
+
+  return successResponse({ public_url: publicUrl, bed_name: config.name, object_key: objectKey });
 }

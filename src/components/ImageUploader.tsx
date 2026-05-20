@@ -89,23 +89,11 @@ export default function ImageUploader({
         const ext = type === 'icon' || type === 'avatar' ? 'png' : compressedBlob.type.includes('webp') ? 'webp' : 'jpg'
         const filename = `${type}_${Date.now()}.${ext}`
 
-        const uploadToken = await imagebedApi.getUploadToken(token, type, filename)
-
-        const uploadResponse = await fetch(uploadToken.upload_url, {
-          method: 'PUT',
-          body: compressedBlob,
-          headers: {
-            'Content-Type': compressedBlob.type,
-          },
-        })
-
-        if (!uploadResponse.ok) {
-          throw new Error(`上传失败: ${uploadResponse.status}`)
-        }
+        const result = await imagebedApi.upload(token, compressedBlob, type, filename)
 
         setProgress(100)
         setUploadStatus('done')
-        onChange(uploadToken.public_url)
+        onChange(result.data.public_url)
 
         setTimeout(() => {
           setUploading(false)

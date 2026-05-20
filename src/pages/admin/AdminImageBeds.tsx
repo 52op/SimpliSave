@@ -18,13 +18,15 @@ export default function AdminImageBeds() {
 
   const [loading, setLoading] = useState(true)
   const [pageError, setPageError] = useState("")
+  const [configSaving, setConfigSaving] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
   const [showConfigModal, setShowConfigModal] = useState(false)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [editing, setEditing] = useState<ImagebedConfig | null>(null)
   const [form, setForm] = useState({
     name: "", endpoint: "", access_key: "", secret_key: "", bucket: "",
     region: "", custom_domain: "", path_template: "{year}/{month}/{day}/{time}_{md5}.{ext}",
-    enabled: 1, is_default: 0, sort_order: 0,
+    enabled: 1, is_default: 0, sort_order: 0, include_bucket: 1,
   })
   const [settingsForm, setSettingsForm] = useState({
     icon_max_width: 128, icon_max_height: 128, icon_quality: 80,
@@ -53,7 +55,8 @@ export default function AdminImageBeds() {
   }
 
   async function handleSaveConfig() {
-    if (!token || !form.name.trim() || !form.endpoint.trim() || !form.access_key.trim() || !form.secret_key.trim() || !form.bucket.trim()) return
+    if (!token || configSaving || !form.name.trim() || !form.endpoint.trim() || !form.access_key.trim() || !form.secret_key.trim() || !form.bucket.trim()) return
+    setConfigSaving(true)
     try {
       const data = {
         ...form,
@@ -71,21 +74,28 @@ export default function AdminImageBeds() {
       } else {
         await createConfig(token, data)
       }
+      toast(t("common.success"), "success")
       setShowConfigModal(false)
       setEditing(null)
       resetForm()
     } catch (err: any) {
       toast(err.message || t("common.error"), "error")
+    } finally {
+      setConfigSaving(false)
     }
   }
 
   async function handleSaveSettings() {
-    if (!token) return
+    if (!token || settingsSaving) return
+    setSettingsSaving(true)
     try {
       await updateSettings(token, settingsForm)
+      toast(t("common.success"), "success")
       setShowSettingsModal(false)
     } catch (err: any) {
       toast(err.message || t("common.error"), "error")
+    } finally {
+      setSettingsSaving(false)
     }
   }
 
@@ -111,7 +121,7 @@ export default function AdminImageBeds() {
     setForm({
       name: "", endpoint: "", access_key: "", secret_key: "", bucket: "",
       region: "", custom_domain: "", path_template: "{year}/{month}/{day}/{time}_{md5}.{ext}",
-      enabled: 1, is_default: 0, sort_order: 0,
+      enabled: 1, is_default: 0, sort_order: 0, include_bucket: 1,
     })
   }
 
@@ -129,6 +139,7 @@ export default function AdminImageBeds() {
       enabled: config.enabled,
       is_default: config.is_default,
       sort_order: config.sort_order,
+      include_bucket: config.include_bucket,
     })
     setShowConfigModal(true)
   }
@@ -306,6 +317,10 @@ export default function AdminImageBeds() {
                   <input type="checkbox" checked={form.is_default === 1} onChange={(e) => setForm({ ...form, is_default: e.target.checked ? 1 : 0 })} />
                   <span className="text-sm text-gray-700 dark:text-gray-300">{t("admin.imagebeds.formDefault")}</span>
                 </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.include_bucket === 1} onChange={(e) => setForm({ ...form, include_bucket: e.target.checked ? 1 : 0 })} />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{t("admin.imagebeds.formIncludeBucket")}</span>
+                </label>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.imagebeds.formSort")}</label>
@@ -314,8 +329,8 @@ export default function AdminImageBeds() {
               </div>
             </div>
             <div className="flex gap-2 pt-4">
-              <button onClick={() => { setShowConfigModal(false); setEditing(null); resetForm() }} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
-              <button onClick={handleSaveConfig} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+              <button onClick={() => { setShowConfigModal(false); setEditing(null); resetForm() }} disabled={configSaving} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">{t("common.cancel")}</button>
+              <button onClick={handleSaveConfig} disabled={configSaving} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{configSaving ? t("common.saving") : t("common.save")}</button>
             </div>
           </div>
         </div>
@@ -419,8 +434,8 @@ export default function AdminImageBeds() {
               </div>
             </div>
             <div className="flex gap-2 pt-4">
-              <button onClick={() => setShowSettingsModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
-              <button onClick={handleSaveSettings} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+              <button onClick={() => setShowSettingsModal(false)} disabled={settingsSaving} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">{t("common.cancel")}</button>
+              <button onClick={handleSaveSettings} disabled={settingsSaving} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{settingsSaving ? t("common.saving") : t("common.save")}</button>
             </div>
           </div>
         </div>

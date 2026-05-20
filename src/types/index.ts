@@ -217,6 +217,7 @@ export interface ImagebedConfig {
   region: string | null
   custom_domain: string | null
   path_template: string
+  include_bucket: number
   enabled: number
   is_default: number
   sort_order: number

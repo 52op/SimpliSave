@@ -30,7 +30,8 @@ import {
 import {
   handleListImagebedConfigs, handleCreateImagebedConfig, handleUpdateImagebedConfig,
   handleDeleteImagebedConfig, handleToggleImagebedConfig, handleGetImagebedSettings,
-  handleUpdateImagebedSettings, handleGetUploadToken, handleGetAvailableImagebeds
+  handleUpdateImagebedSettings, handleGetUploadToken, handleGetAvailableImagebeds,
+  handleUploadImage
 } from './api/imagebed';
 import { handleGetSiteSettings, handleUpdateSiteSettings } from './api/siteSettings';
 import { handleHotTags } from './api/hotTags';
@@ -292,6 +293,7 @@ async function handleImagebed(request: Request, env: Env, path: string): Promise
   if (path === '/imagebed/settings' && request.method === 'GET') return handleGetImagebedSettings(request, env);
   if (path === '/imagebed/settings' && request.method === 'PUT') return handleUpdateImagebedSettings(request, env);
   if (path === '/imagebed/upload-token' && request.method === 'POST') return handleGetUploadToken(request, env);
+  if (path === '/imagebed/upload' && request.method === 'POST') return handleUploadImage(request, env);
   if (path === '/imagebed/available' && request.method === 'GET') return handleGetAvailableImagebeds(request, env);
   if (toggleMatch && request.method === 'POST') return handleToggleImagebedConfig(request, env, toggleMatch[1]);
 

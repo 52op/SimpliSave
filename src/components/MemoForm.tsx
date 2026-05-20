@@ -202,13 +202,8 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
       }
       const compressedBlob = await compressImage(file, 'memo')
       const filename = `memo_${Date.now()}.${compressedBlob.type.includes('webp') ? 'webp' : 'jpg'}`
-      const uploadToken = await imagebedApi.getUploadToken(token, 'memo', filename)
-      await fetch(uploadToken.upload_url, {
-        method: 'PUT',
-        body: compressedBlob,
-        headers: { 'Content-Type': compressedBlob.type },
-      })
-      editor.chain().focus().setImage({ src: uploadToken.public_url }).run()
+      const result = await imagebedApi.upload(token, compressedBlob, 'memo', filename)
+      editor.chain().focus().setImage({ src: result.data.public_url }).run()
     } catch (err: any) {
       // Image upload failed silently - caller handles toast
     }
