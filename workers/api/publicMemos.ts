@@ -11,7 +11,7 @@ export async function handleListPublicMemosByUser(request: Request, env: any, us
 
 export async function handleGetPublicMemo(request: Request, env: any, id: string): Promise<Response> {
   const memo = await env.DB.prepare(
-    'SELECT id, user_id, title, content, color, cover_image, category_id, tags, is_public, archived, created_at, updated_at FROM memos WHERE id = ? AND is_public = 1 AND archived = 0'
+    'SELECT id, user_id, title, content, color, cover_image, category_id, tags, is_public, archived, created_at, updated_at, CASE WHEN share_password IS NOT NULL AND share_password != \"\" THEN 1 ELSE 0 END AS has_password FROM memos WHERE id = ? AND is_public = 1 AND archived = 0'
   ).bind(id).first();
   if (!memo) return errorResponse('Memo not found or not public', 404);
   return successResponse(memo);

@@ -23,7 +23,7 @@ function isHostBlocked(hostname: string) {
   return true
 }
 
-export default function Favicon({ src, title, size = "md" }: { src?: string | null; title: string; size?: "sm" | "md" | "lg" }) {
+export default function Favicon({ src, title, size = "md" }: { src?: string | null; title: string; size?: "sm" | "md" | "lg" | "xl" }) {
   const hostname = useMemo(() => getHostname(src), [src])
   const [errored, setErrored] = useState(() => isHostBlocked(hostname))
 
@@ -31,6 +31,7 @@ export default function Favicon({ src, title, size = "md" }: { src?: string | nu
     sm: "w-6 h-6 text-xs",
     md: "w-10 h-10 text-sm",
     lg: "w-14 h-14 text-lg",
+    xl: "w-20 h-20 text-xl",
   }[size]
 
   if (!src || errored) {

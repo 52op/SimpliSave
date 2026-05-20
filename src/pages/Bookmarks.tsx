@@ -1,18 +1,20 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useBookmarkStore } from "../stores/bookmarkStore"
 import { userBookmarkApi, userCategoryApi, tagApi, fetchMetaApi, submissionApi } from "../services/api"
 import { Bookmark } from "../types"
-import { Plus, Search, Star, Trash2, Edit2, Folder, X, Loader2, Upload, Download, Share2, Archive, CheckSquare, Square, CheckCheck } from "lucide-react"
-import Favicon from "../components/Favicon"
+import { Plus, Search, Upload, Download, Folder, X, Loader2, Menu, PanelLeftClose, Trash2, ArrowUpDown } from "lucide-react"
 import Modal from "../components/Modal"
 import ImageUploader from "../components/ImageUploader"
 import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
 import SectionCard from "../components/SectionCard"
 import FilterBar from "../components/FilterBar"
+import CategoryTree from "../components/CategoryTree"
+import BookmarkListView from "../components/BookmarkListView"
+import ImportPreviewDialog from "../components/ImportPreviewDialog"
 
 export default function Bookmarks() {
   const { t } = useTranslation()
@@ -24,23 +26,28 @@ export default function Bookmarks() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [showMoveModal, setShowMoveModal] = useState(false)
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [selectedCategory, setSelectedCategory] = useState<string | null>("all")
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
   const [fetching, setFetching] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [importPreview, setImportPreview] = useState<any>(null)
+  const [importHtmlContent, setImportHtmlContent] = useState("")
   const [submittingShare, setSubmittingShare] = useState<string | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [batchLoading, setBatchLoading] = useState(false)
   const [pageError, setPageError] = useState("")
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const [formData, setFormData] = useState({
     title: "", url: "", description: "", icon_url: "", category_id: "", tags: [] as string[], is_favorite: 0,
   })
   const [categoryName, setCategoryName] = useState("")
   const [categoryColor, setCategoryColor] = useState("#3b82f6")
+  const [categoryParentId, setCategoryParentId] = useState("")
 
   useEffect(() => { loadData() }, [showFavoritesOnly, showArchived])
 
@@ -65,11 +72,13 @@ export default function Bookmarks() {
     }
   }
 
+  const selectedCategoryId = selectedCategory === "all" ? null : selectedCategory
+
   const filteredBookmarks = bookmarks.filter((b) => {
-    const matchesSearch = b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = !searchQuery || b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (b.description && b.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesCategory = selectedCategory === "all" || b.category_id === selectedCategory
+    const matchesCategory = selectedCategoryId === null || b.category_id === selectedCategoryId
     return matchesSearch && matchesCategory
   })
 
@@ -90,8 +99,8 @@ export default function Bookmarks() {
     if (!token || !formData.title || !formData.url) return
     try {
       const res = await userBookmarkApi.create(token, {
-        ...formData,
-        tags: typeof formData.tags === "string" ? formData.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : formData.tags,
+        ...formData, category_id: formData.category_id || undefined,
+        tags: formData.tags,
       })
       addBookmark(res)
       setShowAddModal(false)
@@ -105,8 +114,8 @@ export default function Bookmarks() {
     if (!token || !editingBookmark) return
     try {
       const res = await userBookmarkApi.update(token, editingBookmark.id, {
-        ...formData,
-        tags: typeof formData.tags === "string" ? formData.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : formData.tags,
+        ...formData, category_id: formData.category_id || undefined,
+        tags: formData.tags,
       })
       updateBookmark(editingBookmark.id, res)
       setShowEditModal(false)
@@ -121,6 +130,7 @@ export default function Bookmarks() {
     try {
       await userBookmarkApi.delete(token, id)
       removeBookmark(id)
+      setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
     } catch (err: any) {
       toast(err.message || t("common.error"), "error")
     }
@@ -143,23 +153,50 @@ export default function Bookmarks() {
       updateBookmark(id, res)
       if ((showArchived && !current) || (!showArchived && current === 0)) {
         setBookmarks(bookmarks.filter(b => b.id !== id))
+        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
       }
     } catch (err: any) {
       toast(err.message || t("common.error"), "error")
     }
   }
 
-  async function handleAddCategory() {
-    if (!token || !categoryName.trim()) return
+  async function handleAddCategory(name?: string) {
+    if (!token) return
     try {
-      const res = await userCategoryApi.create(token, { name: categoryName, color: categoryColor, type: "bookmark" })
+      const res = await userCategoryApi.create(token, {
+        name: name || categoryName,
+        color: categoryColor,
+        type: "bookmark",
+        parent_id: categoryParentId || undefined,
+      })
       addCategory(res)
       setShowCategoryModal(false)
       setCategoryName("")
       setCategoryColor("#3b82f6")
+      setCategoryParentId("")
     } catch (err: any) {
       toast(err.message || t("common.error"), "error")
     }
+  }
+
+  function getCategoryOptions() {
+    const sorted = [...categories].sort((a, b) => a.sort_order - b.sort_order)
+    const childrenMap = new Map<string | null, typeof sorted>()
+    for (const cat of sorted) {
+      const key = cat.parent_id ?? '__root__'
+      if (!childrenMap.has(key)) childrenMap.set(key, [])
+      childrenMap.get(key)!.push(cat)
+    }
+    const result: { id: string; label: string }[] = []
+    function walk(parentId: string | null, depth: number) {
+      const children = childrenMap.get(parentId ?? '__root__') || []
+      for (const cat of children) {
+        result.push({ id: cat.id, label: '\u3000'.repeat(depth) + cat.name })
+        walk(cat.id, depth + 1)
+      }
+    }
+    walk(null, 0)
+    return result
   }
 
   async function handleShareBookmark(bookmark: Bookmark) {
@@ -168,12 +205,8 @@ export default function Bookmarks() {
     try {
       const tagsArray = typeof bookmark.tags === "string" ? JSON.parse(bookmark.tags || "[]") : bookmark.tags
       await submissionApi.create(token, {
-        user_bookmark_id: bookmark.id,
-        title: bookmark.title,
-        url: bookmark.url,
-        description: bookmark.description,
-        icon_url: bookmark.icon_url,
-        tags: tagsArray,
+        user_bookmark_id: bookmark.id, title: bookmark.title, url: bookmark.url,
+        description: bookmark.description, icon_url: bookmark.icon_url, tags: tagsArray,
       })
       toast("提交成功，等待管理员审核", "success")
     } catch (err: any) {
@@ -190,10 +223,8 @@ export default function Bookmarks() {
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
-      a.download = `simplisave-bookmarks-${Date.now()}.json`
-      a.click()
-      window.URL.revokeObjectURL(url)
+      a.href = url; a.download = `simplisave-bookmarks-${Date.now()}.json`
+      a.click(); window.URL.revokeObjectURL(url)
     } catch (err: any) {
       toast(err.message || t("common.error"), "error")
     }
@@ -206,10 +237,8 @@ export default function Bookmarks() {
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
-      a.download = `simplisave-bookmarks-${Date.now()}.html`
-      a.click()
-      window.URL.revokeObjectURL(url)
+      a.href = url; a.download = `simplisave-bookmarks-${Date.now()}.html`
+      a.click(); window.URL.revokeObjectURL(url)
     } catch (err: any) {
       toast(err.message || t("common.error"), "error")
     }
@@ -220,7 +249,30 @@ export default function Bookmarks() {
     setImporting(true)
     try {
       const html = await file.text()
+      const preview = await userBookmarkApi.previewImport(token, html)
+      if (preview.existing_categories.length > 0) {
+        setImportPreview(preview)
+        setImportHtmlContent(html)
+        setImporting(false)
+        return
+      }
       const result = await userBookmarkApi.importHtml(token, html)
+      toast(`导入完成：${result.imported}/${result.total}`, "success")
+      await loadData()
+    } catch (err: any) {
+      toast(err.message || "导入失败", "error")
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  async function handleImportConfirm(renameMap: Record<string, string>) {
+    if (!token || !importHtmlContent) return
+    setImporting(true)
+    setImportPreview(null)
+    setImportHtmlContent("")
+    try {
+      const result = await userBookmarkApi.importHtml(token, importHtmlContent, renameMap)
       toast(`导入完成：${result.imported}/${result.total}`, "success")
       await loadData()
     } catch (err: any) {
@@ -239,7 +291,7 @@ export default function Bookmarks() {
   }
 
   function toggleSelectAll() {
-    if (selectedIds.size === filteredBookmarks.length) {
+    if (selectedIds.size === filteredBookmarks.length && filteredBookmarks.length > 0) {
       setSelectedIds(new Set())
     } else {
       setSelectedIds(new Set(filteredBookmarks.map(b => b.id)))
@@ -261,74 +313,51 @@ export default function Bookmarks() {
     }
   }
 
-  async function handleBatchArchive(archived: boolean) {
+  async function handleBatchMove(targetCategoryId: string | null) {
     if (!token || selectedIds.size === 0) return
     setBatchLoading(true)
     try {
-      await Promise.all(Array.from(selectedIds).map(id => userBookmarkApi.update(token, id, { archived: archived ? 1 : 0 })))
+      await userBookmarkApi.batchMove(token, Array.from(selectedIds), targetCategoryId)
       await loadData()
       setSelectedIds(new Set())
+      setShowMoveModal(false)
+      toast("移动完成", "success")
     } catch (err: any) {
-      toast(err.message || t("common.error"), "error")
+      toast(err.message || "移动失败", "error")
     } finally {
       setBatchLoading(false)
     }
   }
 
-  async function handleBatchFavorite(favorite: boolean) {
-    if (!token || selectedIds.size === 0) return
-    setBatchLoading(true)
+  async function handleDragDrop(bookmarkId: string, targetCategoryId: string | null) {
+    if (!token) return
     try {
-      await Promise.all(Array.from(selectedIds).map(id => userBookmarkApi.update(token, id, { is_favorite: favorite ? 1 : 0 })))
+      await userBookmarkApi.update(token, bookmarkId, { category_id: targetCategoryId || null })
+      updateBookmark(bookmarkId, { category_id: targetCategoryId } as any)
       await loadData()
-      setSelectedIds(new Set())
     } catch (err: any) {
-      toast(err.message || t("common.error"), "error")
-    } finally {
-      setBatchLoading(false)
+      toast(err.message || "移动失败", "error")
     }
   }
 
-  async function handleBatchShare() {
-    if (!token || selectedIds.size === 0) return
-    setBatchLoading(true)
-    let successCount = 0
-    let failCount = 0
-    for (const id of selectedIds) {
-      const b = bookmarks.find(b => b.id === id)
-      if (!b) continue
-      try {
-        const tagsArray = typeof b.tags === "string" ? JSON.parse(b.tags || "[]") : b.tags
-        await submissionApi.create(token, {
-          user_bookmark_id: b.id, title: b.title, url: b.url,
-          description: b.description, icon_url: b.icon_url, tags: tagsArray,
-        })
-        successCount++
-      } catch {
-        failCount++
-      }
-    }
-    toast(t("bookmarks.batchShareResult", { success: successCount, fail: failCount ? `，失败 ${failCount} 个` : '' }))
-    setSelectedIds(new Set())
-    setBatchLoading(false)
+  function handleDragStart(e: React.DragEvent, id: string) {
+    e.dataTransfer.setData('text/plain', id)
+    e.dataTransfer.effectAllowed = 'move'
   }
 
   function openEditModal(b: Bookmark) {
     setEditingBookmark(b)
     setFormData({
-      title: b.title,
-      url: b.url,
-      description: b.description || "",
-      icon_url: b.icon_url || "",
-      category_id: b.category_id || "",
+      title: b.title, url: b.url, description: b.description || "",
+      icon_url: b.icon_url || "", category_id: b.category_id || "",
       tags: typeof b.tags === "string" ? JSON.parse(b.tags || "[]") : (b.tags || []),
       is_favorite: b.is_favorite,
     })
     setShowEditModal(true)
   }
 
-  function openAddModal() {
-    setFormData({ title: "", url: "", description: "", icon_url: "", category_id: "", tags: [], is_favorite: 0 })
+  function openAddModal(categoryId?: string) {
+    setFormData({ title: "", url: "", description: "", icon_url: "", category_id: categoryId || "", tags: [], is_favorite: 0 })
     setShowAddModal(true)
   }
 
@@ -337,136 +366,173 @@ export default function Bookmarks() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <PageHeader title="私人收藏夹" description="管理你自己的收藏，可申请分享到公开导航。" />
+    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+      <PageHeader title="私人收藏夹" description="管理你的收藏，可申请分享到公开导航。支持导入浏览器书签 HTML。" />
 
-      <SectionCard className="mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex flex-wrap gap-2">
-          <label className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2 cursor-pointer">
+      {/* Toolbar */}
+      <SectionCard className="mb-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => setSidebarOpen(v => !v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 lg:hidden">
+            <Menu className="w-5 h-5" />
+          </button>
+          <button onClick={() => setSidebarOpen(v => !v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hidden lg:block">
+            {sidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+          <label className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 cursor-pointer text-sm">
             <Upload className="w-4 h-4" />{importing ? "导入中..." : "导入HTML"}
             <input type="file" accept=".html,text/html" className="hidden" disabled={importing}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.currentTarget.value = "" }} />
           </label>
-          <button onClick={handleExportHtml} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
+          <button onClick={handleExportHtml} className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm">
             <Download className="w-4 h-4" />导出HTML
           </button>
-          <button onClick={handleExport} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
+          <button onClick={handleExport} className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm">
             <Download className="w-4 h-4" />导出JSON
           </button>
-          <button onClick={() => setShowCategoryModal(true)} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
+          <button onClick={() => setShowCategoryModal(true)} className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm">
             <Folder className="w-4 h-4" />分类
           </button>
-          <button onClick={openAddModal} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+          <button onClick={() => openAddModal()} className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1.5 text-sm">
             <Plus className="w-4 h-4" />{t("bookmarks.add")}
           </button>
+          <div className="flex-1" />
+          <button onClick={() => setShowFavoritesOnly(v => !v)}
+            className={`px-3 py-2 rounded-lg text-sm ${showFavoritesOnly ? "bg-yellow-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+            仅收藏
+          </button>
+          <button onClick={() => setShowArchived(v => !v)}
+            className={`px-3 py-2 rounded-lg text-sm ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+            {showArchived ? "未归档" : "归档"}
+          </button>
         </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard className="mb-6">
-      <FilterBar className="items-stretch">
-        <div className="relative min-w-0 w-full lg:basis-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-          <input type="text" placeholder={t("bookmarks.search")} value={searchQuery}
+        <div className="mt-3 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input type="text" placeholder="搜索标题、链接或描述..." value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="ui-input h-11 w-full pl-10 pr-4" />
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800" />
         </div>
-        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
-          className="ui-select h-11 w-full px-4 sm:w-auto sm:min-w-[180px]">
-          <option value="all">{t("bookmarks.allCategories")}</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-        <button onClick={() => setShowFavoritesOnly(v => !v)}
-          className={`h-11 w-full rounded-xl px-4 sm:w-auto ${showFavoritesOnly ? "bg-yellow-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-          仅收藏
-        </button>
-        <button onClick={() => setShowArchived(v => !v)}
-          className={`h-11 w-full rounded-xl px-4 sm:w-auto ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-          {showArchived ? "查看未归档" : "查看归档"}
-        </button>
-      </FilterBar>
       </SectionCard>
 
       {pageError ? (
         <EmptyState title="加载失败" description={pageError} tone="error" />
-      ) : null}
+      ) : (
+        <div className="flex gap-4">
+          {/* Sidebar - Category Tree */}
+          <div className={`shrink-0 transition-all duration-200 ${sidebarOpen ? 'w-64' : 'w-0 overflow-hidden lg:w-0'}`}>
+            <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-3 ${sidebarOpen ? '' : 'hidden lg:block'}`}
+              style={{ height: 'calc(100vh - 220px)' }}>
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">分类</span>
+                <button onClick={() => setShowCategoryModal(true)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-500">
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              <CategoryTree
+                categories={categories}
+                bookmarks={bookmarks}
+                selectedCategoryId={selectedCategoryId}
+                onSelectCategory={(id) => setSelectedCategory(id === null ? "all" : id)}
+                onDropBookmark={handleDragDrop}
+                onAddSubCategory={(parentId) => { setCategoryParentId(parentId); setShowCategoryModal(true) }}
+                onRenameCategory={async (id, name) => {
+                  if (!token) return
+                  try { await userCategoryApi.update(token, id, { name }); await loadData() }
+                  catch (err: any) { toast(err.message || "重命名失败", "error") }
+                }}
+                onDeleteCategory={async (id) => {
+                  if (!token || !await confirm("确定删除此分类？分类下的书签将变为未分类状态。")) return
+                  try { await userCategoryApi.delete(token, id); await loadData() }
+                  catch (err: any) { toast(err.message || "删除失败", "error") }
+                }}
+              />
+            </div>
+          </div>
 
-      {!pageError && filteredBookmarks.length > 0 && (
-        <div className="flex items-center gap-2 mb-3 px-1">
-          <button onClick={toggleSelectAll} className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600">
-            {selectedIds.size === filteredBookmarks.length ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-            {t("bookmarks.selectAll")}
-          </button>
-          <span className="text-sm text-gray-400 dark:text-gray-500">
-            {selectedIds.size > 0
-              ? t("bookmarks.selected", { count: selectedIds.size })
-              : t("bookmarks.total", { count: filteredBookmarks.length })}
-          </span>
-          {selectedIds.size > 0 && (
-            <div className="flex items-center gap-1 ml-auto">
-              <button onClick={() => handleBatchFavorite(true)} disabled={batchLoading}
-                className="px-2.5 py-1 text-xs bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded hover:bg-yellow-100 dark:hover:bg-yellow-900/50 disabled:opacity-50">{t("bookmarks.batchFavorite")}</button>
-              <button onClick={() => handleBatchArchive(true)} disabled={batchLoading}
-                className="px-2.5 py-1 text-xs bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-100 dark:hover:bg-purple-900/50 disabled:opacity-50">{t("bookmarks.batchArchive")}</button>
-              <button onClick={handleBatchShare} disabled={batchLoading}
-                className="px-2.5 py-1 text-xs bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-100 dark:hover:bg-green-900/50 disabled:opacity-50">{t("bookmarks.batchShare")}</button>
-              <button onClick={handleBatchDelete} disabled={batchLoading}
-                className="px-2.5 py-1 text-xs bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-50">{t("bookmarks.batchDelete")}</button>
+          {/* Mobile overlay */}
+          {sidebarOpen && (
+            <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setSidebarOpen(false)}>
+              <div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">分类</span>
+                  <button onClick={() => setSidebarOpen(false)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-5 h-5" /></button>
+                </div>
+                <CategoryTree
+                  categories={categories}
+                  bookmarks={bookmarks}
+                  selectedCategoryId={selectedCategoryId}
+                  onSelectCategory={(id) => { setSelectedCategory(id === null ? "all" : id); setSidebarOpen(false) }}
+                  onDropBookmark={handleDragDrop}
+                  onAddSubCategory={(parentId) => { setCategoryParentId(parentId); setShowCategoryModal(true) }}
+                  onRenameCategory={async (id, name) => {
+                    if (!token) return
+                    try { await userCategoryApi.update(token, id, { name }); await loadData() }
+                    catch (err: any) { toast(err.message || "重命名失败", "error") }
+                  }}
+                  onDeleteCategory={async (id) => {
+                    if (!token || !await confirm("确定删除此分类？")) return
+                    try { await userCategoryApi.delete(token, id); await loadData() }
+                    catch (err: any) { toast(err.message || "删除失败", "error") }
+                  }}
+                />
+              </div>
             </div>
           )}
+
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <BookmarkListView
+                bookmarks={filteredBookmarks}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onToggleSelectAll={toggleSelectAll}
+                onOpenEdit={openEditModal}
+                onDelete={handleDeleteBookmark}
+                onToggleFavorite={handleToggleFavorite}
+                onToggleArchive={handleToggleArchived}
+                onShare={handleShareBookmark}
+                onDragStart={handleDragStart}
+                onMoveToCategory={() => setShowMoveModal(true)}
+                submittingShare={submittingShare}
+              />
+
+              {filteredBookmarks.length === 0 && !pageError && (
+                <EmptyState
+                  title={searchQuery || selectedCategory !== "all" ? "没有匹配收藏" : "暂无私人收藏"}
+                  description={searchQuery || selectedCategory !== "all" ? "试试切换分类或更换关键词。" : "可先新增收藏，或导入浏览器书签。"}
+                  icon={<Folder className="w-6 h-6" />}
+                  action={searchQuery || selectedCategory !== "all" ? undefined : <button onClick={() => openAddModal()} className="ui-btn ui-btn-primary">添加第一个收藏</button>}
+                />
+              )}
+            </div>
+          </div>
         </div>
       )}
 
-      {!pageError && filteredBookmarks.length === 0 ? (
-        <EmptyState
-          title={searchQuery || selectedCategory !== "all" ? "没有匹配收藏" : "暂无私人收藏"}
-          description={searchQuery || selectedCategory !== "all" ? "试试切换分类或更换关键词。" : "可先新增收藏，或导入浏览器书签。"}
-          icon={<Folder className="w-6 h-6" />}
-          action={searchQuery || selectedCategory !== "all" ? undefined : <button onClick={openAddModal} className="ui-btn ui-btn-primary">添加第一个收藏</button>}
+      {/* Import Preview Dialog */}
+      {importPreview && (
+        <ImportPreviewDialog
+          preview={importPreview}
+          onConfirm={handleImportConfirm}
+          onCancel={() => { setImportPreview(null); setImportHtmlContent("") }}
         />
-      ) : !pageError ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredBookmarks.map((b) => {
-            const tagsArray = typeof b.tags === "string" ? JSON.parse(b.tags || "[]") : b.tags
-            return (
-              <div key={b.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition ${selectedIds.has(b.id) ? 'ring-2 ring-blue-400' : ''}`}>
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <button onClick={() => toggleSelect(b.id)} className="shrink-0 text-gray-400 dark:text-gray-500 hover:text-blue-500">
-                      {selectedIds.has(b.id) ? <CheckSquare className="w-4 h-4 text-blue-500" /> : <Square className="w-4 h-4" />}
-                    </button>
-                    <Favicon src={b.icon_url} title={b.title} size="sm" />
-                    <a href={b.url} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline truncate">{b.title}</a>
-                  </div>
-                  <button onClick={() => handleToggleFavorite(b.id, b.is_favorite)} className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 ${b.is_favorite ? "text-yellow-500 dark:text-yellow-400" : "text-gray-400 dark:text-gray-500"}`}>
-                    <Star className="w-4 h-4" fill={b.is_favorite ? "currentColor" : "none"} />
-                  </button>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 truncate mb-2">{b.url}</p>
-                {b.description && <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">{b.description}</p>}
-                <div className="flex items-center gap-2 flex-wrap mb-3">
-                  {b.category_id && <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">{categories.find(c => c.id === b.category_id)?.name || t("common.noCategory")}</span>}
-                  {tagsArray.slice(0, 2).map((tag: string, i: number) => <span key={i} className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded">#{tag}</span>)}
-                </div>
-                <div className="flex flex-wrap gap-1 justify-between items-center">
-                  <div className="flex gap-1">
-                    <button onClick={() => openEditModal(b)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                    <button onClick={() => handleDeleteBookmark(b.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                    <button onClick={() => handleToggleArchived(b.id, b.archived)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-purple-600"><Archive className="w-4 h-4" /></button>
-                  </div>
-                  <button onClick={() => handleShareBookmark(b)} disabled={submittingShare === b.id}
-                    className="text-xs px-2 py-1 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded hover:bg-green-100 dark:hover:bg-green-900/50 flex items-center gap-1 disabled:opacity-50">
-                    {submittingShare === b.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Share2 className="w-3 h-3" />}申请分享
-                  </button>
-                </div>
-              </div>
-            )
-          })}
+      )}
+
+      {/* Move to Category Modal */}
+      <Modal show={showMoveModal} title="移动到分类" onClose={() => setShowMoveModal(false)}>
+        <div className="space-y-1 max-h-80 overflow-y-auto">
+          <button onClick={() => handleBatchMove(null)}
+            className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">
+            不分类
+          </button>
+          {getCategoryOptions().map(({ id, label }) => (
+            <button key={id} onClick={() => handleBatchMove(id)}
+              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">
+              {label}
+            </button>
+          ))}
         </div>
-      ) : null}
+      </Modal>
 
       {/* Add Modal */}
       <Modal show={showAddModal} title={t("bookmarks.add")} onClose={() => setShowAddModal(false)}>
@@ -483,7 +549,7 @@ export default function Bookmarks() {
           </div>
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.title")}</label><input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder={t("bookmarks.titlePlaceholder")} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.description")}</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder={t("bookmarks.descriptionPlaceholder")} rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{getCategoryOptions().map(({ id, label }) => <option key={id} value={id}>{label}</option>)}</select></div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.icon")}</label>
             <div className="flex gap-2">
@@ -502,7 +568,7 @@ export default function Bookmarks() {
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.url")}</label><input type="url" value={formData.url} onChange={(e) => setFormData({ ...formData, url: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.title")}</label><input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.description")}</label><textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label><select value={formData.category_id} onChange={(e) => setFormData({ ...formData, category_id: e.target.value })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">{t("common.noCategory")}</option>{getCategoryOptions().map(({ id, label }) => <option key={id} value={id}>{label}</option>)}</select></div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.icon")}</label>
             <div className="flex gap-2">
@@ -519,8 +585,9 @@ export default function Bookmarks() {
       <Modal show={showCategoryModal} title={t("categories.add")} onClose={() => setShowCategoryModal(false)}>
         <div className="space-y-4">
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.name")}</label><input type="text" value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder={t("categories.namePlaceholder")} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">父分类</label><select value={categoryParentId} onChange={(e) => setCategoryParentId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"><option value="">无（顶级分类）</option>{getCategoryOptions().map(({ id, label }) => <option key={id} value={id}>{label}</option>)}</select></div>
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.color")}</label><input type="color" value={categoryColor} onChange={(e) => setCategoryColor(e.target.value)} className="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg" /></div>
-          <div className="flex gap-2 pt-4"><button onClick={() => setShowCategoryModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button><button onClick={handleAddCategory} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
+          <div className="flex gap-2 pt-4"><button onClick={() => setShowCategoryModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button><button onClick={() => handleAddCategory()} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
         </div>
       </Modal>
     </div>

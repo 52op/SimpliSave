@@ -1,11 +1,12 @@
 interface UploadProgressProps {
   progress: number
-  status?: 'uploading' | 'compressing' | 'cropping' | 'done' | 'error'
+  status?: 'idle' | 'uploading' | 'compressing' | 'cropping' | 'done' | 'error'
   message?: string
 }
 
 export default function UploadProgress({ progress, status = 'uploading', message }: UploadProgressProps) {
   const statusText = {
+    idle: '',
     uploading: '上传中...',
     compressing: '压缩中...',
     cropping: '裁剪中...',

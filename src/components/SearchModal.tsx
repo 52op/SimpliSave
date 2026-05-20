@@ -9,9 +9,9 @@ interface SearchResult {
   type: "bookmark" | "group" | "private" | "memo"
   id: string
   title: string
-  url?: string
-  description?: string
-  icon_url?: string
+  url?: string | null
+  description?: string | null
+  icon_url?: string | null
   slug?: string
 }
 

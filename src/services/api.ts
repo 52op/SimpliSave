@@ -84,16 +84,28 @@ export const userBookmarkApi = {
   delete: (token: string, id: string) => request<void>('DELETE', `/user-bookmarks/${id}`, undefined, token),
   export: (token: string) => fetch(`${BASE_URL}/user-bookmarks/export`, { headers: getHeaders(token) }),
   exportHtml: (token: string) => fetch(`${BASE_URL}/user-bookmarks/export-html`, { headers: getHeaders(token) }),
-  importHtml: async (token: string, html: string) => {
-    const res = await fetch(`${BASE_URL}/user-bookmarks/import`, {
+  previewImport: async (token: string, html: string) => {
+    const res = await fetch(`${BASE_URL}/user-bookmarks/import/preview`, {
       method: 'POST',
       headers: getHeaders(token),
       body: JSON.stringify({ html }),
     });
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Preview failed');
+    return data.data;
+  },
+  importHtml: async (token: string, html: string, renameMap?: Record<string, string>) => {
+    const res = await fetch(`${BASE_URL}/user-bookmarks/import`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify({ html, rename_map: renameMap }),
+    });
+    const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Import failed');
     return data.data;
   },
+  batchMove: (token: string, ids: string[], targetCategoryId: string | null) =>
+    request<void>('POST', '/user-bookmarks/batch-move', { ids, target_category_id: targetCategoryId }, token),
 };
 
 export const publicCategoryApi = {

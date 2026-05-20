@@ -13,7 +13,7 @@ const DEFAULT_SETTINGS: ImagebedSettings = {
   updated_at: '',
 }
 
-function getSettingsForType(type: ImageType, settings: ImagebedSettings) {
+function getSettingsForType(type: ImageType, settings?: ImagebedSettings) {
   const s = settings || DEFAULT_SETTINGS
   switch (type) {
     case 'icon':

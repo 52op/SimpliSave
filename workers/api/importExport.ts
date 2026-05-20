@@ -108,6 +108,129 @@ function buildBookmarkHtml(items: Array<{ title: string; url: string; descriptio
   return html;
 }
 
+// 确保分类层级存在，返回叶子分类ID
+// renameMap: 完整路径 → 叶子段重命名（用于冲突时用户选择重命名）
+async function ensureCategoryHierarchy(
+  userId: string,
+  segments: string[],
+  existingCache: Map<string, string>,
+  newCache: Map<string, string>,
+  renameMap: Map<string, string>,
+  env: any
+): Promise<string> {
+  let parentId: string | null = null;
+  let currentKey = '';
+  const fullPath = segments.join('/');
+
+  for (let i = 0; i < segments.length; i++) {
+    let seg = segments[i];
+    const isLeaf = i === segments.length - 1;
+
+    if (isLeaf && renameMap.has(fullPath)) {
+      seg = renameMap.get(fullPath)!;
+    }
+
+    currentKey = currentKey ? `${currentKey}/${seg}` : seg;
+
+    const cached = existingCache.get(currentKey) || newCache.get(currentKey);
+    if (cached) {
+      parentId = cached;
+      continue;
+    }
+
+    let row: any;
+    if (parentId) {
+      row = await env.DB.prepare(
+        'SELECT id FROM user_categories WHERE user_id = ? AND name = ? AND parent_id = ?'
+      ).bind(userId, seg, parentId).first();
+    } else {
+      row = await env.DB.prepare(
+        'SELECT id FROM user_categories WHERE user_id = ? AND name = ? AND parent_id IS NULL'
+      ).bind(userId, seg).first();
+    }
+
+    if (row) {
+      existingCache.set(currentKey, row.id);
+      parentId = row.id;
+      continue;
+    }
+
+    const id = crypto.randomUUID();
+    await env.DB.prepare(
+      'INSERT INTO user_categories (id, user_id, name, parent_id, color, sort_order, type) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).bind(id, userId, seg, parentId, '#3b82f6', 0, 'bookmark').run();
+    newCache.set(currentKey, id);
+    parentId = id;
+  }
+
+  return parentId!;
+}
+
+// 预览导入：仅扫描，不写入
+export async function handlePreviewImportUserBookmarks(request: Request, env: any): Promise<Response> {
+  const userId = await getUserId(request, env);
+  if (!userId) return errorResponse('Unauthorized', 401);
+
+  const body = await request.json() as { html?: string };
+  const html = body.html || '';
+  if (!html.trim()) return errorResponse('Empty bookmark HTML', 400);
+
+  const items = parseBookmarkHtml(html);
+  if (items.length === 0) return errorResponse('No bookmarks found in HTML', 400);
+
+  const scannedPaths = new Set<string>();
+  let uncategorizedCount = 0;
+  for (const item of items) {
+    if (item.categoryPath && item.categoryPath.length > 0) {
+      scannedPaths.add(item.categoryPath.join('/'));
+    } else {
+      uncategorizedCount++;
+    }
+  }
+
+  const existingCategories: string[] = [];
+  const newCategories: string[] = [];
+
+  for (const path of scannedPaths) {
+    const segments = path.split('/');
+    let parentId: string | null = null;
+    let pathExists = true;
+
+    for (const seg of segments) {
+      let found: any;
+      if (parentId) {
+        found = await env.DB.prepare(
+          'SELECT id FROM user_categories WHERE user_id = ? AND name = ? AND parent_id = ?'
+        ).bind(userId, seg, parentId).first();
+      } else {
+        found = await env.DB.prepare(
+          'SELECT id FROM user_categories WHERE user_id = ? AND name = ? AND parent_id IS NULL'
+        ).bind(userId, seg).first();
+      }
+      if (found) {
+        parentId = found.id;
+      } else {
+        pathExists = false;
+        break;
+      }
+    }
+
+    if (pathExists) {
+      existingCategories.push(path);
+    } else {
+      newCategories.push(path);
+    }
+  }
+
+  return successResponse({
+    total: items.length,
+    existing_categories: existingCategories,
+    new_categories: newCategories,
+    all_categories: Array.from(scannedPaths),
+    uncategorized_count: uncategorizedCount,
+  });
+}
+
 // 导入浏览器书签 HTML 到 user_bookmarks
 export async function handleImportUserBookmarks(request: Request, env: any): Promise<Response> {
   const userId = await getUserId(request, env);
@@ -115,10 +238,14 @@ export async function handleImportUserBookmarks(request: Request, env: any): Pro
 
   const contentType = request.headers.get('content-type') || '';
   let html = '';
+  let renameMap = new Map<string, string>();
 
   if (contentType.includes('application/json')) {
-    const body = await request.json() as { html?: string };
+    const body = await request.json() as { html?: string; rename_map?: Record<string, string> };
     html = body.html || '';
+    if (body.rename_map) {
+      renameMap = new Map(Object.entries(body.rename_map));
+    }
   } else {
     html = await request.text();
   }
@@ -128,31 +255,17 @@ export async function handleImportUserBookmarks(request: Request, env: any): Pro
   const items = parseBookmarkHtml(html);
   if (items.length === 0) return errorResponse('No bookmarks found in HTML', 400);
 
-  // 先收集文件夹名并确保分类存在
-  const categoryMap = new Map<string, string>();
-  const categoryNames = new Set<string>();
-  for (const item of items) {
-    const cat = (item.categoryPath && item.categoryPath.length > 0) ? item.categoryPath[item.categoryPath.length - 1] : '未分类';
-    categoryNames.add(cat);
-  }
-
-  for (const name of categoryNames) {
-    const existed = await env.DB.prepare('SELECT id FROM user_categories WHERE user_id = ? AND name = ?').bind(userId, name).first();
-    if (existed) {
-      categoryMap.set(name, existed.id);
-    } else {
-      const created = await env.DB.prepare('INSERT INTO user_categories (user_id, name, color, sort_order) VALUES (?, ?, ?, ?)').bind(userId, name, '#3b82f6', 0).run();
-      if (created.success) {
-        const row = await env.DB.prepare('SELECT id FROM user_categories WHERE user_id = ? AND name = ?').bind(userId, name).first();
-        if (row) categoryMap.set(name, row.id);
-      }
-    }
-  }
-
+  const existingCache = new Map<string, string>();
+  const newCache = new Map<string, string>();
   let inserted = 0;
+
   for (const item of items) {
-    const categoryName = (item.categoryPath && item.categoryPath.length > 0) ? item.categoryPath[item.categoryPath.length - 1] : '未分类';
-    const categoryId = categoryMap.get(categoryName) || null;
+    const segments = item.categoryPath || [];
+
+    let categoryId: string | null = null;
+    if (segments.length > 0) {
+      categoryId = await ensureCategoryHierarchy(userId, segments, existingCache, newCache, renameMap, env);
+    }
 
     const result = await env.DB.prepare(
       'INSERT INTO user_bookmarks (user_id, title, url, description, icon_url, category_id, tags) VALUES (?, ?, ?, ?, ?, ?, ?)'
@@ -172,7 +285,8 @@ export async function handleImportUserBookmarks(request: Request, env: any): Pro
   return successResponse({
     imported: inserted,
     total: items.length,
-    message: `Imported ${inserted}/${items.length} bookmarks`
+    message: `Imported ${inserted}/${items.length} bookmarks`,
+    existing_categories: Array.from(existingCache.keys()),
   });
 }
 

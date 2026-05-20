@@ -7,9 +7,10 @@ import {
 } from './api/publicBookmarks';
 import {
   handleListUserBookmarks, handleCreateUserBookmark, handleGetUserBookmark,
-  handleUpdateUserBookmark, handleDeleteUserBookmark, handleExportUserBookmarks
+  handleUpdateUserBookmark, handleDeleteUserBookmark, handleExportUserBookmarks,
+  handleBatchMoveUserBookmarks
 } from './api/userBookmarks';
-import { handleImportUserBookmarks, handleExportUserBookmarksHtml } from './api/importExport';
+import { handleImportUserBookmarks, handleExportUserBookmarksHtml, handlePreviewImportUserBookmarks } from './api/importExport';
 import {
   handleListUserCategories, handleCreateUserCategory, handleUpdateUserCategory, handleDeleteUserCategory,
   handleListPublicCategories, handleCreatePublicCategory, handleUpdatePublicCategory, handleDeletePublicCategory
@@ -117,6 +118,12 @@ async function handleUserBookmarks(request: Request, env: Env, path: string): Pr
   }
   if (path === '/user-bookmarks/export-html') {
     return handleExportUserBookmarksHtml(request, env);
+  }
+  if (path === '/user-bookmarks/import/preview' && request.method === 'POST') {
+    return handlePreviewImportUserBookmarks(request, env);
+  }
+  if (path === '/user-bookmarks/batch-move' && request.method === 'POST') {
+    return handleBatchMoveUserBookmarks(request, env);
   }
   if (path === '/user-bookmarks/import' && request.method === 'POST') {
     return handleImportUserBookmarks(request, env);

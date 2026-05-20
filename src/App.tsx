@@ -7,7 +7,6 @@ import { siteSettingsApi } from "./services/api"
 import type { SiteSettings } from "./types"
 import Header from "./components/Header"
 import { useThemeStore } from "./stores/themeStore"
-import { useAuthStore } from "./stores/authStore"
 import "./index.css"
 
 const Home = lazy(() => import("./pages/Home"))

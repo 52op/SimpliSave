@@ -116,6 +116,23 @@ export async function handleDeleteUserBookmark(request: Request, env: any, id: s
   return successResponse({ message: 'User bookmark deleted' });
 }
 
+// 批量移动书签到指定分类
+export async function handleBatchMoveUserBookmarks(request: Request, env: any): Promise<Response> {
+  const userId = await getUserId(request, env);
+  if (!userId) return errorResponse('Unauthorized', 401);
+
+  const body = await request.json() as { ids: string[]; target_category_id: string | null };
+  if (!body.ids || body.ids.length === 0) return errorResponse('No bookmark IDs provided', 400);
+
+  const stmt = env.DB.prepare('UPDATE user_bookmarks SET category_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?');
+  let moved = 0;
+  for (const id of body.ids) {
+    const r = await stmt.bind(body.target_category_id, id, userId).run();
+    if (r.success) moved++;
+  }
+  return successResponse({ moved, total: body.ids.length });
+}
+
 // 导出私人收藏为 JSON
 export async function handleExportUserBookmarks(request: Request, env: any): Promise<Response> {
   const userId = await getUserId(request, env);

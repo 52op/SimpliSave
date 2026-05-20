@@ -21,6 +21,9 @@ export default function MemoViewer() {
   const [verified, setVerified] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  const requiresPassword = (item: Memo | (Memo & { has_password?: number | boolean }) | null) =>
+    Boolean(item && ((item as any).has_password || item.share_password))
+
   useEffect(() => {
     if (!id) return
     loadMemo()
@@ -43,7 +46,7 @@ export default function MemoViewer() {
         res = await publicMemoApi.get(id)
       }
       setMemo(res)
-      if (canBypassPassword || !res.share_password) setVerified(true)
+      if (canBypassPassword || !requiresPassword(res)) setVerified(true)
     } catch {
       setError(t("memos.notFound") || "备忘录不存在或未公开")
     } finally {

@@ -70,7 +70,7 @@ export default function Home() {
   const [tagPaused, setTagPaused] = useState(false)
   const [pageError, setPageError] = useState("")
   const engineRef = useRef<HTMLDivElement>(null)
-  const suggestRef = useRef<HTMLDivElement>(null)
+  const suggestRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const tagTimerRef = useRef<ReturnType<typeof setTimeout>>()

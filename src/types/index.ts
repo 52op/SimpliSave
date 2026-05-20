@@ -66,6 +66,7 @@ export interface Category {
   color: string
   sort_order: number
   type: 'bookmark' | 'memo'
+  parent_id: string | null
   created_at: string
 }
 

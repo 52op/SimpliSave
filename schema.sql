@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS user_categories (
     icon TEXT,
     color TEXT DEFAULT '#3b82f6',
     type TEXT NOT NULL DEFAULT 'bookmark' CHECK (type IN ('bookmark', 'memo')),
+    parent_id TEXT REFERENCES user_categories(id) ON DELETE SET NULL,
     sort_order INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -152,6 +153,7 @@ CREATE INDEX IF NOT EXISTS idx_public_bookmarks_group ON public_bookmarks(group_
 CREATE INDEX IF NOT EXISTS idx_public_bookmarks_category ON public_bookmarks(category_id);
 CREATE INDEX IF NOT EXISTS idx_user_bookmarks_user ON user_bookmarks(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_categories_user ON user_categories(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_categories_parent ON user_categories(parent_id);
 CREATE INDEX IF NOT EXISTS idx_public_categories_sort ON public_categories(sort_order);
 CREATE INDEX IF NOT EXISTS idx_submissions_status ON bookmark_submissions(status);
 CREATE INDEX IF NOT EXISTS idx_memos_user ON memos(user_id);
@@ -261,6 +263,9 @@ ALTER TABLE users ADD COLUMN show_website INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN show_github INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN show_twitter INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN show_weibo INTEGER DEFAULT 0;
+
+-- Migration v4.5: 用户分类支持层级结构
+ALTER TABLE user_categories ADD COLUMN parent_id TEXT REFERENCES user_categories(id) ON DELETE SET NULL;
 
 -- Migration v4: Memo public sharing
 ALTER TABLE memos ADD COLUMN is_public INTEGER DEFAULT 0;

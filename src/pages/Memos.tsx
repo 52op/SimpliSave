@@ -24,7 +24,7 @@ const MEMO_COLORS = [
   "#e0e7ff", "#f3e8ff", "#fce7f3", "#fdf2f8", "#f1f5f9"
 ]
 
-function EditorToolbar({ editor, onImageUpload }: { editor: Editor | null; onImageUpload?: (url: string) => void }) {
+function EditorToolbar({ editor, onImageUpload }: { editor: Editor | null; onImageUpload?: (file: File) => void }) {
   if (!editor) return null
 
   const handleImageUpload = () => {
@@ -403,7 +403,7 @@ export default function Memos() {
                     )}
                     {(() => {
                       const tagsArr = typeof m.tags === "string" ? JSON.parse(m.tags || "[]") : (m.tags || [])
-                      return tagsArr.slice(0, 3).map((tag, i) => (
+                      return tagsArr.slice(0, 3).map((tag: string, i: number) => (
                         <span key={i} className="text-xs px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded ml-1 inline-block">#{tag}</span>
                       ))
                     })()}
