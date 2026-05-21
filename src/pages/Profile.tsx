@@ -33,6 +33,11 @@ export default function Profile() {
   const publicUrl = user ? `${window.location.origin}/u/${user.id}` : ""
 
   useEffect(() => {
+    if (!token) return
+    authApi.me(token).then(setUser).catch(() => {})
+  }, [token])
+
+  useEffect(() => {
     if (user) {
       setName(user.name || "")
       setAvatarUrl(user.avatar_url || "")

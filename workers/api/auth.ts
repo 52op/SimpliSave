@@ -32,9 +32,11 @@ export async function handleRegister(request: Request, env: any): Promise<Respon
     return errorResponse('Failed to create user', 500);
   }
   
-  const user = await env.DB.prepare('SELECT id, email, name, created_at FROM users WHERE email = ?').bind(email).first();
+  const user = await env.DB.prepare(
+    'SELECT id, email, name, avatar_url, bio, website, github, twitter, weibo, show_bio, show_website, show_github, show_twitter, show_weibo, role, created_at FROM users WHERE email = ?'
+  ).bind(email).first();
   const token = await signJWT({ userId: user.id, email: user.email, role: 'user' }, env);
-  
+
   return successResponse({ user, token }, 201);
 }
 
@@ -47,7 +49,7 @@ export async function handleLogin(request: Request, env: any): Promise<Response>
   }
   
   const user = await env.DB.prepare(
-    'SELECT id, email, name, password_hash, role, created_at FROM users WHERE email = ?'
+    'SELECT id, email, name, avatar_url, bio, website, github, twitter, weibo, show_bio, show_website, show_github, show_twitter, show_weibo, role, password_hash, created_at FROM users WHERE email = ?'
   ).bind(email).first();
   
   if (!user) {
@@ -61,7 +63,7 @@ export async function handleLogin(request: Request, env: any): Promise<Response>
   
   const token = await signJWT({ userId: user.id, email: user.email, role: user.role || 'user' }, env);
   return successResponse({
-    user: { id: user.id, email: user.email, name: user.name, role: user.role, created_at: user.created_at },
+    user: { id: user.id, email: user.email, name: user.name, avatar_url: user.avatar_url, bio: user.bio, website: user.website, github: user.github, twitter: user.twitter, weibo: user.weibo, show_bio: user.show_bio, show_website: user.show_website, show_github: user.show_github, show_twitter: user.show_twitter, show_weibo: user.show_weibo, role: user.role, created_at: user.created_at },
     token,
   });
 }
