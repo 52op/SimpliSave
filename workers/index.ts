@@ -58,35 +58,36 @@ export default {
       if (path.startsWith('/public-categories')) return handlePublicCategories(request, env, path);
       if (path.startsWith('/user-categories')) return handleUserCategories(request, env, path);
       if (path.startsWith('/submissions')) return handleSubmissions(request, env, path);
-    if (path.startsWith('/fetch-meta')) return handleFetchMeta(request, env);
-    if (path.startsWith('/card-groups')) return handleCardGroups(request, env, path);
-    if (path.startsWith('/memos')) return handleMemos(request, env, path);
-    if (path.startsWith('/tags')) return handleTags(request, env, path);
-    if (path.startsWith('/search-engines')) return handleSearchEngines(request, env, path);
-    if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
-    if (path.startsWith('/site-settings')) return handleSiteSettings(request, env);
-    if (path === '/hot-tags') return handleHotTags();
+      if (path.startsWith('/fetch-meta')) return handleFetchMeta(request, env);
+      if (path.startsWith('/card-groups')) return handleCardGroups(request, env, path);
+      if (path.startsWith('/memos')) return handleMemos(request, env, path);
+      if (path.startsWith('/tags')) return handleTags(request, env, path);
+      if (path.startsWith('/search-engines')) return handleSearchEngines(request, env, path);
+      if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
+      if (path.startsWith('/site-settings')) return handleSiteSettings(request, env);
+      if (path === '/hot-tags') return handleHotTags();
 
-    const publicMemoVerifyMatch = path.match(/^\/public-memos\/([^\/]+)\/verify$/);
-    const publicMemoMatch = path.match(/^\/public-memos\/([^\/]+)$/);
-    if (publicMemoVerifyMatch && request.method === 'POST') return handleVerifyPublicMemoPassword(request, env, publicMemoVerifyMatch[1]);
-    if (publicMemoMatch && request.method === 'GET') return handleGetPublicMemo(request, env, publicMemoMatch[1]);
+      const publicMemoVerifyMatch = path.match(/^\/public-memos\/([^\/]+)\/verify$/);
+      const publicMemoMatch = path.match(/^\/public-memos\/([^\/]+)$/);
+      if (publicMemoVerifyMatch && request.method === 'POST') return handleVerifyPublicMemoPassword(request, env, publicMemoVerifyMatch[1]);
+      if (publicMemoMatch && request.method === 'GET') return handleGetPublicMemo(request, env, publicMemoMatch[1]);
 
-    const publicUserMemosMatch = path.match(/^\/public\/users\/([^\/]+)\/memos$/);
-    const publicUserMatch = path.match(/^\/public\/users\/([^\/]+)$/);
-    if (publicUserMemosMatch && request.method === 'GET') return handleListPublicMemosByUser(request, env, publicUserMemosMatch[1]);
-    if (publicUserMatch && request.method === 'GET') return handleGetPublicUser(request, env, publicUserMatch[1]);
+      const publicUserMemosMatch = path.match(/^\/public\/users\/([^\/]+)\/memos$/);
+      const publicUserMatch = path.match(/^\/public\/users\/([^\/]+)$/);
+      if (publicUserMemosMatch && request.method === 'GET') return handleListPublicMemosByUser(request, env, publicUserMemosMatch[1]);
+      if (publicUserMatch && request.method === 'GET') return handleGetPublicUser(request, env, publicUserMatch[1]);
 
-    return new Response('Not Found', { status: 404, headers: corsHeaders() });
-  } catch (err: any) {
-    console.error('Unhandled error:', err);
-    return new Response(JSON.stringify({ success: false, error: err.message || 'Internal Server Error' }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        ...corsHeaders(),
-      },
-    });
+      return new Response('Not Found', { status: 404, headers: corsHeaders() });
+    } catch (err: any) {
+      console.error('Unhandled error:', err);
+      return new Response(JSON.stringify({ success: false, error: err.message || 'Internal Server Error' }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders(),
+        },
+      });
+    }
   }
 };
 
