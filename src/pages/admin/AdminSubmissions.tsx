@@ -8,6 +8,7 @@ import { Check, X, Clock, ExternalLink, Search, ChevronDown } from "lucide-react
 import Favicon from "../../components/Favicon"
 import EmptyState from "../../components/EmptyState"
 import PageHeader from "../../components/PageHeader"
+import { pinyinMatch } from "../../utils/pinyin"
 
 // 可搜索的卡片组选择器，支持分类分组
 function GroupSelector({ groups, value, onChange }: {
@@ -28,7 +29,7 @@ function GroupSelector({ groups, value, onChange }: {
   }, [])
 
   const filtered = search
-    ? groups.filter(g => g.title.toLowerCase().includes(search.toLowerCase()) || (g.category_name || "").toLowerCase().includes(search.toLowerCase()))
+    ? groups.filter(g => pinyinMatch(g.title, search) || pinyinMatch(g.category_name || "", search))
     : groups
 
   // 按分类分组

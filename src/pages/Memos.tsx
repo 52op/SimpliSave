@@ -12,6 +12,7 @@ import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
 import SectionCard from "../components/SectionCard"
 import FilterBar from "../components/FilterBar"
+import { pinyinMatch } from "../utils/pinyin"
 
 function stripHtml(html: string): string {
   const div = document.createElement("div")
@@ -110,8 +111,7 @@ export default function Memos() {
 
   const filteredMemos = memos
     .filter((m) => {
-      const q = searchQuery.toLowerCase()
-      const matchesSearch = m.title.toLowerCase().includes(q) || (m.content || "").toLowerCase().includes(q)
+      const matchesSearch = !searchQuery || pinyinMatch(m.title, searchQuery) || pinyinMatch(stripHtml(m.content || ""), searchQuery)
       const matchesCategory = selectedCategory === "all" || m.category_id === selectedCategory
       const matchesPinned = !showPinnedOnly || !!m.is_pinned
       const matchesTime = isInTimeRange(m.created_at, timeFilter)

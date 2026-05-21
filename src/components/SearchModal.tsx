@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { publicBookmarkApi, cardGroupApi, userBookmarkApi, memoApi } from "../services/api"
 import { X, Search, Globe, FolderOpen, Star, BookOpen, ExternalLink } from "lucide-react"
+import { pinyinMatch } from "../utils/pinyin"
 
 interface SearchResult {
   type: "bookmark" | "group" | "private" | "memo"
@@ -43,7 +44,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
         all.push({ type: "bookmark", id: b.id, title: b.title, url: b.url, description: b.description, icon_url: b.icon_url })
       }
       for (const g of (grps || [])) {
-        if (g.title.toLowerCase().includes(q.toLowerCase()) || (g.description && g.description.toLowerCase().includes(q.toLowerCase()))) {
+        if (pinyinMatch(g.title, q) || (g.description && pinyinMatch(g.description, q))) {
           all.push({ type: "group", id: g.id, title: g.title, description: g.description, slug: g.slug, icon_url: g.icon_url })
         }
       }
@@ -58,7 +59,7 @@ export default function SearchModal({ open, onClose }: { open: boolean; onClose:
             all.push({ type: "private", id: b.id, title: b.title, url: b.url, description: b.description, icon_url: b.icon_url })
           }
           for (const m of (memos || [])) {
-            if (m.title.toLowerCase().includes(q.toLowerCase()) || (m.content || "").toLowerCase().includes(q.toLowerCase())) {
+            if (pinyinMatch(m.title, q) || pinyinMatch((m.content || "").replace(/<[^>]*>/g, ""), q)) {
               all.push({ type: "memo", id: m.id, title: m.title, description: m.content?.replace(/<[^>]*>/g, "").slice(0, 120) })
             }
           }

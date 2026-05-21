@@ -10,6 +10,7 @@ import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
 import Modal from "../components/Modal"
 import { useNavigate } from "react-router-dom"
+import { pinyinMatch } from "../utils/pinyin"
 
 const STORAGE_KEY = "preferredEngineId"
 const TAG_GROUP_SIZE = 3
@@ -203,9 +204,9 @@ export default function Home() {
   const selectedEngine = engines.find(e => e.id === selectedEngineId) || engines[0]
 
   const filteredGroups = cardGroups.filter((g) => {
-    const matchesSearch = !searchQuery || 
-      g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (g.description && g.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    const matchesSearch = !searchQuery ||
+      pinyinMatch(g.title, searchQuery) ||
+      (g.description && pinyinMatch(g.description, searchQuery))
     const matchesCategory = selectedCategory === "all" || g.category_id === selectedCategory
     return matchesSearch && matchesCategory
   })

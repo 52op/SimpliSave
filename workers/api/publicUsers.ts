@@ -11,24 +11,17 @@ export async function handleGetPublicUser(request: Request, env: any, id: string
 }
 
 export async function handleListPublicBookmarksByUser(request: Request, env: any, id: string): Promise<Response> {
-  // 查询该用户提交被通过后创建的公开卡片组，及其下的链接
-  const groups = await env.DB.prepare(
-    `SELECT pcg.*, pc.name as category_name
+  const rows = await env.DB.prepare(
+    `SELECT pb.id, pb.title, pb.url, pb.description, pb.icon_url, pb.tags,
+            pcg.id as group_id, pcg.title as group_title, pcg.slug as group_slug, pcg.icon_url as group_icon_url,
+            bs.created_at as submitted_at
      FROM bookmark_submissions bs
      JOIN public_card_groups pcg ON bs.approved_public_group_id = pcg.id
-     LEFT JOIN public_categories pc ON pcg.category_id = pc.id
-     WHERE bs.user_id = ? AND bs.status = 'approved' AND pcg.status = 'active'
-     GROUP BY pcg.id
-     ORDER BY bs.created_at DESC`
+     JOIN public_bookmarks pb ON pb.url = bs.url AND pb.group_id = pcg.id
+     WHERE bs.user_id = ? AND bs.status = 'approved' AND pcg.status = 'active' AND pb.status = 'active'
+     ORDER BY bs.created_at DESC
+     LIMIT 100`
   ).bind(id).all();
 
-  const result = [];
-  for (const group of (groups.results as any[])) {
-    const bookmarks = await env.DB.prepare(
-      `SELECT * FROM public_bookmarks WHERE group_id = ? AND status = 'active' ORDER BY sort_order ASC`
-    ).bind(group.id).all();
-    result.push({ ...group, bookmarks: bookmarks.results });
-  }
-
-  return successResponse(result);
+  return successResponse(rows.results);
 }

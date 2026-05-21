@@ -15,6 +15,7 @@ import FilterBar from "../components/FilterBar"
 import CategoryTree from "../components/CategoryTree"
 import BookmarkListView from "../components/BookmarkListView"
 import ImportPreviewDialog from "../components/ImportPreviewDialog"
+import { pinyinMatch } from "../utils/pinyin"
 
 export default function Bookmarks() {
   const { t } = useTranslation()
@@ -76,9 +77,9 @@ export default function Bookmarks() {
   const selectedCategoryId = selectedCategory === "all" ? null : selectedCategory
 
   const filteredBookmarks = bookmarks.filter((b) => {
-    const matchesSearch = !searchQuery || b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = !searchQuery || pinyinMatch(b.title, searchQuery) ||
       b.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (b.description && b.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      (b.description && pinyinMatch(b.description, searchQuery))
     const matchesCategory = selectedCategoryId === null || b.category_id === selectedCategoryId
     return matchesSearch && matchesCategory
   })

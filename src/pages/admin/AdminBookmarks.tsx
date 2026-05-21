@@ -10,6 +10,7 @@ import ImageUploader from "../../components/ImageUploader"
 import EmptyState from "../../components/EmptyState"
 import PageHeader from "../../components/PageHeader"
 import Modal from "../../components/Modal"
+import { pinyinMatch } from "../../utils/pinyin"
 
 export default function AdminBookmarks() {
   const { t } = useTranslation()
@@ -235,7 +236,7 @@ export default function AdminBookmarks() {
 
   // 卡片组列表筛选
   const filteredGroups = groups.filter(g => {
-    const matchSearch = !groupSearch || g.title.toLowerCase().includes(groupSearch.toLowerCase()) || (g.description && g.description.toLowerCase().includes(groupSearch.toLowerCase()))
+    const matchSearch = !groupSearch || pinyinMatch(g.title, groupSearch) || (g.description && pinyinMatch(g.description, groupSearch))
     const matchCat = !groupCategoryFilter || g.category_id === groupCategoryFilter
     return matchSearch && matchCat
   })

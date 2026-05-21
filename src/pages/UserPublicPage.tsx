@@ -2,9 +2,11 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { publicUserApi } from "../services/api"
-import { ArrowLeft, User as UserIcon, Globe, Github, Quote, Loader2, BookOpen, FileText, Calendar, Tag, Link as LinkIcon, FolderOpen, ExternalLink } from "lucide-react"
+import { ArrowLeft, User as UserIcon, Globe, Github, Quote, Loader2, BookOpen, FileText, Calendar, Tag, Link as LinkIcon, FolderOpen, ExternalLink, ChevronDown } from "lucide-react"
 import type { Memo } from "../types"
 import Favicon from "../components/Favicon"
+
+const BOOKMARK_PAGE_SIZE = 20
 
 export default function UserPublicPage() {
   const { id } = useParams<{ id: string }>()
@@ -13,7 +15,8 @@ export default function UserPublicPage() {
 
   const [user, setUser] = useState<any>(null)
   const [memos, setMemos] = useState<Memo[]>([])
-  const [bookmarkGroups, setBookmarkGroups] = useState<any[]>([])
+  const [bookmarks, setBookmarks] = useState<any[]>([])
+  const [showAllBookmarks, setShowAllBookmarks] = useState(false)
   const [loading, setLoading] = useState(true)
   const [memosLoading, setMemosLoading] = useState(true)
   const [bookmarksLoading, setBookmarksLoading] = useState(true)
@@ -55,7 +58,7 @@ export default function UserPublicPage() {
     setBookmarksLoading(true)
     try {
       const res = await publicUserApi.listBookmarks(id)
-      setBookmarkGroups(res || [])
+      setBookmarks(res || [])
     } catch {
     } finally {
       setBookmarksLoading(false)
@@ -156,37 +159,52 @@ export default function UserPublicPage() {
         <div className="flex justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>
-      ) : bookmarkGroups.length === 0 ? (
+      ) : bookmarks.length === 0 ? (
         <div className="text-center py-8 text-gray-400 dark:text-gray-500 mb-8">
           <FolderOpen className="w-10 h-10 mx-auto mb-2" />
           <p className="text-sm">暂无贡献的公开链接</p>
         </div>
       ) : (
-        <div className="space-y-4 mb-8">
-          {bookmarkGroups.map((group) => (
-            <div key={group.id} className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
-              <div className="px-4 py-3 border-b dark:border-gray-700 flex items-center gap-2">
-                <Favicon src={group.icon_url} title={group.title} size="sm" />
-                <span className="font-medium text-gray-900 dark:text-gray-100">{group.title}</span>
-                {group.category_name && (
-                  <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">{group.category_name}</span>
-                )}
+        <div className="mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 divide-y dark:divide-gray-700 overflow-hidden">
+            {(showAllBookmarks ? bookmarks : bookmarks.slice(0, BOOKMARK_PAGE_SIZE)).map((bm: any) => (
+              <div key={bm.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <Favicon src={bm.icon_url} title={bm.title} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <a href={bm.url} target="_blank" rel="noopener noreferrer"
+                      className="text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 truncate">
+                      {bm.title}
+                    </a>
+                    {bm.group_slug && (
+                      <button
+                        onClick={() => navigate(`/g/${bm.group_slug}`)}
+                        className="flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors shrink-0"
+                      >
+                        <Favicon src={bm.group_icon_url} title={bm.group_title} size="sm" />
+                        {bm.group_title}
+                      </button>
+                    )}
+                  </div>
+                  {bm.description && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{bm.description}</p>}
+                </div>
+                <a href={bm.url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-3.5 h-3.5 text-gray-400 shrink-0 hover:text-blue-500" />
+                </a>
               </div>
-              <div className="divide-y dark:divide-gray-700">
-                {(group.bookmarks || []).map((bm: any) => (
-                  <a key={bm.id} href={bm.url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <Favicon src={bm.icon_url} title={bm.title} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{bm.title}</div>
-                      {bm.description && <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{bm.description}</div>}
-                    </div>
-                    <ExternalLink className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  </a>
-                ))}
-              </div>
+            ))}
+          </div>
+          {bookmarks.length > BOOKMARK_PAGE_SIZE && (
+            <div className="mt-3 text-center">
+              <button
+                onClick={() => setShowAllBookmarks(v => !v)}
+                className="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                <ChevronDown className={`w-4 h-4 transition-transform ${showAllBookmarks ? "rotate-180" : ""}`} />
+                {showAllBookmarks ? "收起" : `查看全部 ${bookmarks.length} 条`}
+              </button>
             </div>
-          ))}
+          )}
         </div>
       )}
 
