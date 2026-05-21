@@ -1,6 +1,6 @@
 import { getUserId, getUserRole } from '../utils/auth';
 import { successResponse, errorResponse } from '../utils/response';
-import { s3PutObject } from '../utils/s3';
+import { s3PutObject, s3DeleteObject } from '../utils/s3';
 
 function parsePathTemplate(template: string, filename: string, ext: string, type: string, userId: string): string {
   const now = new Date();
@@ -268,5 +268,100 @@ export async function handleUploadImage(request: Request, env: any): Promise<Res
   const baseUrl = config.custom_domain || config.endpoint;
   const publicUrl = `${baseUrl.replace(/\/+$/, '')}/${uploadPath}`;
 
+  // 写入图片记录
+  const fileId = crypto.randomUUID().replace(/-/g, '');
+  await env.DB.prepare(
+    `INSERT INTO imagebed_files (id, user_id, config_id, object_key, public_url, file_type, file_size, content_type, bed_name)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    fileId, userId, config.id, objectKey, publicUrl,
+    type, body.byteLength, contentType, config.name
+  ).run();
+
   return successResponse({ public_url: publicUrl, bed_name: config.name, object_key: objectKey });
+}
+
+export async function handleListImagebedFiles(request: Request, env: any): Promise<Response> {
+  const role = await getUserRole(request, env);
+  if (role !== 'admin') return errorResponse('Admin only', 403);
+
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
+  const pageSize = Math.min(100, Math.max(1, parseInt(url.searchParams.get('page_size') || '48')));
+  const fileType = url.searchParams.get('file_type') || '';
+  const offset = (page - 1) * pageSize;
+
+  let where = 'WHERE 1=1';
+  const binds: any[] = [];
+  if (fileType) { where += ' AND file_type = ?'; binds.push(fileType); }
+
+  const total = await env.DB.prepare(`SELECT COUNT(*) as cnt FROM imagebed_files ${where}`).bind(...binds).first() as any;
+  const rows = await env.DB.prepare(
+    `SELECT id, user_id, config_id, object_key, public_url, file_type, file_size, content_type, bed_name, created_at
+     FROM imagebed_files ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+  ).bind(...binds, pageSize, offset).all();
+
+  return successResponse({
+    items: rows.results,
+    total: total?.cnt ?? 0,
+    page,
+    page_size: pageSize,
+  });
+}
+
+export async function handleDeleteImagebedFile(request: Request, env: any, id: string): Promise<Response> {
+  const role = await getUserRole(request, env);
+  if (role !== 'admin') return errorResponse('Admin only', 403);
+
+  const file = await env.DB.prepare(
+    `SELECT f.*, c.endpoint, c.access_key, c.secret_key, c.bucket, c.region
+     FROM imagebed_files f
+     JOIN imagebed_configs c ON f.config_id = c.id
+     WHERE f.id = ?`
+  ).bind(id).first() as any;
+
+  if (!file) return errorResponse('File not found', 404);
+
+  // 先删 S3，失败也继续删数据库记录（避免孤儿记录）
+  try {
+    await s3DeleteObject(
+      file.endpoint, file.access_key, file.secret_key,
+      file.region || 'auto', file.bucket, file.object_key,
+    );
+  } catch (_) {
+    // S3 删除失败不阻断数据库删除
+  }
+
+  await env.DB.prepare('DELETE FROM imagebed_files WHERE id = ?').bind(id).run();
+
+  return successResponse({ message: 'Deleted' });
+}
+
+export async function handleBatchDeleteImagebedFiles(request: Request, env: any): Promise<Response> {
+  const role = await getUserRole(request, env);
+  if (role !== 'admin') return errorResponse('Admin only', 403);
+
+  const body = await request.json() as any;
+  const ids: string[] = body.ids || [];
+  if (!ids.length) return errorResponse('No ids provided', 400);
+
+  const placeholders = ids.map(() => '?').join(',');
+  const files = await env.DB.prepare(
+    `SELECT f.*, c.endpoint, c.access_key, c.secret_key, c.bucket, c.region
+     FROM imagebed_files f
+     JOIN imagebed_configs c ON f.config_id = c.id
+     WHERE f.id IN (${placeholders})`
+  ).bind(...ids).all() as any;
+
+  // 并发删除 S3 文件
+  await Promise.allSettled(
+    (files.results || []).map((file: any) =>
+      s3DeleteObject(file.endpoint, file.access_key, file.secret_key,
+        file.region || 'auto', file.bucket, file.object_key)
+    )
+  );
+
+  await env.DB.prepare(`DELETE FROM imagebed_files WHERE id IN (${placeholders})`).bind(...ids).run();
+
+  return successResponse({ message: 'Deleted', count: ids.length });
 }

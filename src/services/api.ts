@@ -185,6 +185,17 @@ export const imagebedApi = {
   getUploadToken: (token: string, type: string, filename: string) => request<UploadTokenResponse>('POST', '/imagebed/upload-token', { type, filename }, token),
   upload: (token: string, file: Blob, type: string, filename: string) => uploadFile(token, `/imagebed/upload?type=${encodeURIComponent(type)}&filename=${encodeURIComponent(filename)}`, file, file.type),
   getAvailable: (token: string) => request<ImagebedConfig[]>('GET', '/imagebed/available', undefined, token),
+  listFiles: (token: string, params?: { page?: number; page_size?: number; file_type?: string }) => {
+    const search = new URLSearchParams();
+    if (params?.page) search.set('page', String(params.page));
+    if (params?.page_size) search.set('page_size', String(params.page_size));
+    if (params?.file_type) search.set('file_type', params.file_type);
+    return request<{ items: any[]; total: number; page: number; page_size: number }>(
+      'GET', `/imagebed/files${search.toString() ? `?${search.toString()}` : ''}`, undefined, token
+    );
+  },
+  deleteFile: (token: string, id: string) => request<void>('DELETE', `/imagebed/files/${id}`, undefined, token),
+  batchDeleteFiles: (token: string, ids: string[]) => request<void>('POST', '/imagebed/files/batch-delete', { ids }, token),
 };
 
 export const siteSettingsApi = {

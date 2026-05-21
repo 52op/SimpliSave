@@ -212,6 +212,22 @@ CREATE TABLE IF NOT EXISTS imagebed_configs (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 图片文件记录表（记录每次上传的图片，支持管理和删除）
+CREATE TABLE IF NOT EXISTS imagebed_files (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    user_id TEXT NOT NULL,
+    config_id TEXT NOT NULL,
+    object_key TEXT NOT NULL,
+    public_url TEXT NOT NULL,
+    file_type TEXT NOT NULL DEFAULT 'memo',
+    file_size INTEGER,
+    content_type TEXT,
+    bed_name TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_imagebed_files_user_id ON imagebed_files(user_id);
+CREATE INDEX IF NOT EXISTS idx_imagebed_files_created_at ON imagebed_files(created_at DESC);
+
 -- 图片上传尺寸限制设置表
 CREATE TABLE IF NOT EXISTS imagebed_settings (
     id TEXT PRIMARY KEY DEFAULT 'global',

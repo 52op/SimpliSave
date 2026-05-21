@@ -31,7 +31,10 @@ import {
   handleListImagebedConfigs, handleCreateImagebedConfig, handleUpdateImagebedConfig,
   handleDeleteImagebedConfig, handleToggleImagebedConfig, handleGetImagebedSettings,
   handleUpdateImagebedSettings, handleGetUploadToken, handleGetAvailableImagebeds,
-  handleUploadImage
+  handleUploadImage,
+  handleListImagebedFiles,
+  handleDeleteImagebedFile,
+  handleBatchDeleteImagebedFiles,
 } from './api/imagebed';
 import { handleGetSiteSettings, handleUpdateSiteSettings } from './api/siteSettings';
 import { handleHotTags } from './api/hotTags';
@@ -300,6 +303,7 @@ async function handleTags(request: Request, env: Env, path: string): Promise<Res
 async function handleImagebed(request: Request, env: Env, path: string): Promise<Response> {
   const id = path.match(/^\/imagebed\/configs\/([^\/]+)$/)?.[1];
   const toggleMatch = path.match(/^\/imagebed\/configs\/([^\/]+)\/toggle$/);
+  const fileIdMatch = path.match(/^\/imagebed\/files\/([^\/]+)$/);
 
   if (path === '/imagebed/configs' && request.method === 'GET') return handleListImagebedConfigs(request, env);
   if (path === '/imagebed/configs' && request.method === 'POST') return handleCreateImagebedConfig(request, env);
@@ -308,6 +312,9 @@ async function handleImagebed(request: Request, env: Env, path: string): Promise
   if (path === '/imagebed/upload-token' && request.method === 'POST') return handleGetUploadToken(request, env);
   if (path === '/imagebed/upload' && request.method === 'POST') return handleUploadImage(request, env);
   if (path === '/imagebed/available' && request.method === 'GET') return handleGetAvailableImagebeds(request, env);
+  if (path === '/imagebed/files' && request.method === 'GET') return handleListImagebedFiles(request, env);
+  if (path === '/imagebed/files/batch-delete' && request.method === 'POST') return handleBatchDeleteImagebedFiles(request, env);
+  if (fileIdMatch && request.method === 'DELETE') return handleDeleteImagebedFile(request, env, fileIdMatch[1]);
   if (toggleMatch && request.method === 'POST') return handleToggleImagebedConfig(request, env, toggleMatch[1]);
 
   if (id) {

@@ -80,3 +80,45 @@ export async function s3PutObject(
     },
   });
 }
+
+// Delete a file from S3-compatible storage with AWS Signature V4
+export async function s3DeleteObject(
+  endpoint: string,
+  accessKey: string,
+  secretKey: string,
+  region: string,
+  bucket: string,
+  objectKey: string,
+): Promise<Response> {
+  const host = new URL(endpoint).host;
+  const now = new Date();
+  const date = now.toISOString().replace(/[:-]/g, '').substring(0, 8);
+  const amzDate = now.toISOString().replace(/[:-]/g, '').replace(/\.\d{3}Z/, 'Z');
+
+  const contentHash = await sha256('');
+
+  const canonicalUri = '/' + bucket + '/' + objectKey.split('/').map(encodeURIComponent).join('/');
+  const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+  const canonicalHeaders = `host:${host}\nx-amz-content-sha256:${contentHash}\nx-amz-date:${amzDate}\n`;
+
+  const canonicalRequest = ['DELETE', canonicalUri, '', canonicalHeaders, signedHeaders, contentHash].join('\n');
+
+  const credentialScope = `${date}/${region}/s3/aws4_request`;
+  const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credentialScope, await sha256(canonicalRequest)].join('\n');
+
+  const signingKey = await getSignatureKey(secretKey, date, region);
+  const signature = hex(await hmacSha256(signingKey, stringToSign));
+
+  const authorization = `AWS4-HMAC-SHA256 Credential=${accessKey}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const url = `${endpoint.replace(/\/+$/, '')}/${bucket}/${objectKey}`;
+  return fetch(url, {
+    method: 'DELETE',
+    headers: {
+      'Host': host,
+      'x-amz-content-sha256': contentHash,
+      'x-amz-date': amzDate,
+      'Authorization': authorization,
+    },
+  });
+}
