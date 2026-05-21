@@ -48,15 +48,16 @@ export default {
     const corsResponse = handleCors(request);
     if (corsResponse) return corsResponse;
 
-    const url = new URL(request.url);
-    const path = url.pathname.replace(/^\/api/, '');
+    try {
+      const url = new URL(request.url);
+      const path = url.pathname.replace(/^\/api/, '');
 
-    if (path.startsWith('/auth')) return handleAuth(request, env, path);
-    if (path.startsWith('/public-bookmarks')) return handlePublicBookmarks(request, env, path);
-    if (path.startsWith('/user-bookmarks')) return handleUserBookmarks(request, env, path);
-    if (path.startsWith('/public-categories')) return handlePublicCategories(request, env, path);
-    if (path.startsWith('/user-categories')) return handleUserCategories(request, env, path);
-    if (path.startsWith('/submissions')) return handleSubmissions(request, env, path);
+      if (path.startsWith('/auth')) return handleAuth(request, env, path);
+      if (path.startsWith('/public-bookmarks')) return handlePublicBookmarks(request, env, path);
+      if (path.startsWith('/user-bookmarks')) return handleUserBookmarks(request, env, path);
+      if (path.startsWith('/public-categories')) return handlePublicCategories(request, env, path);
+      if (path.startsWith('/user-categories')) return handleUserCategories(request, env, path);
+      if (path.startsWith('/submissions')) return handleSubmissions(request, env, path);
     if (path.startsWith('/fetch-meta')) return handleFetchMeta(request, env);
     if (path.startsWith('/card-groups')) return handleCardGroups(request, env, path);
     if (path.startsWith('/memos')) return handleMemos(request, env, path);
@@ -77,6 +78,15 @@ export default {
     if (publicUserMatch && request.method === 'GET') return handleGetPublicUser(request, env, publicUserMatch[1]);
 
     return new Response('Not Found', { status: 404, headers: corsHeaders() });
+  } catch (err: any) {
+    console.error('Unhandled error:', err);
+    return new Response(JSON.stringify({ success: false, error: err.message || 'Internal Server Error' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders(),
+      },
+    });
   }
 };
 

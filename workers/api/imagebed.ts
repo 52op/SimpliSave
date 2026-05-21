@@ -169,10 +169,17 @@ export async function handleUpdateImagebedSettings(request: Request, env: any): 
   }
 
   if (updates.length === 0) return errorResponse('No fields to update', 400);
-  updates.push('updated_at = CURRENT_TIMESTAMP');
-  values.push('global');
 
-  await env.DB.prepare(`INSERT INTO imagebed_settings (id, ${updates.map(u => u.split(' = ')[0]).join(', ')}) VALUES (?, ${updates.map(() => '?').join(', ')}) ON CONFLICT(id) DO UPDATE SET ${updates.join(', ')}`).bind(...values).run();
+  const colNames = updates.map(u => u.split(' = ')[0]);
+  const colPlaceholders = updates.map(() => '?').join(', ');
+
+  values.unshift('global');
+
+  await env.DB.prepare(
+    `INSERT INTO imagebed_settings (id, ${colNames.join(', ')})
+     VALUES (?, ${colPlaceholders})
+     ON CONFLICT(id) DO UPDATE SET ${colNames.map(c => `${c} = excluded.${c}`).join(', ')}, updated_at = CURRENT_TIMESTAMP`
+  ).bind(...values).run();
 
   const settings = await env.DB.prepare('SELECT * FROM imagebed_settings WHERE id = ?').bind('global').first();
   return successResponse(settings);

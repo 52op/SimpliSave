@@ -15,6 +15,7 @@ interface ImageUploaderProps {
   aspectRatio?: number
   className?: string
   placeholder?: string
+  raw?: boolean
 }
 
 export default function ImageUploader({
@@ -24,6 +25,7 @@ export default function ImageUploader({
   aspectRatio = 1,
   className = '',
   placeholder = '点击上传',
+  raw = false,
 }: ImageUploaderProps) {
   const token = useAuthStore((s) => s.token)
   const settings = useImagebedStore((s) => s.settings)
@@ -45,10 +47,12 @@ export default function ImageUploader({
         return
       }
 
-      const validationError = validateImageFile(file, settings || undefined)
-      if (validationError) {
-        setErrorMessage(validationError)
-        return
+      if (!raw) {
+        const validationError = validateImageFile(file, settings || undefined)
+        if (validationError) {
+          setErrorMessage(validationError)
+          return
+        }
       }
 
       setErrorMessage('')
@@ -61,7 +65,7 @@ export default function ImageUploader({
       }
       reader.readAsDataURL(file)
     },
-    [token, settings]
+    [token, settings, raw]
   )
 
   const handleCropComplete = useCallback(
@@ -74,7 +78,7 @@ export default function ImageUploader({
       setProgress(0)
 
       try {
-        const compressedBlob = await compressImage(
+        const uploadBlob = raw ? croppedBlob : await compressImage(
           new File([croppedBlob], pendingFile.name, { type: croppedBlob.type }),
           type,
           settings || undefined,
@@ -86,10 +90,12 @@ export default function ImageUploader({
         setUploadStatus('uploading')
         setProgress(50)
 
-        const ext = type === 'icon' || type === 'avatar' ? 'png' : compressedBlob.type.includes('webp') ? 'webp' : 'jpg'
+        const ext = raw
+          ? (pendingFile.name.split('.').pop()?.toLowerCase() || 'png')
+          : type === 'icon' || type === 'avatar' ? 'png' : uploadBlob.type.includes('webp') ? 'webp' : 'jpg'
         const filename = `${type}_${Date.now()}.${ext}`
 
-        const result = await imagebedApi.upload(token, compressedBlob, type, filename)
+        const result = await imagebedApi.upload(token, uploadBlob, type, filename)
 
         setProgress(100)
         setUploadStatus('done')
@@ -106,7 +112,7 @@ export default function ImageUploader({
         setUploading(false)
       }
     },
-    [pendingFile, token, type, settings, onChange]
+    [pendingFile, token, type, settings, onChange, raw]
   )
 
   const handleCancelCrop = () => {

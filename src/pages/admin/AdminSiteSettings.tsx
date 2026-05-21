@@ -97,12 +97,12 @@ export default function AdminSiteSettings() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("admin.siteSettings.logo")}</label>
-            <ImageUploader type="cover" value={form.logo_url} onChange={(url) => setForm({ ...form, logo_url: url })} aspectRatio={1} className="w-24 h-24" />
+            <ImageUploader raw type="cover" value={form.logo_url} onChange={(url) => setForm({ ...form, logo_url: url })} aspectRatio={1} className="w-24 h-24" />
             <input type="text" value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} placeholder={t("admin.siteSettings.logoPlaceholder")} className="ui-input w-full mt-2 px-3 py-2 text-sm" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("admin.siteSettings.favicon")}</label>
-            <ImageUploader type="icon" value={form.favicon_url} onChange={(url) => setForm({ ...form, favicon_url: url })} aspectRatio={1} className="w-16 h-16" />
+            <ImageUploader raw type="icon" value={form.favicon_url} onChange={(url) => setForm({ ...form, favicon_url: url })} aspectRatio={1} className="w-16 h-16" />
             <input type="text" value={form.favicon_url} onChange={(e) => setForm({ ...form, favicon_url: e.target.value })} placeholder={t("admin.siteSettings.faviconPlaceholder")} className="ui-input w-full mt-2 px-3 py-2 text-sm" />
           </div>
         </div>
