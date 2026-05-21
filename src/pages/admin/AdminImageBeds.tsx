@@ -7,7 +7,7 @@ import { imagebedApi } from "../../services/api"
 import { ImagebedConfig } from "../../types"
 import {
   Plus, Trash2, Edit2, X, Server, Settings,
-  ToggleLeft, ToggleRight, Images, Copy, ZoomIn,
+  ToggleLeft, ToggleRight, Image as ImageIcon, Copy, ZoomIn,
   ChevronLeft, ChevronRight, Check, Loader2,
 } from "lucide-react"
 import EmptyState from "../../components/EmptyState"
@@ -302,7 +302,7 @@ export default function AdminImageBeds() {
               : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
           }`}
         >
-          <Images className="w-4 h-4" />
+          <ImageIcon className="w-4 h-4" />
           图片库
           {filesTotal > 0 && activeTab === "gallery" && (
             <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full">
@@ -420,7 +420,7 @@ export default function AdminImageBeds() {
             <EmptyState
               title="暂无图片记录"
               description="上传图片后，记录将显示在这里"
-              icon={<Images className="w-6 h-6" />}
+              icon={<ImageIcon className="w-6 h-6" />}
             />
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
