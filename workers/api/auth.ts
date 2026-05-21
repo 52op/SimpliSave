@@ -85,7 +85,7 @@ export async function handleGetMe(request: Request, env: any): Promise<Response>
   }
   
   const user = await env.DB.prepare(
-    'SELECT id, email, name, avatar_url, role, created_at, updated_at FROM users WHERE id = ?'
+    'SELECT id, email, name, avatar_url, bio, website, github, twitter, weibo, show_bio, show_website, show_github, show_twitter, show_weibo, role, created_at, updated_at FROM users WHERE id = ?'
   ).bind(payload.userId).first();
   
   if (!user) return errorResponse('User not found', 404);
