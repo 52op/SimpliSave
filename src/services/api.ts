@@ -204,4 +204,5 @@ export const publicMemoApi = {
 export const publicUserApi = {
   get: (id: string) => request<any>('GET', `/public/users/${id}`),
   listMemos: (id: string) => request<any[]>('GET', `/public/users/${id}/memos`),
+  listBookmarks: (id: string) => request<any[]>('GET', `/public/users/${id}/bookmarks`),
 };

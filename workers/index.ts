@@ -36,7 +36,7 @@ import {
 import { handleGetSiteSettings, handleUpdateSiteSettings } from './api/siteSettings';
 import { handleHotTags } from './api/hotTags';
 import { handleGetPublicMemo, handleVerifyPublicMemoPassword, handleListPublicMemosByUser } from './api/publicMemos';
-import { handleGetPublicUser } from './api/publicUsers';
+import { handleGetPublicUser, handleListPublicBookmarksByUser } from './api/publicUsers';
 
 interface Env {
   DB: D1Database;
@@ -73,8 +73,10 @@ export default {
       if (publicMemoMatch && request.method === 'GET') return handleGetPublicMemo(request, env, publicMemoMatch[1]);
 
       const publicUserMemosMatch = path.match(/^\/public\/users\/([^\/]+)\/memos$/);
+      const publicUserBookmarksMatch = path.match(/^\/public\/users\/([^\/]+)\/bookmarks$/);
       const publicUserMatch = path.match(/^\/public\/users\/([^\/]+)$/);
       if (publicUserMemosMatch && request.method === 'GET') return handleListPublicMemosByUser(request, env, publicUserMemosMatch[1]);
+      if (publicUserBookmarksMatch && request.method === 'GET') return handleListPublicBookmarksByUser(request, env, publicUserBookmarksMatch[1]);
       if (publicUserMatch && request.method === 'GET') return handleGetPublicUser(request, env, publicUserMatch[1]);
 
       return new Response('Not Found', { status: 404, headers: corsHeaders() });

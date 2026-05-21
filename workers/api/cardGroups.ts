@@ -97,7 +97,8 @@ export async function handleUpdateCardGroup(request: Request, env: any, id: stri
   }
   if (body.description !== undefined) { updates.push('description = ?'); values.push(body.description); }
   if (body.category_id !== undefined) { updates.push('category_id = ?'); values.push(body.category_id); }
-  if (body.cover_url !== undefined) { updates.push('cover_url = ?'); values.push(body.cover_url); }
+  if (body.icon_url !== undefined) { updates.push('icon_url = ?'); values.push(body.icon_url); }
+  if (body.cover_url !== undefined) { updates.push('icon_url = ?'); values.push(body.cover_url); }
   if (body.status !== undefined) { updates.push('status = ?'); values.push(body.status); }
   if (body.sort_order !== undefined) { updates.push('sort_order = ?'); values.push(body.sort_order); }
   if (body.is_featured !== undefined) { updates.push('is_featured = ?'); values.push(body.is_featured ? 1 : 0); }

@@ -82,7 +82,7 @@ export async function handleApproveSubmission(request: Request, env: any, id: st
   }
 
   const publicResult = await env.DB.prepare(
-    'INSERT INTO public_bookmarks (title, url, description, icon_url, category_id, tags, status, source_submission_id, created_by, group_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO public_bookmarks (title, url, description, icon_url, category_id, tags, status, group_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     submission.title,
     submission.url,
@@ -91,22 +91,17 @@ export async function handleApproveSubmission(request: Request, env: any, id: st
     submission.suggested_category_id,
     submission.tags,
     'active',
-    submission.id,
-    adminId,
     targetGroupId
   ).run();
 
   if (!publicResult.success) return errorResponse('Failed to create public bookmark', 500);
 
-  const publicBookmark = await env.DB.prepare('SELECT id FROM public_bookmarks WHERE source_submission_id = ? ORDER BY created_at DESC LIMIT 1').bind(id).first();
-
   await env.DB.prepare(
-    'UPDATE bookmark_submissions SET status = ?, approved_public_bookmark_id = ?, approved_public_group_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
-  ).bind('approved', publicBookmark?.id || null, targetGroupId, id).run();
+    'UPDATE bookmark_submissions SET status = ?, approved_public_group_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+  ).bind('approved', targetGroupId, id).run();
 
   return successResponse({
     message: 'Submission approved',
-    public_bookmark_id: publicBookmark?.id,
     group_id: targetGroupId
   });
 }

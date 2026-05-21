@@ -50,7 +50,7 @@ export default function ImageUploader({
 
       try {
         const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
-        const filename = `${type}_${Date.now()}.${ext}`
+        const filename = `${Date.now()}.${ext}`
         const result = await imagebedApi.upload(token, file, type, filename)
 
         setProgress(100)
@@ -130,7 +130,7 @@ export default function ImageUploader({
         const ext = raw
           ? (pendingFile.name.split('.').pop()?.toLowerCase() || 'png')
           : type === 'icon' || type === 'avatar' ? 'png' : uploadBlob.type.includes('webp') ? 'webp' : 'jpg'
-        const filename = `${type}_${Date.now()}.${ext}`
+        const filename = `${Date.now()}.${ext}`
 
         const result = await imagebedApi.upload(token, uploadBlob, type, filename)
 

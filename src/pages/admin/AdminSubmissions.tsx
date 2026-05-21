@@ -1,13 +1,108 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useToast } from "../../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { submissionApi, cardGroupApi } from "../../services/api"
 import { Submission, CardGroup } from "../../types"
-import { Check, X, Clock, ExternalLink, Globe, Send } from "lucide-react"
+import { Check, X, Clock, ExternalLink, Search, ChevronDown } from "lucide-react"
 import Favicon from "../../components/Favicon"
 import EmptyState from "../../components/EmptyState"
 import PageHeader from "../../components/PageHeader"
+
+// 可搜索的卡片组选择器，支持分类分组
+function GroupSelector({ groups, value, onChange }: {
+  groups: CardGroup[]
+  value: string
+  onChange: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  const filtered = search
+    ? groups.filter(g => g.title.toLowerCase().includes(search.toLowerCase()) || (g.category_name || "").toLowerCase().includes(search.toLowerCase()))
+    : groups
+
+  // 按分类分组
+  const grouped = new Map<string, CardGroup[]>()
+  for (const g of filtered) {
+    const cat = g.category_name || "未分类"
+    if (!grouped.has(cat)) grouped.set(cat, [])
+    grouped.get(cat)!.push(g)
+  }
+
+  const selected = value ? groups.find(g => g.id === value) : null
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => { setOpen(o => !o); setSearch("") }}
+        className="text-xs border rounded px-2 py-1 flex items-center gap-1 bg-white dark:bg-gray-800 min-w-[140px] max-w-[200px]"
+      >
+        <span className="flex-1 text-left truncate text-gray-700 dark:text-gray-300">
+          {selected ? selected.title : "自动创建卡片组"}
+        </span>
+        <ChevronDown className="w-3 h-3 text-gray-400 shrink-0" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-64 bg-white dark:bg-gray-800 border rounded-lg shadow-lg z-50 overflow-hidden">
+          <div className="p-2 border-b">
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-gray-700 rounded">
+              <Search className="w-3 h-3 text-gray-400" />
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="搜索卡片组..."
+                className="flex-1 bg-transparent text-xs outline-none"
+              />
+            </div>
+          </div>
+          <div className="max-h-56 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => { onChange(""); setOpen(false) }}
+              className={`w-full text-left px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/30 ${!value ? "text-blue-600 font-medium" : "text-gray-500 dark:text-gray-400"}`}
+            >
+              自动创建卡片组
+            </button>
+            {Array.from(grouped.entries()).map(([cat, items]) => (
+              <div key={cat}>
+                <div className="px-3 py-1 text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide bg-gray-50 dark:bg-gray-700/50">
+                  {cat}
+                </div>
+                {items.map(g => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => { onChange(g.id); setOpen(false) }}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-blue-50 dark:hover:bg-blue-900/30 truncate ${value === g.id ? "text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/30" : "text-gray-700 dark:text-gray-300"}`}
+                  >
+                    {g.title}
+                  </button>
+                ))}
+              </div>
+            ))}
+            {filtered.length === 0 && (
+              <div className="px-3 py-4 text-xs text-gray-400 text-center">无匹配结果</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function AdminSubmissions() {
   const { t } = useTranslation()
@@ -120,14 +215,11 @@ export default function AdminSubmissions() {
 
                 {filterStatus === "pending" && (
                   <div className="flex gap-2 flex-shrink-0 items-center">
-                    <select
+                    <GroupSelector
+                      groups={groups}
                       value={targetGroupMap[s.id] || ""}
-                      onChange={(e) => setTargetGroupMap(prev => ({ ...prev, [s.id]: e.target.value }))}
-                      className="text-xs border rounded px-1 py-0.5"
-                    >
-                      <option value="">{t("admin.submissions.createGroup")}</option>
-                      {groups.map(g => <option key={g.id} value={g.id}>{g.title}</option>)}
-                    </select>
+                      onChange={(id) => setTargetGroupMap(prev => ({ ...prev, [s.id]: id }))}
+                    />
                     <button onClick={() => handleApprove(s.id)}
                       className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1 text-sm">
                       <Check className="w-4 h-4" />{t("admin.submissions.approve")}
