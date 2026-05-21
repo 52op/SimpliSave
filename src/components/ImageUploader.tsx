@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuthStore } from '../stores/authStore'
 import { useImagebedStore } from '../stores/imagebedStore'
 import { imagebedApi } from '../services/api'
 import { compressImage, validateImageFile } from '../utils/imageCompress'
 import ImageCropper from './ImageCropper'
 import UploadProgress from './UploadProgress'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Image as ImageIcon, Trash2 } from 'lucide-react'
 import type { ImageType } from '../types'
 
 interface ImageUploaderProps {
@@ -31,14 +32,17 @@ export default function ImageUploader({
   const settings = useImagebedStore((s) => s.settings)
 
   const [showCropper, setShowCropper] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
   const [imageSrc, setImageSrc] = useState('')
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'compressing' | 'uploading' | 'done' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [dragOver, setDragOver] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dialogFileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDirectUpload = useCallback(
     async (file: File) => {
@@ -56,6 +60,7 @@ export default function ImageUploader({
         setProgress(100)
         setUploadStatus('done')
         onChange(result.data.public_url)
+        setShowEditDialog(false)
 
         setTimeout(() => {
           setUploading(false)
@@ -98,6 +103,7 @@ export default function ImageUploader({
       const reader = new FileReader()
       reader.onload = (e) => {
         setImageSrc(e.target?.result as string)
+        setShowEditDialog(false)
         setShowCropper(true)
       }
       reader.readAsDataURL(file)
@@ -160,11 +166,13 @@ export default function ImageUploader({
 
   const handleRemove = () => {
     onChange('')
+    setShowEditDialog(false)
   }
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault()
+      setDragOver(false)
       const file = e.dataTransfer.files[0]
       if (file && file.type.startsWith('image/')) {
         handleFileSelect(file)
@@ -175,6 +183,11 @@ export default function ImageUploader({
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
+    setDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback(() => {
+    setDragOver(false)
   }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,9 +195,8 @@ export default function ImageUploader({
     if (file) {
       handleFileSelect(file)
     }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (dialogFileInputRef.current) dialogFileInputRef.current.value = ''
   }
 
   const handlePaste = useCallback(
@@ -203,10 +215,87 @@ export default function ImageUploader({
     [handleFileSelect]
   )
 
+  const editDialog = showEditDialog && createPortal(
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) setShowEditDialog(false) }}
+    >
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
+          <span className="font-semibold text-gray-900 dark:text-gray-100">替换图片</span>
+          <button
+            onClick={() => setShowEditDialog(false)}
+            className="p-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* 当前图片预览 */}
+          <div className="flex justify-center">
+            <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
+              <img src={value} alt="当前图片" className="w-full h-full object-cover" />
+            </div>
+          </div>
+
+          {/* 上传进度 */}
+          {uploading && (
+            <div className="flex items-center justify-center py-2">
+              <UploadProgress progress={progress} status={uploadStatus} />
+            </div>
+          )}
+
+          {/* 上传区域 */}
+          {!uploading && (
+            <div
+              onClick={() => dialogFileInputRef.current?.click()}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={`w-full py-6 flex flex-col items-center justify-center border-2 border-dashed rounded-xl cursor-pointer transition-colors
+                ${dragOver
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10'
+                }`}
+            >
+              <Upload className="w-7 h-7 text-gray-400 mb-2" />
+              <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">点击或拖拽上传新图片</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">支持粘贴图片</p>
+            </div>
+          )}
+
+          {errorMessage && (
+            <p className="text-sm text-red-600 text-center">{errorMessage}</p>
+          )}
+
+          {/* 删除按钮 */}
+          {!uploading && (
+            <button
+              onClick={handleRemove}
+              className="w-full flex items-center justify-center gap-2 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              删除图片
+            </button>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+
   return (
     <div className={`${className} overflow-hidden`} onPaste={handlePaste}>
       <input
         ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleInputChange}
+      />
+      <input
+        ref={dialogFileInputRef}
         type="file"
         accept="image/*"
         className="hidden"
@@ -222,8 +311,13 @@ export default function ImageUploader({
         />
       )}
 
+      {editDialog}
+
       {value ? (
-        <div className="relative w-full h-full group">
+        <div
+          className="relative w-full h-full group cursor-pointer"
+          onClick={() => setShowEditDialog(true)}
+        >
           <img
             src={value}
             alt="Uploaded"
@@ -232,12 +326,8 @@ export default function ImageUploader({
               ;(e.target as HTMLImageElement).src = ''
             }}
           />
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center">
-            <button onClick={handleRemove}
-              className="absolute top-0.5 right-0.5 p-0.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10">
-              <X className="w-3 h-3" />
-            </button>
-            <Upload className="w-4 h-4 text-white opacity-0 group-hover:opacity-100" />
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-lg flex items-center justify-center pointer-events-none">
+            <Upload className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
       ) : uploading ? (
@@ -255,6 +345,7 @@ export default function ImageUploader({
           onClick={() => fileInputRef.current?.click()}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
           className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
         >
           <ImageIcon className="w-5 h-5 text-gray-400 mb-0.5 shrink-0" />
