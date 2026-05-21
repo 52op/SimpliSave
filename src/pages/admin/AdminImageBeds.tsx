@@ -55,7 +55,8 @@ export default function AdminImageBeds() {
   }
 
   async function handleSaveConfig() {
-    if (!token || configSaving || !form.name.trim() || !form.endpoint.trim() || !form.access_key.trim() || !form.secret_key.trim() || !form.bucket.trim()) return
+    if (!token || configSaving || !form.name.trim() || !form.endpoint.trim() || !form.bucket.trim()) return
+    if (!editing && (!form.access_key.trim() || !form.secret_key.trim())) return
     setConfigSaving(true)
     try {
       const data = {

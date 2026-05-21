@@ -1,12 +1,11 @@
 ﻿import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { useAuthStore } from "./stores/authStore"
 import { useTranslation } from "react-i18next"
-import { useState, useEffect, Suspense, lazy } from "react"
+import { useEffect, Suspense, lazy } from "react"
 import { Helmet } from "react-helmet-async"
-import { siteSettingsApi } from "./services/api"
-import type { SiteSettings } from "./types"
 import Header from "./components/Header"
 import { useThemeStore } from "./stores/themeStore"
+import { useSiteSettingsStore } from "./stores/siteSettingsStore"
 import "./index.css"
 
 const Home = lazy(() => import("./pages/Home"))
@@ -49,15 +48,16 @@ function LoadingFallback() {
 
 export default function App() {
   const { t, i18n } = useTranslation()
-  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null)
   const initTheme = useThemeStore((s) => s.initTheme)
   const validateSession = useAuthStore((s) => s.validateSession)
+  const siteSettings = useSiteSettingsStore((s) => s.settings)
+  const loadSiteSettings = useSiteSettingsStore((s) => s.load)
 
   useEffect(() => {
     initTheme()
     validateSession().catch(() => {})
-    siteSettingsApi.get().then(setSiteSettings).catch(() => {})
-  }, [initTheme, validateSession])
+    loadSiteSettings()
+  }, [initTheme, validateSession, loadSiteSettings])
 
   // GA
   useEffect(() => {

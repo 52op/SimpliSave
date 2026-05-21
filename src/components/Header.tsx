@@ -1,6 +1,7 @@
 ﻿import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuthStore } from "../stores/authStore"
 import { useThemeStore } from "../stores/themeStore"
+import { useSiteSettingsStore } from "../stores/siteSettingsStore"
 import { useTranslation } from "react-i18next"
 import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe, Search, Image, Settings } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
@@ -10,6 +11,7 @@ export default function Header() {
   const { token, logout, user } = useAuthStore()
   const { dark, toggle: toggleDark } = useThemeStore()
   const { t, i18n } = useTranslation()
+  const siteSettings = useSiteSettingsStore((s) => s.settings)
   const loc = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -74,10 +76,14 @@ export default function Header() {
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">S</span>
-              </div>
-              <span className="text-xl font-bold text-[var(--color-text-main)]">SimpliSave</span>
+              {siteSettings?.logo_url ? (
+                <img src={siteSettings.logo_url} alt="logo" className="w-8 h-8 rounded-lg object-cover" />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">S</span>
+                </div>
+              )}
+              <span className="text-xl font-bold text-[var(--color-text-main)]">{siteSettings?.site_name || "SimpliSave"}</span>
             </Link>
             <nav className="hidden md:flex gap-1">
               {navs.map((n) => (

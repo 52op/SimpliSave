@@ -262,7 +262,9 @@ export async function handleUploadImage(request: Request, env: any): Promise<Res
   const config: any = configs.results[randomIndex];
 
   const ext = filename.split('.').pop()?.toLowerCase() || 'bin';
-  const finalExt = (ext !== 'gif') ? 'webp' : ext;
+  const webpSettings = await env.DB.prepare('SELECT convert_to_webp FROM imagebed_settings WHERE id = ?').bind('global').first() as any;
+  const convertToWebP = webpSettings ? webpSettings.convert_to_webp === 1 : true;
+  const finalExt = convertToWebP && ext !== 'gif' ? 'webp' : ext;
   const objectKey = parsePathTemplate(config.path_template, filename, finalExt, type, userId);
 
   const s3Response = await s3PutObject(

@@ -40,6 +40,37 @@ export default function ImageUploader({
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const handleDirectUpload = useCallback(
+    async (file: File) => {
+      if (!token) return
+
+      setUploading(true)
+      setUploadStatus('uploading')
+      setProgress(50)
+
+      try {
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
+        const filename = `${type}_${Date.now()}.${ext}`
+        const result = await imagebedApi.upload(token, file, type, filename)
+
+        setProgress(100)
+        setUploadStatus('done')
+        onChange(result.data.public_url)
+
+        setTimeout(() => {
+          setUploading(false)
+          setUploadStatus('idle')
+          setProgress(0)
+        }, 1500)
+      } catch (err: any) {
+        setUploadStatus('error')
+        setErrorMessage(err.message || '上传失败')
+        setUploading(false)
+      }
+    },
+    [token, type, onChange]
+  )
+
   const handleFileSelect = useCallback(
     (file: File) => {
       if (!token) {
@@ -56,6 +87,12 @@ export default function ImageUploader({
       }
 
       setErrorMessage('')
+
+      if (raw) {
+        handleDirectUpload(file)
+        return
+      }
+
       setPendingFile(file)
 
       const reader = new FileReader()
@@ -65,7 +102,7 @@ export default function ImageUploader({
       }
       reader.readAsDataURL(file)
     },
-    [token, settings, raw]
+    [token, settings, raw, handleDirectUpload]
   )
 
   const handleCropComplete = useCallback(
