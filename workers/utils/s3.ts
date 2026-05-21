@@ -34,8 +34,9 @@ export async function s3PutObject(
   contentType: string,
 ): Promise<Response> {
   const host = new URL(endpoint).host;
-  const date = new Date().toISOString().replace(/[:-]/g, '').substring(0, 8);
-  const amzDate = date + 'T000000Z';
+  const now = new Date();
+  const date = now.toISOString().replace(/[:-]/g, '').substring(0, 8);
+  const amzDate = now.toISOString().replace(/[:-]/g, '').replace(/\.\d{3}Z/, 'Z');
 
   const contentHash = await sha256(body);
 

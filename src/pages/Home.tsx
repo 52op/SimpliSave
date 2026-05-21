@@ -365,22 +365,18 @@ export default function Home() {
               >
                 <Search className="w-3.5 h-3.5 shrink-0" />
                 <span>在站内搜索 "{searchQuery}"</span>
-                <kbd className="ml-auto text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded font-mono shrink-0">Ctrl+Enter</kbd>
               </button>
             </div>
           )}
-          {!showSuggestions && searchQuery.trim() && (
-            <div className="absolute left-0 right-0 top-full mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg z-50 overflow-hidden">
-              <button
-                type="button"
-                onClick={() => navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)}
-                className="w-full px-4 py-2 text-left hover:bg-blue-50 dark:hover:bg-blue-900/30 text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2"
-              >
-                <Search className="w-3.5 h-3.5 shrink-0" />
-                <span>在站内搜索 "{searchQuery}"</span>
-                <kbd className="ml-auto text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded font-mono shrink-0">Ctrl+Enter</kbd>
-              </button>
-            </div>
+          {searchQuery.trim() && (
+            <button
+              type="button"
+              onClick={() => { setShowSuggestions(false); navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`) }}
+              className="mt-2 w-full flex items-center justify-center gap-2 py-2 px-4 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-xl border border-blue-200 dark:border-blue-800 transition-colors"
+            >
+              <Search className="w-3.5 h-3.5 shrink-0" />
+              在站内搜索 "{searchQuery}"
+            </button>
           )}
         </form>
 

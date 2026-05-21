@@ -103,7 +103,6 @@ export default function ImageUploader({
       const reader = new FileReader()
       reader.onload = (e) => {
         setImageSrc(e.target?.result as string)
-        setShowEditDialog(false)
         setShowCropper(true)
       }
       reader.readAsDataURL(file)
