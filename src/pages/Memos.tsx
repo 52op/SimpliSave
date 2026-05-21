@@ -290,8 +290,14 @@ export default function Memos() {
                 {group.items.map((m) => {
                   const tagsArr = typeof m.tags === "string" ? JSON.parse(m.tags || "[]") : (m.tags || [])
                   return (
-                    <div key={m.id} className="rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition border-l-4"
+                    <div key={m.id} className="rounded-lg shadow-md dark:shadow-gray-900/30 hover:shadow-lg transition border-l-4 overflow-hidden"
                       style={{ borderLeftColor: m.color || "#e5e7eb", backgroundColor: m.color === "#ffffff" ? "#fff" : m.color + "15" }}>
+                      {m.cover_image && (
+                        <button onClick={() => navigate(`/memo/${m.id}`)} className="block w-full">
+                          <img src={m.cover_image} alt="" className="w-full h-32 object-cover" />
+                        </button>
+                      )}
+                      <div className="p-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <button onClick={() => handlePinMemo(m.id)} className="text-gray-400 dark:text-gray-500 hover:text-yellow-500 flex-shrink-0">
@@ -334,6 +340,7 @@ export default function Memos() {
                       <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
                         {formatDateKey(m.created_at, t)}
                       </div>
+                      </div>
                     </div>
                   )
                 })}
@@ -356,6 +363,7 @@ export default function Memos() {
               title: editingMemo.title,
               content: editingMemo.content,
               color: editingMemo.color,
+              cover_image: editingMemo.cover_image,
               category_id: editingMemo.category_id,
               tags: editingMemo.tags,
               is_public: editingMemo.is_public,

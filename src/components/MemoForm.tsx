@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
@@ -7,8 +7,11 @@ import ImageExt from "@tiptap/extension-image"
 import Underline from "@tiptap/extension-underline"
 import Link from "@tiptap/extension-link"
 import { imagebedApi } from "../services/api"
+import { useImagebedStore } from "../stores/imagebedStore"
 import { Category } from "../types"
 import { compressImage, validateImageFile } from "../utils/imageCompress"
+import ImageUploader from "./ImageUploader"
+import { useToast } from "./Toast"
 
 const MEMO_COLORS = [
   "#ffffff", "#fff7ed", "#fef3c7", "#dcfce7", "#dbeafe",
@@ -19,6 +22,7 @@ export interface MemoFormData {
   title: string
   content: string
   color: string
+  cover_image: string | null
   category_id: string | null
   tags: string[]
   is_public: number
@@ -30,6 +34,7 @@ interface MemoFormProps {
     title?: string
     content?: string
     color?: string
+    cover_image?: string | null
     category_id?: string | null
     tags?: string[] | string
     is_public?: number
@@ -109,17 +114,21 @@ function LinkModal({ show, onConfirm, onCancel }: {
   )
 }
 
-function EditorToolbar({ editor, onImageUpload }: { editor: any; onImageUpload?: (file: File) => void }) {
+function EditorToolbar({ editor, onImageUpload, uploading }: {
+  editor: any
+  onImageUpload: (file: File) => void
+  uploading: boolean
+}) {
   const [showLink, setShowLink] = useState(false)
   if (!editor) return null
 
-  const handleImageUpload = () => {
+  const handleImageClick = () => {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
-      if (file && onImageUpload) onImageUpload(file)
+      if (file) onImageUpload(file)
     }
     input.click()
   }
@@ -145,20 +154,34 @@ function EditorToolbar({ editor, onImageUpload }: { editor: any; onImageUpload?:
         <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
         <button onClick={() => setShowLink(true)}
           className={`p-1.5 rounded text-sm ${editor.isActive("link") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>🔗</button>
-        {onImageUpload && (
-          <button onClick={handleImageUpload}
-            className="p-1.5 rounded text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600">🖼️</button>
-        )}
+        <button
+          onClick={handleImageClick}
+          disabled={uploading}
+          title="插入图片（支持粘贴/拖拽）"
+          className={`p-1.5 rounded text-sm ${uploading ? "opacity-40 cursor-not-allowed" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}
+        >
+          {uploading ? "⏳" : "🖼️"}
+        </button>
       </div>
       <LinkModal show={showLink} onConfirm={(url) => { if (url) { editor.chain().focus().setLink({ href: url }).run() }; setShowLink(false) }} onCancel={() => setShowLink(false)} />
     </>
   )
 }
 
+/** 从 HTML 内容中提取第一张图片的 src */
+function extractFirstImageSrc(html: string): string | null {
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  return match ? match[1] : null
+}
+
 export default function MemoForm({ initialData, onSave, onCancel, categories, token }: MemoFormProps) {
   const { t } = useTranslation()
+  const { toast } = useToast()
+  const settings = useImagebedStore((s) => s.settings)
+
   const [title, setTitle] = useState(initialData?.title || "")
   const [memoColor, setMemoColor] = useState(initialData?.color || "#ffffff")
+  const [coverImage, setCoverImage] = useState<string>(initialData?.cover_image || "")
   const [categoryId, setCategoryId] = useState(initialData?.category_id || "")
   const initialTags = (() => {
     const tags = initialData?.tags
@@ -171,8 +194,30 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
   const [isPublic, setIsPublic] = useState(!!initialData?.is_public)
   const [sharePassword, setSharePassword] = useState(initialData?.share_password || "")
   const [saving, setSaving] = useState(false)
+  const [imgUploading, setImgUploading] = useState(false)
 
   const contentRef = useRef(initialData?.content || "")
+
+  const uploadImageToEditor = useCallback(async (file: File, editor: any) => {
+    if (!token || !editor) return
+    const validationError = validateImageFile(file, settings || undefined)
+    if (validationError) {
+      toast(validationError, "error")
+      return
+    }
+    setImgUploading(true)
+    try {
+      const compressedBlob = await compressImage(file, 'memo', settings || undefined)
+      const ext = compressedBlob.type.includes('webp') ? 'webp' : 'jpg'
+      const filename = `memo_${Date.now()}.${ext}`
+      const result = await imagebedApi.upload(token, compressedBlob, 'memo', filename)
+      editor.chain().focus().setImage({ src: result.data.public_url }).run()
+    } catch (err: any) {
+      toast(err.message || "图片上传失败", "error")
+    } finally {
+      setImgUploading(false)
+    }
+  }, [token, settings, toast])
 
   const editor = useEditor({
     extensions: [
@@ -190,33 +235,43 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
       attributes: {
         class: "prose prose-sm max-w-none focus:outline-none min-h-[200px] p-3",
       },
+      handlePaste(view, event) {
+        const items = event.clipboardData?.items
+        if (!items) return false
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            event.preventDefault()
+            const file = item.getAsFile()
+            if (file) uploadImageToEditor(file, view.editor)
+            return true
+          }
+        }
+        return false
+      },
+      handleDrop(view, event) {
+        const files = event.dataTransfer?.files
+        if (!files?.length) return false
+        const imageFile = Array.from(files).find(f => f.type.startsWith('image/'))
+        if (!imageFile) return false
+        event.preventDefault()
+        uploadImageToEditor(imageFile, view.editor)
+        return true
+      },
     },
   })
-
-  async function handleImageUpload(file: File) {
-    if (!token || !editor) return
-    try {
-      const validationError = validateImageFile(file)
-      if (validationError) {
-        return
-      }
-      const compressedBlob = await compressImage(file, 'memo')
-      const filename = `memo_${Date.now()}.${compressedBlob.type.includes('webp') ? 'webp' : 'jpg'}`
-      const result = await imagebedApi.upload(token, compressedBlob, 'memo', filename)
-      editor.chain().focus().setImage({ src: result.data.public_url }).run()
-    } catch (err: any) {
-      // Image upload failed silently - caller handles toast
-    }
-  }
 
   async function handleSubmit() {
     if (!title.trim() || saving) return
     setSaving(true)
     try {
+      const content = contentRef.current
+      // 无封面时自动提取内容中第一张图
+      const finalCover = coverImage || extractFirstImageSrc(content) || null
       await onSave({
         title: title.trim(),
-        content: contentRef.current,
+        content,
         color: memoColor,
+        cover_image: finalCover,
         category_id: categoryId || null,
         tags: memoTags,
         is_public: isPublic ? 1 : 0,
@@ -238,9 +293,24 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.content")}</label>
         <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-          <EditorToolbar editor={editor} onImageUpload={handleImageUpload} />
+          <EditorToolbar editor={editor} onImageUpload={(file) => uploadImageToEditor(file, editor)} uploading={imgUploading} />
           <EditorContent editor={editor} />
         </div>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">支持粘贴或拖拽图片自动上传插入</p>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          封面图
+          <span className="ml-1.5 text-xs font-normal text-gray-400">（不设置时自动取内容第一张图）</span>
+        </label>
+        <ImageUploader
+          type="memo"
+          value={coverImage}
+          onChange={setCoverImage}
+          aspectRatio={16 / 9}
+          className="w-full h-28 rounded-lg"
+          placeholder="点击上传封面图"
+        />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("memos.color")}</label>
