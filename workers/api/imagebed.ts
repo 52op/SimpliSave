@@ -1,20 +1,6 @@
-import { verifyJWT } from '../utils/jwt';
+import { getUserId, getUserRole } from '../utils/auth';
 import { successResponse, errorResponse } from '../utils/response';
 import { s3PutObject } from '../utils/s3';
-
-async function getUserId(request: Request, env: any): Promise<string | null> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const payload = await verifyJWT(authHeader.slice(7), env);
-  return payload?.userId || null;
-}
-
-async function getUserRole(request: Request, env: any): Promise<string | null> {
-  const userId = await getUserId(request, env);
-  if (!userId) return null;
-  const user = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(userId).first();
-  return user?.role || 'user';
-}
 
 function parsePathTemplate(template: string, filename: string, ext: string, type: string, userId: string): string {
   const now = new Date();

@@ -33,7 +33,7 @@ export async function handleRegister(request: Request, env: any): Promise<Respon
   }
   
   const user = await env.DB.prepare('SELECT id, email, name, created_at FROM users WHERE email = ?').bind(email).first();
-  const token = await signJWT({ userId: user.id, email: user.email }, env);
+  const token = await signJWT({ userId: user.id, email: user.email, role: 'user' }, env);
   
   return successResponse({ user, token }, 201);
 }
@@ -59,7 +59,7 @@ export async function handleLogin(request: Request, env: any): Promise<Response>
     return errorResponse('Invalid email or password', 401);
   }
   
-  const token = await signJWT({ userId: user.id, email: user.email }, env);
+  const token = await signJWT({ userId: user.id, email: user.email, role: user.role || 'user' }, env);
   return successResponse({
     user: { id: user.id, email: user.email, name: user.name, role: user.role, created_at: user.created_at },
     token,

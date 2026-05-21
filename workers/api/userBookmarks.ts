@@ -1,13 +1,6 @@
 // User bookmarks API handlers
-import { verifyJWT } from '../utils/jwt';
+import { getUserId } from '../utils/auth';
 import { successResponse, errorResponse, corsHeaders } from '../utils/response';
-
-async function getUserId(request: Request, env: any): Promise<string | null> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const payload = await verifyJWT(authHeader.slice(7), env);
-  return payload?.userId || null;
-}
 
 // 私人收藏夹列表
 export async function handleListUserBookmarks(request: Request, env: any): Promise<Response> {

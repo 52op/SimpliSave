@@ -1,15 +1,8 @@
 ﻿// Memos API handlers
-import { verifyJWT } from '../utils/jwt';
+import { getUserId } from '../utils/auth';
 import { successResponse, errorResponse } from '../utils/response';
 
 interface Env { DB: D1Database; }
-
-async function getUserId(request: Request, env: any): Promise<string | null> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const payload = await verifyJWT(authHeader.slice(7), env);
-  return payload?.userId || null;
-}
 
 export async function handleListMemos(request: Request, env: any): Promise<Response> {
   const userId = await getUserId(request, env);

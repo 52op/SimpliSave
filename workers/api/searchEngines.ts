@@ -1,14 +1,5 @@
-import { verifyJWT } from '../utils/jwt';
+import { getUserRole } from '../utils/auth';
 import { successResponse, errorResponse } from '../utils/response';
-
-async function getUserRole(request: Request, env: any): Promise<string | null> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const payload = await verifyJWT(authHeader.slice(7), env);
-  if (!payload?.userId) return null;
-  const user = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(payload.userId).first();
-  return user?.role || 'user';
-}
 
 export async function handleListSearchEngines(request: Request, env: any): Promise<Response> {
   const url = new URL(request.url);

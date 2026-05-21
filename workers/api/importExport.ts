@@ -1,13 +1,6 @@
 // Bookmark HTML import/export utilities for D1
 import { successResponse, errorResponse, corsHeaders } from '../utils/response';
-import { verifyJWT } from '../utils/jwt';
-
-async function getUserId(request: Request, env: any): Promise<string | null> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const payload = await verifyJWT(authHeader.slice(7), env);
-  return payload?.userId || null;
-}
+import { getUserId } from '../utils/auth';
 
 function decodeHtmlEntities(str: string): string {
   return str
