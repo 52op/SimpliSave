@@ -4,6 +4,7 @@ import { publicBookmarkApi, cardGroupApi } from "../services/api"
 import { PublicBookmark, CardGroup } from "../types"
 import { Search as SearchIcon, ExternalLink, Globe, FolderOpen, Loader2 } from "lucide-react"
 import Favicon from "../components/Favicon"
+import { pinyinMatch } from "../utils/pinyin"
 
 export default function Search() {
   const [searchParams] = useSearchParams()
@@ -27,12 +28,19 @@ export default function Search() {
         publicBookmarkApi.list({ q }),
         cardGroupApi.list(),
       ])
-      setBookmarks(bms || [])
 
-      const lower = q.toLowerCase()
+      // 按 URL 去重
+      const seenUrls = new Set<string>()
+      const dedupedBms: PublicBookmark[] = []
+      for (const b of (bms || [])) {
+        if (b.url && seenUrls.has(b.url)) continue
+        if (b.url) seenUrls.add(b.url)
+        dedupedBms.push(b)
+      }
+      setBookmarks(dedupedBms)
+
       const matchedGroups = (grps || []).filter(g =>
-        g.title.toLowerCase().includes(lower) ||
-        (g.description && g.description.toLowerCase().includes(lower))
+        pinyinMatch(g.title, q) || (g.description && pinyinMatch(g.description, q))
       )
       setGroups(matchedGroups)
     } catch (err) {
@@ -116,8 +124,9 @@ export default function Search() {
               </h2>
               <div className="space-y-2">
                 {bookmarks.map(b => (
-                  <a key={b.id} href={b.url} target="_blank" rel="noopener noreferrer"
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-4 hover:shadow-lg transition flex items-center gap-3 group">
+                  <div key={b.id}
+                    onClick={() => (b as any).group_slug ? navigate(`/g/${(b as any).group_slug}`) : window.open(b.url, "_blank")}
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-4 hover:shadow-lg transition flex items-center gap-3 group cursor-pointer">
                     <Favicon src={b.icon_url} title={b.title} size="md" />
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600">{b.title}</p>
@@ -127,8 +136,12 @@ export default function Search() {
                       </p>
                       {b.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">{b.description}</p>}
                     </div>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{b.group_title || ""}</span>
-                  </a>
+                    {b.group_title && (
+                      <span className="text-xs text-blue-500 dark:text-blue-400 shrink-0 flex items-center gap-1">
+                        <FolderOpen className="w-3 h-3" />{b.group_title}
+                      </span>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>

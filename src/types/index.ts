@@ -100,6 +100,7 @@ export interface PublicBookmark {
   icon_url: string | null
   group_id: string | null
   group_title: string | null
+  group_slug: string | null
   category_id: string | null
   tags: TagList
   sort_order: number

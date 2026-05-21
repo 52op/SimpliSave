@@ -169,6 +169,14 @@ export default function Home() {
     }
   }
 
+  function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault()
+      const q = searchQuery.trim()
+      if (q) navigate(`/search?q=${encodeURIComponent(q)}`)
+    }
+  }
+
   function handleSearchDirect(query?: string) {
     const q = (query || searchQuery).trim()
     if (!q || !selectedEngine) return
@@ -322,6 +330,7 @@ export default function Home() {
               type="text"
               value={searchQuery}
               onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
               placeholder={`${t("home.searchIn")} ${selectedEngine?.name || ""}`}
               className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-[var(--color-text-main)] outline-none focus:ring-0"
@@ -349,6 +358,28 @@ export default function Home() {
                   <span>{word}</span>
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => { setShowSuggestions(false); navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`) }}
+                className="w-full px-4 py-2 text-left hover:bg-blue-50 dark:hover:bg-blue-900/30 text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2 border-t border-[var(--color-border)]"
+              >
+                <Search className="w-3.5 h-3.5 shrink-0" />
+                <span>在站内搜索 "{searchQuery}"</span>
+                <kbd className="ml-auto text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded font-mono shrink-0">Ctrl+Enter</kbd>
+              </button>
+            </div>
+          )}
+          {!showSuggestions && searchQuery.trim() && (
+            <div className="absolute left-0 right-0 top-full mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg z-50 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)}
+                className="w-full px-4 py-2 text-left hover:bg-blue-50 dark:hover:bg-blue-900/30 text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2"
+              >
+                <Search className="w-3.5 h-3.5 shrink-0" />
+                <span>在站内搜索 "{searchQuery}"</span>
+                <kbd className="ml-auto text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded font-mono shrink-0">Ctrl+Enter</kbd>
+              </button>
             </div>
           )}
         </form>

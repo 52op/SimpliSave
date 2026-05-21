@@ -9,7 +9,7 @@ export async function handleListPublicBookmarks(request: Request, env: any): Pro
   const groupId = url.searchParams.get('group_id');
   const q = url.searchParams.get('q');
 
-  let sql = `SELECT pb.*, pc.name as category_name, pc.color as category_color, pcg.title as group_title
+  let sql = `SELECT pb.*, pc.name as category_name, pc.color as category_color, pcg.title as group_title, pcg.slug as group_slug
              FROM public_bookmarks pb
              LEFT JOIN public_categories pc ON pb.category_id = pc.id
              LEFT JOIN public_card_groups pcg ON pb.group_id = pcg.id
