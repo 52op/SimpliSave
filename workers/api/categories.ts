@@ -1,5 +1,5 @@
 ﻿// Categories API handlers (public + user)
-import { getUserId, getUserRole } from '../utils/auth';
+import { getUserId, getUserRole, getAuthPayload } from '../utils/auth';
 import { successResponse, errorResponse } from '../utils/response';
 
 // 用户私有分类
@@ -79,9 +79,9 @@ export async function handleListPublicCategories(request: Request, env: any): Pr
 }
 
 export async function handleCreatePublicCategory(request: Request, env: any): Promise<Response> {
-  const role = await getUserRole(request, env);
-  const userId = await getUserId(request, env);
-  if (role !== 'admin' || !userId) return errorResponse('Admin only', 403);
+  const auth = await getAuthPayload(request, env);
+  if (!auth || auth.role !== 'admin') return errorResponse('Admin only', 403);
+  const userId = auth.userId;
 
   const body = await request.json() as any;
   if (!body.name) return errorResponse('Name is required', 400);

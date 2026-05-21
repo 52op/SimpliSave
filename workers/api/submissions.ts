@@ -1,5 +1,5 @@
 // Bookmark submissions API handlers
-import { getUserId, getUserRole } from '../utils/auth';
+import { getUserId, getUserRole, getAuthPayload } from '../utils/auth';
 import { successResponse, errorResponse } from '../utils/response';
 import { generateSlug } from '../utils/slug';
 
@@ -52,9 +52,9 @@ export async function handleListSubmissions(request: Request, env: any): Promise
 
 // 管理员通过审核 → 创建公开导航
 export async function handleApproveSubmission(request: Request, env: any, id: string): Promise<Response> {
-  const role = await getUserRole(request, env);
-  const adminId = await getUserId(request, env);
-  if (role !== 'admin' || !adminId) return errorResponse('Admin only', 403);
+  const auth = await getAuthPayload(request, env);
+  if (!auth || auth.role !== 'admin') return errorResponse('Admin only', 403);
+  const adminId = auth.userId;
 
   const submission = await env.DB.prepare('SELECT * FROM bookmark_submissions WHERE id = ?').bind(id).first();
   if (!submission) return errorResponse('Submission not found', 404);

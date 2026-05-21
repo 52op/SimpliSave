@@ -1,5 +1,5 @@
 // Public bookmarks API handlers
-import { getUserId, getUserRole } from '../utils/auth';
+import { getUserId, getUserRole, getAuthPayload } from '../utils/auth';
 import { successResponse, errorResponse } from '../utils/response';
 
 // 公开导航列表（首页使用，无需登录）
@@ -37,9 +37,9 @@ export async function handleListPublicBookmarks(request: Request, env: any): Pro
 
 // 管理员：创建公开导航
 export async function handleCreatePublicBookmark(request: Request, env: any): Promise<Response> {
-  const role = await getUserRole(request, env);
-  const userId = await getUserId(request, env);
-  if (role !== 'admin' || !userId) return errorResponse('Admin only', 403);
+  const auth = await getAuthPayload(request, env);
+  if (!auth || auth.role !== 'admin') return errorResponse('Admin only', 403);
+  const userId = auth.userId;
 
   const body = await request.json() as any;
   if (!body.title || !body.url) return errorResponse('Title and URL are required', 400);

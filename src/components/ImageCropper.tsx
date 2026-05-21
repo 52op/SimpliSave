@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import Cropper from 'react-easy-crop'
 import { cropImage } from '../utils/imageCompress'
 
@@ -31,8 +32,8 @@ export default function ImageCropper({ imageSrc, aspect = 1, onComplete, onCance
     onComplete(blob)
   }
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  return createPortal(
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200]">
       <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
         <h3 className="text-lg font-medium text-gray-900 mb-4">裁剪图片</h3>
         <div className="relative w-full h-64 mb-4">
@@ -73,6 +74,7 @@ export default function ImageCropper({ imageSrc, aspect = 1, onComplete, onCance
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
