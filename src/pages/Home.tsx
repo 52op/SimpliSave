@@ -383,7 +383,11 @@ export default function Home() {
 
         {/* 热搜词 — 分组切换 */}
         {tagGroups.length > 0 && (
-          <div className="mx-auto mt-3 max-w-2xl">
+          <div
+            className="mx-auto mt-3 max-w-2xl"
+            onMouseEnter={() => clearInterval(tagTimerRef.current)}
+            onMouseLeave={() => resetTagTimer()}
+          >
             <div className="flex items-center justify-center overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 h-8 px-4">
               <div key={tagGroupIndex} className="flex items-center justify-center gap-1 animate-tag-fade">
                 {currentTagGroup.map((tag) => (
@@ -420,16 +424,18 @@ export default function Home() {
             <Zap className="w-5 h-5 text-yellow-500" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t("home.recommended")}</h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {topGroups.map((g) => (
               <a
                 key={g.id}
                 href={`/g/${g.slug}`}
                 onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition text-center group"
+                className="ui-card p-3 flex items-center gap-2.5 hover:shadow-md transition-shadow group"
               >
-                <Favicon src={g.icon_url} title={g.title} size="lg" />
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mt-2 group-hover:text-blue-600" title={g.title}>{g.title}</p>
+                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-[var(--color-surface-2)] flex items-center justify-center">
+                  <Favicon src={g.icon_url} title={g.title} size="md" />
+                </div>
+                <p className="text-sm font-medium text-[var(--color-text-main)] truncate group-hover:text-[var(--color-primary)] transition-colors" title={g.title}>{g.title}</p>
               </a>
             ))}
           </div>
@@ -502,8 +508,8 @@ export default function Home() {
                       key={g.id}
                       href={`/g/${g.slug}`}
                       onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                      className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition group border-l-4"
-                      style={{ borderLeftColor: catColor }}
+                      className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition group border-l-4 border-l-transparent hover:[border-left-color:var(--cat-color)]"
+                      style={{ '--cat-color': catColor } as React.CSSProperties}
                     >
                       <div className="flex items-start gap-3">
                         <Favicon src={g.icon_url} title={g.title} size="md" />
