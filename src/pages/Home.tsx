@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
-import { Search, Folder, Globe, Zap, Loader2, X, TrendingUp } from "lucide-react"
+import { Search, Folder, Globe, Zap, Loader2, X, ChevronLeft, ChevronRight } from "lucide-react"
 import Favicon from "../components/Favicon"
 import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
@@ -67,10 +67,12 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hotTags, setHotTags] = useState<string[]>([])
   const [pageError, setPageError] = useState("")
+  const [tagGroupIndex, setTagGroupIndex] = useState(0)
   const engineRef = useRef<HTMLDivElement>(null)
   const suggestRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const tagTimerRef = useRef<ReturnType<typeof setInterval>>()
 
   useEffect(() => {
     loadData()
@@ -101,6 +103,37 @@ export default function Home() {
   }, [showSuggestions])
 
   const displayTags = hotTags.slice(0, MAX_TAGS)
+  const tagGroups: string[][] = []
+  for (let i = 0; i < displayTags.length; i += TAG_GROUP_SIZE) {
+    tagGroups.push(displayTags.slice(i, i + TAG_GROUP_SIZE))
+  }
+  const currentTagGroup = tagGroups[tagGroupIndex % Math.max(tagGroups.length, 1)] ?? []
+
+  useEffect(() => {
+    if (tagGroups.length <= 1) return
+    tagTimerRef.current = setInterval(() => {
+      setTagGroupIndex((i) => (i + 1) % tagGroups.length)
+    }, ROTATE_INTERVAL)
+    return () => clearInterval(tagTimerRef.current)
+  }, [tagGroups.length])
+
+  function resetTagTimer() {
+    clearInterval(tagTimerRef.current)
+    if (tagGroups.length <= 1) return
+    tagTimerRef.current = setInterval(() => {
+      setTagGroupIndex((i) => (i + 1) % tagGroups.length)
+    }, ROTATE_INTERVAL)
+  }
+
+  function handleTagPrev() {
+    setTagGroupIndex((i) => (i - 1 + Math.max(tagGroups.length, 1)) % Math.max(tagGroups.length, 1))
+    resetTagTimer()
+  }
+
+  function handleTagNext() {
+    setTagGroupIndex((i) => (i + 1) % Math.max(tagGroups.length, 1))
+    resetTagTimer()
+  }
 
   function handleTagClick(tag: string) {
     setSearchQuery(tag)
@@ -358,26 +391,34 @@ export default function Home() {
           )}
         </form>
 
-        {/* 热搜词 — 细条滚动字幕 */}
-        {displayTags.length > 0 && (
+        {/* 热搜词 — 分组切换 */}
+        {tagGroups.length > 0 && (
           <div className="mx-auto mt-3 max-w-2xl flex items-center gap-0 overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 h-8">
-            <div className="flex items-center gap-1.5 px-3 shrink-0 border-r border-[var(--color-border)] h-full">
-              <TrendingUp className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">热搜</span>
+            <button
+              type="button"
+              onClick={handleTagPrev}
+              className="px-2 h-full flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <div className="flex-1 flex items-center justify-center gap-1">
+              {currentTagGroup.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => handleTagClick(tag)}
+                  className="text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-2 whitespace-nowrap"
+                >
+                  {tag}
+                </button>
+              ))}
             </div>
-            <div className="flex-1 overflow-hidden relative">
-              <div className="animate-marquee">
-                {[...displayTags, ...displayTags].map((tag, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleTagClick(tag)}
-                    className="text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 whitespace-nowrap"
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={handleTagNext}
+              className="px-2 h-full flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
       </div>
