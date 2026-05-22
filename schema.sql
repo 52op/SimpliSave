@@ -319,6 +319,28 @@ INSERT OR IGNORE INTO email_config_v2 (id, provider, api_key, from_address, doma
 DROP TABLE IF EXISTS email_config;
 ALTER TABLE email_config_v2 RENAME TO email_config;
 
+-- Migration v7: 每个服务商独立一行（UNIQUE provider），enabled=1 表示当前激活的服务商
+-- 重建表加唯一约束，并清理重复行（保留每个 provider 最新一行）
+CREATE TABLE IF NOT EXISTS email_config_v3 (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  provider     TEXT    NOT NULL UNIQUE CHECK(provider IN ('resend','sendgrid','mailgun','formail','custom')),
+  api_key      TEXT    NOT NULL DEFAULT '',
+  from_address TEXT    NOT NULL DEFAULT '',
+  domain       TEXT,
+  region       TEXT    DEFAULT 'us',
+  endpoint_url TEXT,
+  enabled      INTEGER NOT NULL DEFAULT 0,
+  created_at   INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at   INTEGER NOT NULL DEFAULT (unixepoch())
+);
+INSERT OR IGNORE INTO email_config_v3 (provider, api_key, from_address, domain, region, endpoint_url, enabled, created_at, updated_at)
+  SELECT provider, api_key, from_address, domain, region, endpoint_url, enabled, created_at, updated_at
+  FROM email_config
+  GROUP BY provider
+  HAVING updated_at = MAX(updated_at);
+DROP TABLE IF EXISTS email_config;
+ALTER TABLE email_config_v3 RENAME TO email_config;
+
 CREATE TABLE IF NOT EXISTS email_verification_codes (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   email      TEXT    NOT NULL,

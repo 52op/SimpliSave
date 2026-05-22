@@ -41,7 +41,7 @@ import { handleHotTags } from './api/hotTags';
 import { handleGetPublicMemo, handleVerifyPublicMemoPassword, handleListPublicMemosByUser } from './api/publicMemos';
 import { handleGetPublicUser, handleListPublicBookmarksByUser } from './api/publicUsers';
 import { handleSendCode } from './api/emailVerify';
-import { handleGetEmailConfig, handleUpdateEmailConfig, handleTestEmailConfig } from './api/emailConfig';
+import { handleGetEmailConfig, handleUpdateEmailConfig, handleTestEmailConfig, handleActivateEmailConfig } from './api/emailConfig';
 
 interface Env {
   DB: D1Database;
@@ -125,6 +125,7 @@ async function handleAdmin(request: Request, env: Env, path: string): Promise<Re
     if (request.method === 'GET') return handleGetEmailConfig(request, env);
     if (request.method === 'PUT') return handleUpdateEmailConfig(request, env);
   }
+  if (path === '/admin/email-config/activate' && request.method === 'POST') return handleActivateEmailConfig(request, env);
   if (path === '/admin/email-config/test' && request.method === 'POST') return handleTestEmailConfig(request, env);
   return new Response('Not Found', { status: 404, headers: corsHeaders() });
 }

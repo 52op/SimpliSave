@@ -234,7 +234,8 @@ export const emailApi = {
 };
 
 export const emailConfigApi = {
-  get: (token: string) => request<any>('GET', '/admin/email-config', undefined, token),
+  get: (token: string) => request<any[]>('GET', '/admin/email-config', undefined, token),
   update: (token: string, data: any) => request<{ message: string }>('PUT', '/admin/email-config', data, token),
+  activate: (token: string, provider: string) => request<{ message: string }>('POST', '/admin/email-config/activate', { provider }, token),
   test: (token: string, to_email: string) => request<{ message: string }>('POST', '/admin/email-config/test', { to_email }, token),
 };
