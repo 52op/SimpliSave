@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
-import { Search, Folder, Globe, Zap, Loader2, X, TrendingUp, ChevronDown, ChevronUp } from "lucide-react"
+import { Search, Folder, Globe, Zap, Loader2, X, TrendingUp } from "lucide-react"
 import Favicon from "../components/Favicon"
 import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
@@ -66,15 +66,11 @@ export default function Home() {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hotTags, setHotTags] = useState<string[]>([])
-  const [showAllTags, setShowAllTags] = useState(false)
-  const [tagGroupIndex, setTagGroupIndex] = useState(0)
-  const [tagPaused, setTagPaused] = useState(false)
   const [pageError, setPageError] = useState("")
   const engineRef = useRef<HTMLDivElement>(null)
   const suggestRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestTimerRef = useRef<ReturnType<typeof setTimeout>>()
-  const tagTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     loadData()
@@ -105,28 +101,10 @@ export default function Home() {
   }, [showSuggestions])
 
   const displayTags = hotTags.slice(0, MAX_TAGS)
-  const totalGroups = Math.ceil(displayTags.length / TAG_GROUP_SIZE)
-  const currentTags = showAllTags
-    ? displayTags
-    : displayTags.slice(tagGroupIndex * TAG_GROUP_SIZE, tagGroupIndex * TAG_GROUP_SIZE + TAG_GROUP_SIZE)
-
-  useEffect(() => {
-    if (showAllTags || tagPaused || totalGroups < 2) return
-    tagTimerRef.current = setInterval(() => {
-      setTagGroupIndex((prev) => (prev + 1) % totalGroups)
-    }, ROTATE_INTERVAL)
-    return () => clearInterval(tagTimerRef.current)
-  }, [showAllTags, tagPaused, totalGroups])
 
   function handleTagClick(tag: string) {
-    setTagPaused(true)
     setSearchQuery(tag)
     handleSearchDirect(tag)
-  }
-
-  function handleTagToggle() {
-    setShowAllTags((p) => !p)
-    setTagPaused(true)
   }
 
   const doSuggest = useCallback(async (q: string) => {
@@ -380,67 +358,26 @@ export default function Home() {
           )}
         </form>
 
-        {/* 热搜词 */}
+        {/* 热搜词 — 细条滚动字幕 */}
         {displayTags.length > 0 && (
-          <div
-            className="mx-auto mt-5 max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/55 px-4 py-3"
-            onMouseEnter={() => setTagPaused(true)}
-            onMouseLeave={() => setTagPaused(false)}
-          >
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <TrendingUp className="w-4 h-4 shrink-0 text-red-500" />
-              {displayTags.length > TAG_GROUP_SIZE && (
-                <button
-                  onClick={handleTagToggle}
-                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
-                  title={showAllTags ? "收起" : "展开"}
-                  aria-label={showAllTags ? "收起" : "展开"}
-                >
-                  {showAllTags ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-              )}
+          <div className="mx-auto mt-3 max-w-2xl flex items-center gap-0 overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 h-8">
+            <div className="flex items-center gap-1.5 px-3 shrink-0 border-r border-[var(--color-border)] h-full">
+              <TrendingUp className="w-3.5 h-3.5 text-red-500" />
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">热搜</span>
             </div>
-            {!showAllTags && (
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                {currentTags.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => handleTagClick(tag)}
-                    className="truncate rounded-full bg-[var(--color-surface)] px-3 py-1.5 text-center text-sm text-gray-600 shadow-sm transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                    title={tag}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            )}
-            {!showAllTags && totalGroups > 1 && (
-              <div className="mt-3 flex justify-center gap-1.5">
-                {Array.from({ length: totalGroups }).map((_, i) => (
+            <div className="flex-1 overflow-hidden relative">
+              <div className="animate-marquee">
+                {[...displayTags, ...displayTags].map((tag, i) => (
                   <button
                     key={i}
-                    onClick={() => { setTagGroupIndex(i); setTagPaused(true) }}
-                    className={`w-2 h-2 rounded-full transition ${
-                      i === tagGroupIndex ? "bg-red-500" : "bg-gray-300 dark:bg-gray-600"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-            {showAllTags && (
-              <div className="grid max-h-56 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-                {displayTags.map((tag) => (
-                  <button
-                    key={tag}
                     onClick={() => handleTagClick(tag)}
-                    className="truncate rounded-full bg-[var(--color-surface)] px-3 py-1.5 text-center text-sm text-gray-600 shadow-sm transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                    title={tag}
+                    className="text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 whitespace-nowrap"
                   >
                     {tag}
                   </button>
                 ))}
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>
@@ -461,7 +398,7 @@ export default function Home() {
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition text-center group"
               >
                 <Favicon src={g.icon_url} title={g.title} size="lg" />
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mt-2 group-hover:text-blue-600">{g.title}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mt-2 group-hover:text-blue-600" title={g.title}>{g.title}</p>
               </a>
             ))}
           </div>

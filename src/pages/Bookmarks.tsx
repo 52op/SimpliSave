@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useBookmarkStore } from "../stores/bookmarkStore"
 import { userBookmarkApi, userCategoryApi, tagApi, fetchMetaApi, submissionApi } from "../services/api"
 import { Bookmark } from "../types"
-import { Plus, Search, Upload, Download, Folder, X, Loader2, Menu, PanelLeftClose, Trash2, ArrowUpDown } from "lucide-react"
+import { Plus, Search, Upload, Download, Folder, X, Loader2, Menu, PanelLeftClose, Trash2, ArrowUpDown, MoreHorizontal } from "lucide-react"
 import Modal from "../components/Modal"
 import ImageUploader from "../components/ImageUploader"
 import EmptyState from "../components/EmptyState"
@@ -42,6 +42,17 @@ export default function Bookmarks() {
   const [batchLoading, setBatchLoading] = useState(false)
   const [pageError, setPageError] = useState("")
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const moreRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!moreOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false)
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [moreOpen])
 
   const [formData, setFormData] = useState({
     title: "", url: "", description: "", icon_url: "", category_id: "", tags: [] as string[], is_favorite: 0,
@@ -380,20 +391,33 @@ export default function Bookmarks() {
           <button onClick={() => setSidebarOpen(v => !v)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hidden lg:block">
             {sidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <label className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 cursor-pointer text-sm">
-            <Upload className="w-4 h-4" />{importing ? t("bookmarks.importing") : t("bookmarks.importLabel")}
-            <input type="file" accept=".html,text/html" className="hidden" disabled={importing}
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportFile(f); e.currentTarget.value = "" }} />
-          </label>
-          <button onClick={handleExportHtml} className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm">
-            <Download className="w-4 h-4" />{t("bookmarks.exportHtml")}
-          </button>
-          <button onClick={handleExport} className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm">
-            <Download className="w-4 h-4" />{t("bookmarks.exportJson")}
-          </button>
-          <button onClick={() => setShowCategoryModal(true)} className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm">
-            <Folder className="w-4 h-4" />{t("bookmarks.sidebarCategories")}
-          </button>
+          <div ref={moreRef} className="relative">
+            <button
+              onClick={() => setMoreOpen(v => !v)}
+              className="px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-1.5 text-sm"
+            >
+              <MoreHorizontal className="w-4 h-4" />更多
+            </button>
+            {moreOpen && (
+              <div className="absolute top-full left-0 mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-lg py-1 min-w-[140px] z-20">
+                <label className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-text-main)] hover:bg-[var(--color-surface-2)] cursor-pointer">
+                  <Upload className="w-4 h-4 shrink-0" />{importing ? t("bookmarks.importing") : t("bookmarks.importLabel")}
+                  <input type="file" accept=".html,text/html" className="hidden" disabled={importing}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleImportFile(f); setMoreOpen(false) } e.currentTarget.value = "" }} />
+                </label>
+                <button onClick={() => { handleExportHtml(); setMoreOpen(false) }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-text-main)] hover:bg-[var(--color-surface-2)]">
+                  <Download className="w-4 h-4 shrink-0" />{t("bookmarks.exportHtml")}
+                </button>
+                <button onClick={() => { handleExport(); setMoreOpen(false) }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-text-main)] hover:bg-[var(--color-surface-2)]">
+                  <Download className="w-4 h-4 shrink-0" />{t("bookmarks.exportJson")}
+                </button>
+                <div className="border-t border-[var(--color-border)] my-1" />
+                <button onClick={() => { setShowCategoryModal(true); setMoreOpen(false) }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-text-main)] hover:bg-[var(--color-surface-2)]">
+                  <Folder className="w-4 h-4 shrink-0" />{t("bookmarks.sidebarCategories")}
+                </button>
+              </div>
+            )}
+          </div>
           <button onClick={() => openAddModal()} className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-1.5 text-sm">
             <Plus className="w-4 h-4" />{t("bookmarks.add")}
           </button>

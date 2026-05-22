@@ -190,7 +190,7 @@ export default function Profile() {
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">{t("profile.title") || "个人资料"}</h1>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-6 space-y-6">
+      <div className="ui-card p-6 space-y-6">
         <div className="flex items-center gap-4">
           <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
             {avatarUrl ? (
@@ -207,7 +207,7 @@ export default function Profile() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("profile.avatar") || "头像"}</label>
-          <ImageUploader type="avatar" value={avatarUrl} onChange={setAvatarUrl} aspectRatio={1} className="w-24 h-24" placeholder={t("profile.uploadAvatar") || "点击上传头像"} />
+          <ImageUploader type="avatar" value={avatarUrl} onChange={setAvatarUrl} aspectRatio={1} className="w-24 h-24 rounded-full" placeholder={t("profile.uploadAvatar") || "点击上传头像"} />
         </div>
 
         <div>
@@ -317,7 +317,7 @@ export default function Profile() {
       </div>
 
       {/* 修改密码 */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-6 space-y-4 mt-6">
+      <div className="ui-card p-6 space-y-4 mt-8">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">修改密码</h3>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">当前密码</label>
@@ -344,7 +344,7 @@ export default function Profile() {
       </div>
 
       {/* 修改邮箱 */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-6 space-y-4 mt-6">
+      <div className="ui-card p-6 space-y-4 mt-8">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">修改邮箱</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400">当前邮箱：<strong className="text-gray-700 dark:text-gray-300">{user?.email}</strong></p>
         <div>

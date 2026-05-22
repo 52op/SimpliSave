@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useMemoStore } from "../stores/memoStore"
 import { memoApi, userCategoryApi, tagApi } from "../services/api"
-import { Plus, Search, Trash2, Edit2, Pin, PinOff, Globe, Lock, Eye, FileText } from "lucide-react"
+import { Plus, Search, Trash2, Edit2, Pin, PinOff, Globe, Lock, Eye, FileText, Folder } from "lucide-react"
 import Modal from "../components/Modal"
 import MemoForm, { type MemoFormData } from "../components/MemoForm"
 import EmptyState from "../components/EmptyState"
@@ -218,9 +218,9 @@ export default function Memos() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex gap-2">
             <button onClick={() => setShowCategoryModal(true)} className="ui-btn ui-btn-ghost">
-              {t("categories.add")}
+              <Folder className="w-4 h-4" />{t("categories.add")}
             </button>
-            <button onClick={() => setShowAddModal(true)} className="ui-btn ui-btn-primary bg-green-600 hover:bg-green-700 text-white">
+            <button onClick={() => setShowAddModal(true)} className="ui-btn ui-btn-primary">
               <Plus className="w-4 h-4" />{t("memos.add")}
             </button>
           </div>

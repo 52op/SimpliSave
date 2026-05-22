@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useEffect, Suspense, lazy } from "react"
 import { Helmet } from "react-helmet-async"
 import Header from "./components/Header"
+import AdminLayout from "./components/AdminLayout"
 import { useThemeStore } from "./stores/themeStore"
 import { useSiteSettingsStore } from "./stores/siteSettingsStore"
 import "./index.css"
@@ -116,13 +117,13 @@ export default function App() {
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/g/:slug" element={<CardGroupDetail />} />
-              <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
-              <Route path="/admin/submissions" element={<AdminRoute><AdminSubmissions /></AdminRoute>} />
-              <Route path="/admin/bookmarks" element={<AdminRoute><AdminBookmarks /></AdminRoute>} />
-              <Route path="/admin/search-engines" element={<AdminRoute><AdminSearchEngines /></AdminRoute>} />
-              <Route path="/admin/imagebeds" element={<AdminRoute><AdminImageBeds /></AdminRoute>} />
-              <Route path="/admin/site-settings" element={<AdminRoute><AdminSiteSettings /></AdminRoute>} />
-              <Route path="/admin/email-config" element={<AdminRoute><AdminEmailConfig /></AdminRoute>} />
+              <Route path="/admin/categories" element={<AdminRoute><AdminLayout><AdminCategories /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/submissions" element={<AdminRoute><AdminLayout><AdminSubmissions /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/bookmarks" element={<AdminRoute><AdminLayout><AdminBookmarks /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/search-engines" element={<AdminRoute><AdminLayout><AdminSearchEngines /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/imagebeds" element={<AdminRoute><AdminLayout><AdminImageBeds /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/site-settings" element={<AdminRoute><AdminLayout><AdminSiteSettings /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/email-config" element={<AdminRoute><AdminLayout><AdminEmailConfig /></AdminLayout></AdminRoute>} />
               <Route path="/memo/:id" element={<MemoViewer />} />
               <Route path="/u/:id" element={<UserPublicPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />

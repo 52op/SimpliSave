@@ -107,4 +107,25 @@ body {
 .ui-btn:hover { transform: translateY(-1px); }
 .ui-btn-primary { background: var(--color-primary); color: white; }
 .ui-btn-ghost { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-main); }
+.ui-btn-secondary { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-main); }
 .ui-btn-danger { background: var(--color-danger); color: white; }
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  display: inline-flex;
+  animation: marquee 28s linear infinite;
+  will-change: transform;
+}
+.animate-marquee:hover { animation-play-state: paused; }
+
+/* 登录/注册页装饰圆 */
+.auth-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.18;
+  pointer-events: none;
+}

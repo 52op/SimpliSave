@@ -3,8 +3,16 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { emailApi } from "../services/api"
 import { Link, useNavigate } from "react-router-dom"
+import { Bookmark, FileText, Search, Shield } from "lucide-react"
 
 const COOLDOWN = 60
+
+const FEATURES = [
+  { icon: Bookmark, text: "收藏喜爱的网站与资源，随时访问" },
+  { icon: FileText, text: "记录想法与灵感，支持 Markdown" },
+  { icon: Search, text: "聚合多引擎搜索，高效获取信息" },
+  { icon: Shield, text: "数据自托管，安全私密可控" },
+]
 
 const RegisterPage = () => {
   const { t } = useTranslation()
@@ -82,94 +90,123 @@ const RegisterPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4">
-      <div className="ui-card max-w-md w-full p-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-[var(--color-text-main)] mb-2">SimpliSave</h1>
-          <p className="text-[var(--color-text-muted)]">{t("app.description")}</p>
+    <div className="py-10 flex items-center justify-center">
+      <div className="w-full max-w-4xl flex rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-2xl">
+        {/* 左侧特性面板 */}
+        <div className="hidden lg:flex flex-col justify-center bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-700 dark:to-indigo-900 text-white p-12 w-5/12 relative overflow-hidden shrink-0">
+          <div className="auth-blob w-72 h-72 bg-white/20 -top-12 -right-12" style={{ opacity: 0.15 }} />
+          <div className="auth-blob w-48 h-48 bg-white/20 bottom-4 -left-8" style={{ opacity: 0.1 }} />
+          <div className="relative z-10">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+              <span className="text-white font-bold text-xl">S</span>
+            </div>
+            <h2 className="text-3xl font-bold mb-3">SimpliSave</h2>
+            <p className="text-blue-100 mb-10 leading-relaxed">{t("app.description")}</p>
+            <ul className="space-y-5">
+              {FEATURES.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm text-blue-100">{text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
-        {step === 1 ? (
-          <div className="space-y-5">
-            {sendError && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
-                {sendError}
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.email")}</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => { setSendError(""); setEmail(e.target.value) }}
-                className="ui-input px-4 py-3"
-                placeholder="you@example.com"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleSendCode}
-              disabled={sendLoading}
-              className="ui-btn ui-btn-primary w-full py-3 disabled:opacity-50"
-            >
-              {sendLoading ? "发送中..." : "发送验证码"}
-            </button>
+        {/* 右侧表单 */}
+        <div className="flex-1 bg-[var(--color-surface)] p-8 lg:p-12 flex flex-col justify-center">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-[var(--color-text-main)] mb-1">创建账号</h1>
+            <p className="text-[var(--color-text-muted)] text-sm">
+              {step === 1 ? "输入邮箱，我们将发送验证码" : `验证码已发送至 ${email}`}
+            </p>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {(error || sendError) && (
-              <div ref={errorRef} tabIndex={-1} className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
-                {error || sendError}
-              </div>
-            )}
-            <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
-              <span>验证码已发送至 <strong className="text-[var(--color-text-main)]">{email}</strong></span>
-              <button type="button" onClick={() => { setStep(1); clearError() }} className="text-[var(--color-primary)] underline underline-offset-2">修改</button>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">验证码</label>
-              <div className="flex gap-2">
+
+          {step === 1 ? (
+            <div className="space-y-5">
+              {sendError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+                  {sendError}
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.email")}</label>
                 <input
-                  type="text"
-                  name="code"
+                  type="email"
                   required
-                  maxLength={6}
-                  value={formData.code}
-                  onChange={handleChange}
-                  className="ui-input px-4 py-3 flex-1 tracking-widest text-center text-lg"
-                  placeholder="6 位验证码"
+                  value={email}
+                  onChange={(e) => { setSendError(""); setEmail(e.target.value) }}
+                  className="ui-input px-4 py-3"
+                  placeholder="you@example.com"
                 />
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  disabled={countdown > 0 || sendLoading}
-                  className="ui-btn ui-btn-secondary px-3 py-2 text-sm whitespace-nowrap disabled:opacity-50"
-                >
-                  {countdown > 0 ? `${countdown}s` : "重新发送"}
+              </div>
+              <button
+                type="button"
+                onClick={handleSendCode}
+                disabled={sendLoading}
+                className="ui-btn ui-btn-primary w-full py-3 disabled:opacity-50"
+              >
+                {sendLoading ? "发送中..." : "发送验证码"}
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {(error || sendError) && (
+                <div ref={errorRef} tabIndex={-1} className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+                  {error || sendError}
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">验证码</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="code"
+                    required
+                    maxLength={6}
+                    value={formData.code}
+                    onChange={handleChange}
+                    className="ui-input px-4 py-3 flex-1 tracking-widest text-center text-lg"
+                    placeholder="6 位验证码"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={countdown > 0 || sendLoading}
+                    className="ui-btn ui-btn-secondary px-3 py-2 text-sm whitespace-nowrap disabled:opacity-50"
+                  >
+                    {countdown > 0 ? `${countdown}s` : "重新发送"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.name")}</label>
+                <input type="text" name="name" required value={formData.name} onChange={handleChange} className="ui-input px-4 py-3" placeholder={t("auth.name")} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.password")}</label>
+                <input type="password" name="password" required value={formData.password} onChange={handleChange} className="ui-input px-4 py-3" placeholder="请输入密码（至少 6 位）" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.confirmPassword")}</label>
+                <input type="password" name="confirmPassword" required value={formData.confirmPassword} onChange={handleChange} className="ui-input px-4 py-3" placeholder="请再次输入密码" />
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { setStep(1); clearError() }} className="ui-btn ui-btn-ghost px-4 py-3">
+                  上一步
+                </button>
+                <button type="submit" disabled={loading} className="ui-btn ui-btn-primary flex-1 py-3 disabled:opacity-50">
+                  {loading ? t("auth.creatingAccount") || "Creating account..." : t("auth.register")}
                 </button>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.name")}</label>
-              <input type="text" name="name" required value={formData.name} onChange={handleChange} className="ui-input px-4 py-3" placeholder={t("auth.name")} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.password")}</label>
-              <input type="password" name="password" required value={formData.password} onChange={handleChange} className="ui-input px-4 py-3" placeholder="请输入密码（至少 6 位）" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.confirmPassword")}</label>
-              <input type="password" name="confirmPassword" required value={formData.confirmPassword} onChange={handleChange} className="ui-input px-4 py-3" placeholder="请再次输入密码" />
-            </div>
-            <button type="submit" disabled={loading} className="ui-btn ui-btn-primary w-full py-3 disabled:opacity-50">
-              {loading ? t("auth.creatingAccount") || "Creating account..." : t("auth.register")}
-            </button>
-          </form>
-        )}
+            </form>
+          )}
 
-        <div className="mt-6 text-center text-sm text-[var(--color-text-muted)]">
-          {t("auth.haveAccount")} <Link to="/login" className="text-[var(--color-primary)] font-medium">{t("auth.login")}</Link>
+          <div className="mt-6 text-center text-sm text-[var(--color-text-muted)]">
+            {t("auth.haveAccount")} <Link to="/login" className="text-[var(--color-primary)] font-medium">{t("auth.login")}</Link>
+          </div>
         </div>
       </div>
     </div>

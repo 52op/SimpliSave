@@ -3,8 +3,16 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { emailApi } from "../services/api"
 import { Link, useNavigate } from "react-router-dom"
+import { Bookmark, FileText, Search, Shield } from "lucide-react"
 
 const COOLDOWN = 60
+
+const FEATURES = [
+  { icon: Bookmark, text: "收藏喜爱的网站与资源，随时访问" },
+  { icon: FileText, text: "记录想法与灵感，支持 Markdown" },
+  { icon: Search, text: "聚合多引擎搜索，高效获取信息" },
+  { icon: Shield, text: "数据自托管，安全私密可控" },
+]
 
 const LoginPage = () => {
   const { t } = useTranslation()
@@ -96,100 +104,126 @@ const LoginPage = () => {
   const combinedError = error || sendError
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4">
-      <div className="ui-card max-w-md w-full p-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-[var(--color-text-main)] mb-2">SimpliSave</h1>
-          <p className="text-[var(--color-text-muted)]">{t("app.description")}</p>
-        </div>
-
-        {/* Tab 切换 */}
-        <div className="flex rounded-lg bg-[var(--color-bg-secondary)] p-1 mb-6">
-          <button
-            type="button"
-            onClick={() => switchTab("password")}
-            className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${tab === "password" ? "bg-white dark:bg-slate-700 text-[var(--color-text-main)] shadow-sm" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"}`}
-          >
-            密码登录
-          </button>
-          <button
-            type="button"
-            onClick={() => switchTab("code")}
-            className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${tab === "code" ? "bg-white dark:bg-slate-700 text-[var(--color-text-main)] shadow-sm" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"}`}
-          >
-            验证码登录
-          </button>
-        </div>
-
-        {combinedError && (
-          <div ref={errorRef} tabIndex={-1} className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300 mb-5">
-            {combinedError}
+    <div className="py-10 flex items-center justify-center">
+      <div className="w-full max-w-4xl flex rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-2xl">
+        {/* 左侧特性面板 */}
+        <div className="hidden lg:flex flex-col justify-center bg-gradient-to-br from-blue-600 to-indigo-700 dark:from-blue-700 dark:to-indigo-900 text-white p-12 w-5/12 relative overflow-hidden shrink-0">
+          <div className="auth-blob w-72 h-72 bg-white/20 -top-12 -right-12" style={{ opacity: 0.15 }} />
+          <div className="auth-blob w-48 h-48 bg-white/20 bottom-4 -left-8" style={{ opacity: 0.1 }} />
+          <div className="relative z-10">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+              <span className="text-white font-bold text-xl">S</span>
+            </div>
+            <h2 className="text-3xl font-bold mb-3">SimpliSave</h2>
+            <p className="text-blue-100 mb-10 leading-relaxed">{t("app.description")}</p>
+            <ul className="space-y-5">
+              {FEATURES.map(({ icon: Icon, text }) => (
+                <li key={text} className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm text-blue-100">{text}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
+        </div>
 
-        {tab === "password" ? (
-          <form onSubmit={handlePasswordSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.email")}</label>
-              <input type="email" name="email" required value={formData.email} onChange={handleChange} className="ui-input px-4 py-3" placeholder="you@example.com" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.password")}</label>
-              <input type="password" name="password" required value={formData.password} onChange={handleChange} className="ui-input px-4 py-3" placeholder="请输入密码" />
-            </div>
-            <button type="submit" disabled={loading} className="ui-btn ui-btn-primary w-full py-3 disabled:opacity-50">
-              {loading ? t("auth.signingIn") || "Signing in..." : t("auth.login")}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleCodeSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.email")}</label>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  required
-                  value={codeEmail}
-                  onChange={(e) => { setSendError(""); setCodeEmail(e.target.value) }}
-                  className="ui-input px-4 py-3 flex-1"
-                  placeholder="you@example.com"
-                  disabled={codeSent}
-                />
-                {codeSent && (
-                  <button type="button" onClick={() => { setCodeSent(false); setCode("") }} className="ui-btn ui-btn-secondary px-3 text-sm">修改</button>
-                )}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">验证码</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  required
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => { if (error) clearError(); setCode(e.target.value) }}
-                  className="ui-input px-4 py-3 flex-1 tracking-widest text-center text-lg"
-                  placeholder="6 位验证码"
-                />
-                <button
-                  type="button"
-                  onClick={codeSent ? handleResend : handleSendCode}
-                  disabled={sendLoading || (codeSent && countdown > 0)}
-                  className="ui-btn ui-btn-secondary px-3 py-2 text-sm whitespace-nowrap disabled:opacity-50"
-                >
-                  {sendLoading ? "发送中..." : codeSent && countdown > 0 ? `${countdown}s` : codeSent ? "重新发送" : "发送验证码"}
-                </button>
-              </div>
-            </div>
-            <button type="submit" disabled={loading || !codeSent} className="ui-btn ui-btn-primary w-full py-3 disabled:opacity-50">
-              {loading ? t("auth.signingIn") || "Signing in..." : t("auth.login")}
-            </button>
-          </form>
-        )}
+        {/* 右侧表单 */}
+        <div className="flex-1 bg-[var(--color-surface)] p-8 lg:p-12 flex flex-col justify-center">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-[var(--color-text-main)] mb-1">欢迎回来</h1>
+            <p className="text-[var(--color-text-muted)] text-sm">请登录你的账号</p>
+          </div>
 
-        <div className="mt-6 text-center text-sm text-[var(--color-text-muted)]">
-          {t("auth.noAccount")} <Link to="/register" className="text-[var(--color-primary)] font-medium">{t("auth.register")}</Link>
+          {/* Tab 切换 */}
+          <div className="flex rounded-lg bg-[var(--color-surface-2)] p-1 mb-6">
+            <button
+              type="button"
+              onClick={() => switchTab("password")}
+              className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${tab === "password" ? "bg-[var(--color-surface)] text-[var(--color-text-main)] shadow-sm" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"}`}
+            >
+              密码登录
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab("code")}
+              className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${tab === "code" ? "bg-[var(--color-surface)] text-[var(--color-text-main)] shadow-sm" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]"}`}
+            >
+              验证码登录
+            </button>
+          </div>
+
+          {combinedError && (
+            <div ref={errorRef} tabIndex={-1} className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300 mb-5">
+              {combinedError}
+            </div>
+          )}
+
+          {tab === "password" ? (
+            <form onSubmit={handlePasswordSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.email")}</label>
+                <input type="email" name="email" required value={formData.email} onChange={handleChange} className="ui-input px-4 py-3" placeholder="you@example.com" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.password")}</label>
+                <input type="password" name="password" required value={formData.password} onChange={handleChange} className="ui-input px-4 py-3" placeholder="请输入密码" />
+              </div>
+              <button type="submit" disabled={loading} className="ui-btn ui-btn-primary w-full py-3 disabled:opacity-50">
+                {loading ? t("auth.signingIn") || "Signing in..." : t("auth.login")}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleCodeSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">{t("auth.email")}</label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    required
+                    value={codeEmail}
+                    onChange={(e) => { setSendError(""); setCodeEmail(e.target.value) }}
+                    className="ui-input px-4 py-3 flex-1"
+                    placeholder="you@example.com"
+                    disabled={codeSent}
+                  />
+                  {codeSent && (
+                    <button type="button" onClick={() => { setCodeSent(false); setCode("") }} className="ui-btn ui-btn-secondary px-3 text-sm">修改</button>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--color-text-main)] mb-2">验证码</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => { if (error) clearError(); setCode(e.target.value) }}
+                    className="ui-input px-4 py-3 flex-1 tracking-widest text-center text-lg"
+                    placeholder="6 位验证码"
+                  />
+                  <button
+                    type="button"
+                    onClick={codeSent ? handleResend : handleSendCode}
+                    disabled={sendLoading || (codeSent && countdown > 0)}
+                    className="ui-btn ui-btn-secondary px-3 py-2 text-sm whitespace-nowrap disabled:opacity-50"
+                  >
+                    {sendLoading ? "发送中..." : codeSent && countdown > 0 ? `${countdown}s` : codeSent ? "重新发送" : "发送验证码"}
+                  </button>
+                </div>
+              </div>
+              <button type="submit" disabled={loading || !codeSent} className="ui-btn ui-btn-primary w-full py-3 disabled:opacity-50">
+                {loading ? t("auth.signingIn") || "Signing in..." : t("auth.login")}
+              </button>
+            </form>
+          )}
+
+          <div className="mt-6 text-center text-sm text-[var(--color-text-muted)]">
+            {t("auth.noAccount")} <Link to="/register" className="text-[var(--color-primary)] font-medium">{t("auth.register")}</Link>
+          </div>
         </div>
       </div>
     </div>
