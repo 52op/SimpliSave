@@ -286,3 +286,29 @@ ALTER TABLE user_categories ADD COLUMN parent_id TEXT REFERENCES user_categories
 -- Migration v4: Memo public sharing
 ALTER TABLE memos ADD COLUMN is_public INTEGER DEFAULT 0;
 ALTER TABLE memos ADD COLUMN share_password TEXT;
+
+-- Migration v5: Email system
+CREATE TABLE IF NOT EXISTS email_config (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  provider     TEXT    NOT NULL CHECK(provider IN ('resend','sendgrid','mailgun')),
+  api_key      TEXT    NOT NULL,
+  from_address TEXT    NOT NULL,
+  domain       TEXT,
+  region       TEXT    DEFAULT 'us',
+  enabled      INTEGER NOT NULL DEFAULT 1,
+  created_at   INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at   INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS email_verification_codes (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  email      TEXT    NOT NULL,
+  code       TEXT    NOT NULL,
+  purpose    TEXT    NOT NULL CHECK(purpose IN ('register','login','change_email')),
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER NOT NULL,
+  used_at    INTEGER,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+CREATE INDEX IF NOT EXISTS idx_evc_email_purpose
+  ON email_verification_codes(email, purpose, created_at DESC);

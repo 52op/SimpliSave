@@ -3,9 +3,11 @@ import { useToast } from "../components/Toast"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
-import { authApi } from "../services/api"
+import { authApi, emailApi } from "../services/api"
 import ImageUploader from "../components/ImageUploader"
 import { User as UserIcon, Save, Globe, Github, Quote, Copy, ExternalLink } from "lucide-react"
+
+const COOLDOWN = 60
 
 export default function Profile() {
   const { t } = useTranslation()
@@ -30,7 +32,27 @@ export default function Profile() {
   const [saving, setSaving] = useState(false)
   const [copiedUrl, setCopiedUrl] = useState(false)
 
+  // 修改密码
+  const [oldPwd, setOldPwd] = useState("")
+  const [newPwd, setNewPwd] = useState("")
+  const [confirmPwd, setConfirmPwd] = useState("")
+  const [pwdSaving, setPwdSaving] = useState(false)
+
+  // 修改邮箱
+  const [newEmail, setNewEmail] = useState("")
+  const [emailCode, setEmailCode] = useState("")
+  const [emailCodeSent, setEmailCodeSent] = useState(false)
+  const [emailCountdown, setEmailCountdown] = useState(0)
+  const [emailSendLoading, setEmailSendLoading] = useState(false)
+  const [emailSaving, setEmailSaving] = useState(false)
+
   const publicUrl = user ? `${window.location.origin}/u/${user.id}` : ""
+
+  useEffect(() => {
+    if (emailCountdown <= 0) return
+    const timer = setTimeout(() => setEmailCountdown((c) => c - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [emailCountdown])
 
   useEffect(() => {
     if (!token) return
@@ -95,6 +117,60 @@ export default function Profile() {
       document.body.removeChild(input)
       setCopiedUrl(true)
       setTimeout(() => setCopiedUrl(false), 2000)
+    }
+  }
+
+  async function handleChangePassword() {
+    if (!token) return
+    if (!oldPwd || !newPwd || !confirmPwd) { toast("请填写所有密码字段", "error"); return }
+    if (newPwd !== confirmPwd) { toast("两次密码不一致", "error"); return }
+    if (newPwd.length < 6) { toast("新密码至少 6 位", "error"); return }
+    setPwdSaving(true)
+    try {
+      await authApi.changePassword(token, oldPwd, newPwd, confirmPwd)
+      toast("密码已更新", "success")
+      setOldPwd(""); setNewPwd(""); setConfirmPwd("")
+    } catch (err: any) {
+      toast(err.message || "修改失败", "error")
+    } finally {
+      setPwdSaving(false)
+    }
+  }
+
+  async function handleSendEmailCode() {
+    if (!token || !newEmail) { toast("请填写新邮箱", "error"); return }
+    setEmailSendLoading(true)
+    try {
+      await authApi.requestEmailChange(token, newEmail)
+      setEmailCodeSent(true)
+      setEmailCountdown(COOLDOWN)
+      toast("验证码已发送至新邮箱", "success")
+    } catch (err: any) {
+      toast(err.message || "发送失败", "error")
+    } finally {
+      setEmailSendLoading(false)
+    }
+  }
+
+  async function handleResendEmailCode() {
+    if (emailCountdown > 0) return
+    await handleSendEmailCode()
+  }
+
+  async function handleConfirmEmailChange() {
+    if (!token) return
+    if (!newEmail || !emailCode) { toast("请填写新邮箱和验证码", "error"); return }
+    setEmailSaving(true)
+    try {
+      await authApi.confirmEmailChange(token, newEmail, emailCode)
+      toast("邮箱已更新", "success")
+      setNewEmail(""); setEmailCode(""); setEmailCodeSent(false)
+      // 刷新用户信息
+      authApi.me(token).then(setUser).catch(() => {})
+    } catch (err: any) {
+      toast(err.message || "修改失败", "error")
+    } finally {
+      setEmailSaving(false)
     }
   }
 
@@ -237,6 +313,73 @@ export default function Profile() {
           className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2">
           <Save className="w-4 h-4" />
           {saving ? (t("common.saving") || "保存中...") : (t("common.save") || "保存")}
+        </button>
+      </div>
+
+      {/* 修改密码 */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-6 space-y-4 mt-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">修改密码</h3>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">当前密码</label>
+          <input type="password" value={oldPwd} onChange={(e) => setOldPwd(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="请输入当前密码" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">新密码</label>
+          <input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="至少 6 位" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">确认新密码</label>
+          <input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="请再次输入新密码" />
+        </div>
+        <button onClick={handleChangePassword} disabled={pwdSaving}
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+          {pwdSaving ? "保存中..." : "更新密码"}
+        </button>
+      </div>
+
+      {/* 修改邮箱 */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 p-6 space-y-4 mt-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">修改邮箱</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">当前邮箱：<strong className="text-gray-700 dark:text-gray-300">{user?.email}</strong></p>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">新邮箱</label>
+          <div className="flex gap-2">
+            <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)}
+              disabled={emailCodeSent}
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-60"
+              placeholder="new@example.com" />
+            {emailCodeSent && (
+              <button type="button" onClick={() => { setEmailCodeSent(false); setEmailCode("") }}
+                className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
+                修改
+              </button>
+            )}
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">验证码</label>
+          <div className="flex gap-2">
+            <input type="text" value={emailCode} onChange={(e) => setEmailCode(e.target.value)}
+              maxLength={6}
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none tracking-widest text-center text-lg"
+              placeholder="6 位验证码" />
+            <button type="button"
+              onClick={emailCodeSent ? handleResendEmailCode : handleSendEmailCode}
+              disabled={emailSendLoading || (emailCodeSent && emailCountdown > 0)}
+              className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap disabled:opacity-50">
+              {emailSendLoading ? "发送中..." : emailCodeSent && emailCountdown > 0 ? `${emailCountdown}s` : emailCodeSent ? "重新发送" : "发送验证码"}
+            </button>
+          </div>
+        </div>
+        <button onClick={handleConfirmEmailChange} disabled={emailSaving || !emailCodeSent}
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+          {emailSaving ? "确认中..." : "确认修改邮箱"}
         </button>
       </div>
     </div>

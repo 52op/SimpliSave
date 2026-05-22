@@ -19,6 +19,7 @@ const AdminBookmarks = lazy(() => import("./pages/admin/AdminBookmarks"))
 const AdminSearchEngines = lazy(() => import("./pages/admin/AdminSearchEngines"))
 const AdminImageBeds = lazy(() => import("./pages/admin/AdminImageBeds"))
 const AdminSiteSettings = lazy(() => import("./pages/admin/AdminSiteSettings"))
+const AdminEmailConfig = lazy(() => import("./pages/admin/AdminEmailConfig"))
 const CardGroupDetail = lazy(() => import("./pages/CardGroupDetail"))
 const SearchPage = lazy(() => import("./pages/Search"))
 const Profile = lazy(() => import("./pages/Profile"))
@@ -121,6 +122,7 @@ export default function App() {
               <Route path="/admin/search-engines" element={<AdminRoute><AdminSearchEngines /></AdminRoute>} />
               <Route path="/admin/imagebeds" element={<AdminRoute><AdminImageBeds /></AdminRoute>} />
               <Route path="/admin/site-settings" element={<AdminRoute><AdminSiteSettings /></AdminRoute>} />
+              <Route path="/admin/email-config" element={<AdminRoute><AdminEmailConfig /></AdminRoute>} />
               <Route path="/memo/:id" element={<MemoViewer />} />
               <Route path="/u/:id" element={<UserPublicPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -29,13 +29,23 @@ export const authApi = {
     const result = await request<{ user: User; token: string }>('POST', '/auth/login', { email, password })
     return { ...result, user: normalizeUser(result.user)! }
   },
-  register: async (email: string, username: string, password: string) => {
-    const result = await request<{ user: User; token: string }>('POST', '/auth/register', { email, username, password })
+  register: async (email: string, username: string, password: string, code: string) => {
+    const result = await request<{ user: User; token: string }>('POST', '/auth/register', { email, username, password, code })
+    return { ...result, user: normalizeUser(result.user)! }
+  },
+  loginWithCode: async (email: string, code: string) => {
+    const result = await request<{ user: User; token: string }>('POST', '/auth/login-code', { email, code })
     return { ...result, user: normalizeUser(result.user)! }
   },
   logout: (token: string) => request<void>('POST', '/auth/logout', undefined, token),
   me: async (token: string) => normalizeUser(await request<User>('GET', '/auth/me', undefined, token))!,
   updateProfile: async (token: string, data: any) => normalizeUser(await request<User>('PUT', '/auth/profile', data, token))!,
+  changePassword: (token: string, old_password: string, new_password: string, confirm_password: string) =>
+    request<{ message: string }>('POST', '/auth/password/change', { old_password, new_password, confirm_password }, token),
+  requestEmailChange: (token: string, new_email: string) =>
+    request<{ message: string; expires_in: number }>('POST', '/auth/email/request-change', { new_email }, token),
+  confirmEmailChange: (token: string, new_email: string, code: string) =>
+    request<{ message: string; new_email: string }>('POST', '/auth/email/confirm-change', { new_email, code }, token),
 };
 
 // 公开导航 API
@@ -216,4 +226,15 @@ export const publicUserApi = {
   get: (id: string) => request<any>('GET', `/public/users/${id}`),
   listMemos: (id: string) => request<any[]>('GET', `/public/users/${id}/memos`),
   listBookmarks: (id: string) => request<any[]>('GET', `/public/users/${id}/bookmarks`),
+};
+
+export const emailApi = {
+  sendCode: (email: string, purpose: 'register' | 'login' | 'change_email') =>
+    request<{ message: string; expires_in: number }>('POST', '/email/send-code', { email, purpose }),
+};
+
+export const emailConfigApi = {
+  get: (token: string) => request<any>('GET', '/admin/email-config', undefined, token),
+  update: (token: string, data: any) => request<{ message: string }>('PUT', '/admin/email-config', data, token),
+  test: (token: string, to_email: string) => request<{ message: string }>('POST', '/admin/email-config/test', { to_email }, token),
 };

@@ -2,6 +2,8 @@
 import { getUserId, getUserRole, getAuthPayload } from '../utils/auth';
 import { successResponse, errorResponse } from '../utils/response';
 import { generateSlug } from '../utils/slug';
+import { getEmailConfig, sendEmail } from '../utils/email';
+import { buildApprovalEmail, buildRejectionEmail } from '../utils/emailTemplates';
 
 // 用户提交公开分享申请
 export async function handleCreateSubmission(request: Request, env: any): Promise<Response> {
@@ -100,10 +102,41 @@ export async function handleApproveSubmission(request: Request, env: any, id: st
     'UPDATE bookmark_submissions SET status = ?, approved_public_group_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
   ).bind('approved', targetGroupId, id).run();
 
+  // 异步发送审核通过通知邮件
+  notifyApproval(env, id, targetGroupId).catch(console.error);
+
   return successResponse({
     message: 'Submission approved',
     group_id: targetGroupId
   });
+}
+
+async function notifyApproval(env: any, submissionId: string, groupId: string | null) {
+  const submission = await env.DB.prepare(
+    'SELECT bs.*, u.name as user_name, u.email as user_email FROM bookmark_submissions bs LEFT JOIN users u ON bs.user_id = u.id WHERE bs.id = ?'
+  ).bind(submissionId).first() as any;
+  if (!submission?.user_email) return;
+
+  const emailCfg = await getEmailConfig(env.DB);
+  if (!emailCfg) return;
+
+  const site = await env.DB.prepare('SELECT site_name FROM site_settings WHERE id = ?').bind('global').first<{ site_name: string }>();
+  const siteName = site?.site_name || 'SimpliSave';
+
+  let publicLink = '';
+  if (groupId) {
+    const group = await env.DB.prepare('SELECT slug FROM public_card_groups WHERE id = ?').bind(groupId).first<{ slug: string }>();
+    if (group?.slug) publicLink = `/nav/${group.slug}`;
+  }
+
+  const { subject, html } = buildApprovalEmail({
+    name: submission.user_name || submission.user_email,
+    title: submission.title,
+    url: submission.url,
+    publicLink,
+    siteName,
+  });
+  await sendEmail({ to: submission.user_email, subject, html }, emailCfg);
 }
 
 // 管理员拒绝审核
@@ -117,5 +150,29 @@ export async function handleRejectSubmission(request: Request, env: any, id: str
     'UPDATE bookmark_submissions SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
   ).bind('rejected', body.admin_note || null, id).run();
 
+  // 异步发送审核拒绝通知邮件
+  notifyRejection(env, id, body.admin_note || '').catch(console.error);
+
   return successResponse({ message: 'Submission rejected' });
+}
+
+async function notifyRejection(env: any, submissionId: string, reason: string) {
+  const submission = await env.DB.prepare(
+    'SELECT bs.*, u.name as user_name, u.email as user_email FROM bookmark_submissions bs LEFT JOIN users u ON bs.user_id = u.id WHERE bs.id = ?'
+  ).bind(submissionId).first() as any;
+  if (!submission?.user_email) return;
+
+  const emailCfg = await getEmailConfig(env.DB);
+  if (!emailCfg) return;
+
+  const site = await env.DB.prepare('SELECT site_name FROM site_settings WHERE id = ?').bind('global').first<{ site_name: string }>();
+  const siteName = site?.site_name || 'SimpliSave';
+
+  const { subject, html } = buildRejectionEmail({
+    name: submission.user_name || submission.user_email,
+    title: submission.title,
+    reason: reason || '不符合收录标准',
+    siteName,
+  });
+  await sendEmail({ to: submission.user_email, subject, html }, emailCfg);
 }

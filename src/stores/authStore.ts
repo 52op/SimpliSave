@@ -10,7 +10,8 @@ type AuthStore = AuthState & {
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  loginWithCode: (email: string, code: string) => Promise<void>
+  register: (name: string, email: string, password: string, code: string) => Promise<void>
   logout: () => void
   clearError: () => void
   validateSession: () => Promise<void>
@@ -38,10 +39,21 @@ export const useAuthStore = create<AuthStore>()(
           throw error
         }
       },
-      register: async (name, email, password) => {
+      loginWithCode: async (email, code) => {
         set({ loading: true, error: null })
         try {
-          const result = await authApi.register(email, name, password)
+          const result = await authApi.loginWithCode(email, code)
+          set({ user: normalizeUser(result.user), token: result.token, loading: false })
+        } catch (error: any) {
+          const message = error.message || "Login failed"
+          set({ error: message, loading: false, token: null, user: null })
+          throw error
+        }
+      },
+      register: async (name, email, password, code) => {
+        set({ loading: true, error: null })
+        try {
+          const result = await authApi.register(email, name, password, code)
           set({ user: normalizeUser(result.user), token: result.token, loading: false })
         } catch (error: any) {
           const message = error.message || "Registration failed"

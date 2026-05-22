@@ -3,7 +3,7 @@ import { useAuthStore } from "../stores/authStore"
 import { useThemeStore } from "../stores/themeStore"
 import { useSiteSettingsStore } from "../stores/siteSettingsStore"
 import { useTranslation } from "react-i18next"
-import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe, Search, Image, Settings } from "lucide-react"
+import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe, Search, Image, Settings, Mail } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import SearchModal from "./SearchModal"
 
@@ -50,6 +50,7 @@ export default function Header() {
     { p: "/admin/search-engines", l: t("admin.searchEngines.title"), icon: <Search className="w-4 h-4" /> },
     { p: "/admin/imagebeds", l: t("admin.imagebeds.title"), icon: <Image className="w-4 h-4" /> },
     { p: "/admin/site-settings", l: t("admin.siteSettings.title"), icon: <Settings className="w-4 h-4" /> },
+    { p: "/admin/email-config", l: "邮件配置", icon: <Mail className="w-4 h-4" /> },
   ]
 
   function openAdminMenu() {

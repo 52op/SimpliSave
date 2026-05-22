@@ -1,6 +1,6 @@
 ﻿// Cloudflare Worker entry point
 import { corsHeaders, handleCors } from './utils/response';
-import { handleRegister, handleLogin, handleLogout, handleGetMe, handleUpdateProfile } from './api/auth';
+import { handleRegister, handleLogin, handleLogout, handleGetMe, handleUpdateProfile, handleLoginWithCode, handleChangePassword, handleRequestEmailChange, handleConfirmEmailChange } from './api/auth';
 import {
   handleListPublicBookmarks, handleCreatePublicBookmark, handleGetPublicBookmark,
   handleUpdatePublicBookmark, handleDeletePublicBookmark
@@ -40,6 +40,8 @@ import { handleGetSiteSettings, handleUpdateSiteSettings } from './api/siteSetti
 import { handleHotTags } from './api/hotTags';
 import { handleGetPublicMemo, handleVerifyPublicMemoPassword, handleListPublicMemosByUser } from './api/publicMemos';
 import { handleGetPublicUser, handleListPublicBookmarksByUser } from './api/publicUsers';
+import { handleSendCode } from './api/emailVerify';
+import { handleGetEmailConfig, handleUpdateEmailConfig, handleTestEmailConfig } from './api/emailConfig';
 
 interface Env {
   DB: D1Database;
@@ -56,6 +58,8 @@ export default {
       const path = url.pathname.replace(/^\/api/, '');
 
       if (path.startsWith('/auth')) return handleAuth(request, env, path);
+      if (path.startsWith('/email')) return handleEmail(request, env, path);
+      if (path.startsWith('/admin')) return handleAdmin(request, env, path);
       if (path.startsWith('/public-bookmarks')) return handlePublicBookmarks(request, env, path);
       if (path.startsWith('/user-bookmarks')) return handleUserBookmarks(request, env, path);
       if (path.startsWith('/public-categories')) return handlePublicCategories(request, env, path);
@@ -100,11 +104,29 @@ async function handleAuth(request: Request, env: Env, path: string): Promise<Res
   switch (path) {
     case '/auth/register': return handleRegister(request, env);
     case '/auth/login': return handleLogin(request, env);
+    case '/auth/login-code': return handleLoginWithCode(request, env);
     case '/auth/logout': return handleLogout(request, env);
     case '/auth/me': return handleGetMe(request, env);
     case '/auth/profile': return handleUpdateProfile(request, env);
+    case '/auth/password/change': return handleChangePassword(request, env);
+    case '/auth/email/request-change': return handleRequestEmailChange(request, env);
+    case '/auth/email/confirm-change': return handleConfirmEmailChange(request, env);
     default: return new Response('Not Found', { status: 404, headers: corsHeaders() });
   }
+}
+
+async function handleEmail(request: Request, env: Env, path: string): Promise<Response> {
+  if (path === '/email/send-code' && request.method === 'POST') return handleSendCode(request, env);
+  return new Response('Not Found', { status: 404, headers: corsHeaders() });
+}
+
+async function handleAdmin(request: Request, env: Env, path: string): Promise<Response> {
+  if (path === '/admin/email-config') {
+    if (request.method === 'GET') return handleGetEmailConfig(request, env);
+    if (request.method === 'PUT') return handleUpdateEmailConfig(request, env);
+  }
+  if (path === '/admin/email-config/test' && request.method === 'POST') return handleTestEmailConfig(request, env);
+  return new Response('Not Found', { status: 404, headers: corsHeaders() });
 }
 
 async function handlePublicBookmarks(request: Request, env: Env, path: string): Promise<Response> {
