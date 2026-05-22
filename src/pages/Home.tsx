@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
-import { Search, Folder, Globe, Zap, Loader2, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Folder, Globe, Zap, Loader2, X } from "lucide-react"
 import Favicon from "../components/Favicon"
 import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
@@ -123,16 +123,6 @@ export default function Home() {
     tagTimerRef.current = setInterval(() => {
       setTagGroupIndex((i) => (i + 1) % tagGroups.length)
     }, ROTATE_INTERVAL)
-  }
-
-  function handleTagPrev() {
-    setTagGroupIndex((i) => (i - 1 + Math.max(tagGroups.length, 1)) % Math.max(tagGroups.length, 1))
-    resetTagTimer()
-  }
-
-  function handleTagNext() {
-    setTagGroupIndex((i) => (i + 1) % Math.max(tagGroups.length, 1))
-    resetTagTimer()
   }
 
   function handleTagClick(tag: string) {
@@ -393,32 +383,32 @@ export default function Home() {
 
         {/* 热搜词 — 分组切换 */}
         {tagGroups.length > 0 && (
-          <div className="mx-auto mt-3 max-w-2xl flex items-center gap-0 overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 h-8">
-            <button
-              type="button"
-              onClick={handleTagPrev}
-              className="px-2 h-full flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
-            <div className="flex-1 flex items-center justify-center gap-1">
-              {currentTagGroup.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => handleTagClick(tag)}
-                  className="text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-2 whitespace-nowrap"
-                >
-                  {tag}
-                </button>
-              ))}
+          <div className="mx-auto mt-3 max-w-2xl">
+            <div className="flex items-center justify-center overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 h-8 px-4">
+              <div key={tagGroupIndex} className="flex items-center justify-center gap-1 animate-tag-fade">
+                {currentTagGroup.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => handleTagClick(tag)}
+                    className="text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 whitespace-nowrap"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={handleTagNext}
-              className="px-2 h-full flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
-            >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+            {tagGroups.length > 1 && (
+              <div className="flex items-center justify-center gap-1.5 mt-1.5">
+                {tagGroups.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => { setTagGroupIndex(i); resetTagTimer() }}
+                    className={`rounded-full transition-all duration-300 ${i === tagGroupIndex % tagGroups.length ? "w-3 h-1.5 bg-blue-500" : "w-1.5 h-1.5 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
