@@ -2,13 +2,52 @@ import { useState, useEffect } from "react"
 import { useAuthStore } from "../../stores/authStore"
 import { emailConfigApi } from "../../services/api"
 import { useToast } from "../../components/Toast"
+import { ExternalLink } from "lucide-react"
 
-type Provider = "resend" | "sendgrid" | "mailgun"
+type Provider = "resend" | "sendgrid" | "mailgun" | "formail" | "custom"
 
-const PROVIDERS: { value: Provider; label: string }[] = [
-  { value: "resend", label: "Resend" },
-  { value: "sendgrid", label: "SendGrid" },
-  { value: "mailgun", label: "Mailgun" },
+interface ProviderMeta {
+  value: Provider
+  label: string
+  desc: string
+  link?: string
+  linkLabel?: string
+}
+
+const PROVIDERS: ProviderMeta[] = [
+  {
+    value: "resend",
+    label: "Resend",
+    desc: "现代邮件 API，开发者友好，免费额度慷慨。",
+    link: "https://resend.com",
+    linkLabel: "注册 Resend →",
+  },
+  {
+    value: "sendgrid",
+    label: "SendGrid",
+    desc: "Twilio 旗下老牌邮件服务，稳定可靠。",
+    link: "https://sendgrid.com",
+    linkLabel: "注册 SendGrid →",
+  },
+  {
+    value: "mailgun",
+    label: "Mailgun",
+    desc: "支持美区 / 欧区，企业级邮件发送服务。",
+    link: "https://www.mailgun.com",
+    linkLabel: "注册 Mailgun →",
+  },
+  {
+    value: "formail",
+    label: "Formail",
+    desc: "自托管邮件 API 服务，from 地址在 Formail 后台配置，无需在此填写，开源地址：github.com/52op/formail",
+    link: "https://formail.it0731.cn",
+    linkLabel: "访问 Formail →",
+  },
+  {
+    value: "custom",
+    label: "自定义",
+    desc: "兼容 Resend 风格的 HTTP API（POST JSON，Bearer 鉴权，body 含 from/to/subject/html）。",
+  },
 ]
 
 export default function AdminEmailConfig() {
@@ -20,6 +59,7 @@ export default function AdminEmailConfig() {
   const [fromAddress, setFromAddress] = useState("")
   const [domain, setDomain] = useState("")
   const [region, setRegion] = useState<"us" | "eu">("us")
+  const [endpointUrl, setEndpointUrl] = useState("")
   const [enabled, setEnabled] = useState(true)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -35,6 +75,7 @@ export default function AdminEmailConfig() {
           setFromAddress(cfg.from_address || "")
           setDomain(cfg.domain || "")
           setRegion(cfg.region || "us")
+          setEndpointUrl(cfg.endpoint_url || "")
           setEnabled(cfg.enabled !== 0)
         }
       })
@@ -42,17 +83,21 @@ export default function AdminEmailConfig() {
       .finally(() => setLoading(false))
   }, [token])
 
+  const currentMeta = PROVIDERS.find((p) => p.value === provider)!
+
   async function handleSave() {
-    if (!fromAddress) { toast("发件地址不能为空", "error"); return }
+    if (provider !== "formail" && !fromAddress) { toast("发件地址不能为空", "error"); return }
     if (provider === "mailgun" && !domain) { toast("Mailgun 需要填写 Domain", "error"); return }
+    if (provider === "custom" && !endpointUrl) { toast("请填写自定义 Endpoint URL", "error"); return }
     setSaving(true)
     try {
       await emailConfigApi.update(token, {
         provider,
         api_key: apiKey || undefined,
-        from_address: fromAddress,
+        from_address: fromAddress || undefined,
         domain: domain || undefined,
         region,
+        endpoint_url: endpointUrl || undefined,
         enabled,
       })
       setApiKey("")
@@ -87,7 +132,7 @@ export default function AdminEmailConfig() {
         {/* Provider 选择 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">服务商</label>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {PROVIDERS.map((p) => (
               <button
                 key={p.value}
@@ -103,6 +148,22 @@ export default function AdminEmailConfig() {
               </button>
             ))}
           </div>
+
+          {/* 当前服务商简介 + 注册链接 */}
+          <div className="mt-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 px-4 py-3 flex items-start justify-between gap-3">
+            <p className="text-sm text-blue-700 dark:text-blue-300">{currentMeta.desc}</p>
+            {currentMeta.link && (
+              <a
+                href={currentMeta.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 flex items-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {currentMeta.linkLabel}
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
         </div>
 
         {/* API Key */}
@@ -115,28 +176,66 @@ export default function AdminEmailConfig() {
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="输入新的 API Key"
+            placeholder={provider === "formail" ? "fm_your_api_key" : "输入新的 API Key"}
             autoComplete="new-password"
           />
         </div>
 
-        {/* 发件地址 */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">发件地址</label>
-          <input
-            type="email"
-            value={fromAddress}
-            onChange={(e) => setFromAddress(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="noreply@yourdomain.com"
-          />
-        </div>
+        {/* Formail endpoint（可选覆盖默认地址） */}
+        {provider === "formail" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Formail 地址 <span className="text-gray-400 font-normal">（留空使用默认 https://formail.it0731.cn）</span>
+            </label>
+            <input
+              type="url"
+              value={endpointUrl}
+              onChange={(e) => setEndpointUrl(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="https://formail.it0731.cn"
+            />
+          </div>
+        )}
+
+        {/* 自定义 Endpoint URL */}
+        {provider === "custom" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Endpoint URL <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="url"
+              value={endpointUrl}
+              onChange={(e) => setEndpointUrl(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="https://api.example.com/v1/emails"
+            />
+          </div>
+        )}
+
+        {/* 发件地址（formail 不需要） */}
+        {provider !== "formail" && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              发件地址 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              value={fromAddress}
+              onChange={(e) => setFromAddress(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="noreply@yourdomain.com"
+            />
+          </div>
+        )}
 
         {/* Mailgun 专属字段 */}
         {provider === "mailgun" && (
           <>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mailgun Domain</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Mailgun Domain <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 value={domain}

@@ -300,6 +300,25 @@ CREATE TABLE IF NOT EXISTS email_config (
   updated_at   INTEGER NOT NULL DEFAULT (unixepoch())
 );
 
+-- Migration v6: 扩展邮件服务商支持 formail / custom，新增 endpoint_url 字段
+-- 重建 email_config 表以更新 CHECK 约束
+CREATE TABLE IF NOT EXISTS email_config_v2 (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  provider     TEXT    NOT NULL CHECK(provider IN ('resend','sendgrid','mailgun','formail','custom')),
+  api_key      TEXT    NOT NULL,
+  from_address TEXT    NOT NULL DEFAULT '',
+  domain       TEXT,
+  region       TEXT    DEFAULT 'us',
+  endpoint_url TEXT,
+  enabled      INTEGER NOT NULL DEFAULT 1,
+  created_at   INTEGER NOT NULL DEFAULT (unixepoch()),
+  updated_at   INTEGER NOT NULL DEFAULT (unixepoch())
+);
+INSERT OR IGNORE INTO email_config_v2 (id, provider, api_key, from_address, domain, region, enabled, created_at, updated_at)
+  SELECT id, provider, api_key, from_address, domain, region, enabled, created_at, updated_at FROM email_config;
+DROP TABLE IF EXISTS email_config;
+ALTER TABLE email_config_v2 RENAME TO email_config;
+
 CREATE TABLE IF NOT EXISTS email_verification_codes (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   email      TEXT    NOT NULL,
