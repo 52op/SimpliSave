@@ -319,7 +319,7 @@ export default function Home() {
                     >
                       {engine.icon_url && <img src={engine.icon_url} alt="" className="w-4 h-4" />}
                       <span>{engine.name}</span>
-                      {engine.is_site_search && <span className="text-xs text-blue-500 ml-1">{t("home.siteSearch")}</span>}
+                      {!!engine.is_site_search && <span className="text-xs text-blue-500 ml-1">{t("home.siteSearch")}</span>}
                     </button>
                   ))}
                 </div>
