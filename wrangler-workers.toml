@@ -6,11 +6,20 @@ name = "simplisave-api"
 main = "workers/index.ts"
 compatibility_date = "2024-04-05"
 compatibility_flags = ["nodejs_compat"]
-workers_dev = true  # 部署到 workers.dev 子域名
+workers_dev = true
 
-# 环境变量
+# 自定义域名绑定在 Cloudflare Dashboard 的 Worker 设置中维护，无需在此声明
+
+# 环境变量（JWT_SECRET 和 D1 database_id 由 GitHub Actions 注入）
 [vars]
 ENVIRONMENT = "production"
+
+# D1 数据库绑定
+[[d1_databases]]
+binding = "DB"
+database_name = "simplisave-db"
+database_id = "YOUR_D1_DATABASE_ID"
+
 # SSO 配置（默认独立模式，不填即可；启用 SSO 时填写以下三项）
 # AUTH_MODE = "sso"
 # SSO_ISSUER = "https://auth.sztcrs.com"
