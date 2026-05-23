@@ -14,19 +14,13 @@ workers_dev = true
 [vars]
 ENVIRONMENT = "production"
 
-# D1 数据库绑定
-[[d1_databases]]
-binding = "DB"
-database_name = "simplisave-db"
-database_id = "YOUR_D1_DATABASE_ID"
-
 # SSO 配置（默认独立模式，不填即可；启用 SSO 时填写以下三项）
 # AUTH_MODE = "sso"
-# SSO_ISSUER = "https://auth.sztcrs.com"
+# SSO_ISSUER = "https://auth.example.com"
 # SSO_PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
 
 # D1 数据库绑定
 [[d1_databases]]
 binding = "DB"
 database_name = "simplisave-db"
-database_id = "b3a0c2e7-7a5a-4b1a-9f0a-1c2d3e4f5a6b"  # 你的 D1 数据库 ID
+database_id = "YOUR_D1_DATABASE_ID"  # 你的 D1 数据库 ID ，脚本自动替换，只要你在secret设置好了变量D1_DATABASE_ID就行
