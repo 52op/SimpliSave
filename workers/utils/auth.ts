@@ -17,13 +17,13 @@ async function extractAndVerify(request: Request, env: any): Promise<any | null>
     // Bearer token 优先（前端 SSO callback 写入 localStorage 后仍用 Bearer）
     const auth = request.headers.get('Authorization');
     if (auth?.startsWith('Bearer ')) {
-      return verifyRS256JWT(auth.slice(7), publicKey);
+      return verifyRS256JWT(auth.slice(7), publicKey, env?.SSO_ISSUER);
     }
     // 备用：直接读 cookie（适用于 API 与前端同域的情况）
     const cookieName = (env?.SSO_COOKIE as string | undefined) || '_goauth_token';
     const cookieToken = getCookieValue(request, cookieName);
     if (cookieToken) {
-      return verifyRS256JWT(cookieToken, publicKey);
+      return verifyRS256JWT(cookieToken, publicKey, env?.SSO_ISSUER);
     }
     return null;
   }

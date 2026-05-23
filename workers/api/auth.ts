@@ -1,9 +1,10 @@
 ﻿// Auth API handlers
-import { signJWT, verifyJWT, hashPassword, verifyPassword } from '../utils/jwt';
+import { signJWT, hashPassword, verifyPassword } from '../utils/jwt';
 import { successResponse, errorResponse } from '../utils/response';
 import { consumeCode } from '../utils/verifyCode';
 import { getEmailConfig, sendEmail } from '../utils/email';
 import { buildWelcomeEmail } from '../utils/emailTemplates';
+import { getAuthPayload } from '../utils/auth';
 
 interface Env {
   DB: D1Database;
@@ -11,12 +12,6 @@ interface Env {
 }
 
 const USER_SELECT = 'SELECT id, email, name, avatar_url, bio, website, github, twitter, weibo, show_bio, show_website, show_github, show_twitter, show_weibo, role, created_at, updated_at FROM users WHERE id = ?'
-
-async function getAuthPayload(request: Request, env: any) {
-  const auth = request.headers.get('Authorization') ?? ''
-  if (!auth.startsWith('Bearer ')) return null
-  return verifyJWT(auth.slice(7), env)
-}
 
 export async function handleRegister(request: Request, env: any): Promise<Response> {
   const body = await request.json() as { email: string; username: string; password: string; code: string };
@@ -204,32 +199,17 @@ export async function handleLogout(request: Request, env: Env): Promise<Response
 }
 
 export async function handleGetMe(request: Request, env: any): Promise<Response> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return errorResponse('Unauthorized', 401);
-  }
+  const auth = await getAuthPayload(request, env);
+  if (!auth) return errorResponse('Invalid or expired token', 401);
 
-  const token = authHeader.slice(7);
-  const payload = await verifyJWT(token, env);
-  if (!payload) {
-    return errorResponse('Invalid or expired token', 401);
-  }
-
-  const user = await env.DB.prepare(USER_SELECT).bind(payload.userId).first();
-
+  const user = await env.DB.prepare(USER_SELECT).bind(auth.userId).first();
   if (!user) return errorResponse('User not found', 404);
   return successResponse(user);
 }
 
 export async function handleUpdateProfile(request: Request, env: any): Promise<Response> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return errorResponse('Unauthorized', 401);
-  }
-
-  const token = authHeader.slice(7);
-  const payload = await verifyJWT(token, env);
-  if (!payload) return errorResponse('Invalid token', 401);
+  const auth = await getAuthPayload(request, env);
+  if (!auth) return errorResponse('Unauthorized', 401);
 
   const body = await request.json() as any;
   const updates: string[] = [];
@@ -251,13 +231,13 @@ export async function handleUpdateProfile(request: Request, env: any): Promise<R
   if (updates.length === 0) return errorResponse('No fields to update', 400);
 
   updates.push('updated_at = CURRENT_TIMESTAMP');
-  values.push(payload.userId);
+  values.push(auth.userId);
 
   await env.DB.prepare(
     `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
   ).bind(...values).run();
 
-  const user = await env.DB.prepare(USER_SELECT).bind(payload.userId).first();
+  const user = await env.DB.prepare(USER_SELECT).bind(auth.userId).first();
   return successResponse(user);
 }
 

@@ -86,7 +86,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 }
 
 // RS256 验证（用于 SSO 模式，验证 GoAuth 颁发的 JWT）
-export async function verifyRS256JWT(token: string, publicKeyPem: string): Promise<any | null> {
+export async function verifyRS256JWT(token: string, publicKeyPem: string, issuer?: string): Promise<any | null> {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
@@ -121,6 +121,7 @@ export async function verifyRS256JWT(token: string, publicKeyPem: string): Promi
 
     const payload = JSON.parse(base64UrlDecode(payloadB64));
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+    if (issuer && payload.iss !== issuer) return null;
     return payload;
   } catch {
     return null;

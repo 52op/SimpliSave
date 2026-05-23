@@ -1,6 +1,6 @@
 // 管理员邮件配置 API
 import { successResponse, errorResponse } from '../utils/response'
-import { verifyJWT } from '../utils/jwt'
+import { getAuthPayload } from '../utils/auth'
 import { getEmailConfig, sendEmail } from '../utils/email'
 import { buildCodeEmail } from '../utils/emailTemplates'
 
@@ -8,11 +8,9 @@ type Provider = 'resend' | 'sendgrid' | 'mailgun' | 'formail' | 'custom'
 const VALID_PROVIDERS: Provider[] = ['resend', 'sendgrid', 'mailgun', 'formail', 'custom']
 
 async function requireAdmin(request: Request, env: any): Promise<boolean> {
-  const auth = request.headers.get('Authorization') ?? ''
-  if (!auth.startsWith('Bearer ')) return false
-  const payload = await verifyJWT(auth.slice(7), env)
-  if (!payload) return false
-  const user = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(payload.userId).first<{ role: string }>()
+  const auth = await getAuthPayload(request, env)
+  if (!auth) return false
+  const user = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(auth.userId).first<{ role: string }>()
   return user?.role === 'admin'
 }
 
