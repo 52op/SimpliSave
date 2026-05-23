@@ -11,6 +11,10 @@ workers_dev = true  # 部署到 workers.dev 子域名
 # 环境变量
 [vars]
 ENVIRONMENT = "production"
+# SSO 配置（默认独立模式，不填即可；启用 SSO 时填写以下三项）
+# AUTH_MODE = "sso"
+# SSO_ISSUER = "https://auth.sztcrs.com"
+# SSO_PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
 
 # D1 数据库绑定
 [[d1_databases]]

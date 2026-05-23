@@ -29,6 +29,14 @@ jobs:
           sed -i 's|database_id = ".*"|database_id = "${{ secrets.D1_DATABASE_ID }}"|' wrangler-workers.toml
           # 在 [vars] 下添加 JWT_SECRET（否则会被放入 d1_databases 块）
           sed -i '/^\[vars\]/a JWT_SECRET = "${{ secrets.JWT_SECRET }}"' wrangler-workers.toml
+          # SSO 配置：有 Secret 就注入，没有就跳过（独立模式）
+          if [ -n "$AUTH_MODE" ]; then
+            sed -i "/^\[vars\]/a AUTH_MODE = \"$AUTH_MODE\"" wrangler-workers.toml
+            sed -i "/^\[vars\]/a SSO_ISSUER = \"$SSO_ISSUER\"" wrangler-workers.toml
+          fi
+        env:
+          AUTH_MODE: ${{ secrets.AUTH_MODE }}
+          SSO_ISSUER: ${{ secrets.SSO_ISSUER }}
 
       - name: Deploy Workers API
         uses: cloudflare/wrangler-action@v3
@@ -36,6 +44,14 @@ jobs:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           command: deploy --config wrangler-workers.toml
+
+      - name: Set SSO_PUBLIC_KEY as Cloudflare secret
+        if: ${{ env.SSO_PUBLIC_KEY != '' }}
+        run: echo "$SSO_PUBLIC_KEY" | npx wrangler secret put SSO_PUBLIC_KEY --config wrangler-workers.toml
+        env:
+          SSO_PUBLIC_KEY: ${{ secrets.SSO_PUBLIC_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Get Workers URL
         id: get-url
@@ -80,18 +96,26 @@ jobs:
           if [ -z "$WORKERS_URL" ] || [ "$WORKERS_URL" = "https://simplisave-api..workers.dev" ]; then
             WORKERS_URL="${{ secrets.WORKERS_URL }}"
           fi
-          
+
           if [ -z "$WORKERS_URL" ]; then
             echo "❌ Error: WORKERS_URL is empty!"
             echo "请在 GitHub Secrets 中添加 WORKERS_URL"
             exit 1
           fi
-          
+
           echo "📡 Using Workers URL: $WORKERS_URL"
           # 写入 .env.production
           echo "VITE_API_URL=$WORKERS_URL" > .env.production
+          # SSO 配置（仅当 Secret 存在时注入）
+          if [ -n "$VITE_AUTH_MODE" ]; then
+            echo "VITE_AUTH_MODE=$VITE_AUTH_MODE" >> .env.production
+            echo "VITE_SSO_URL=$VITE_SSO_URL" >> .env.production
+          fi
           cat .env.production
           npm run build
+        env:
+          VITE_AUTH_MODE: ${{ secrets.VITE_AUTH_MODE }}
+          VITE_SSO_URL: ${{ secrets.VITE_SSO_URL }}
 
       - name: Create Pages Project (if not exists)
         run: |

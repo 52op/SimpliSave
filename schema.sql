@@ -280,9 +280,6 @@ ALTER TABLE users ADD COLUMN show_github INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN show_twitter INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN show_weibo INTEGER DEFAULT 0;
 
--- Migration v4.5: 用户分类支持层级结构
-ALTER TABLE user_categories ADD COLUMN parent_id TEXT REFERENCES user_categories(id) ON DELETE SET NULL;
-
 -- Migration v4: Memo public sharing
 ALTER TABLE memos ADD COLUMN is_public INTEGER DEFAULT 0;
 ALTER TABLE memos ADD COLUMN share_password TEXT;

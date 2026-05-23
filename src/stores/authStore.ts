@@ -15,6 +15,7 @@ type AuthStore = AuthState & {
   logout: () => void
   clearError: () => void
   validateSession: () => Promise<void>
+  loginWithSSOToken: (token: string) => Promise<void>
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -65,6 +66,16 @@ export const useAuthStore = create<AuthStore>()(
         set({ user: null, token: null, error: null, loading: false })
       },
       clearError: () => set({ error: null }),
+      // SSO 回调：GoAuth 登录后携带 token 跳转回来，存入 store 并获取用户信息
+      loginWithSSOToken: async (token: string) => {
+        set({ loading: true, error: null })
+        try {
+          const user = await authApi.me(token)
+          set({ user: normalizeUser(user), token, loading: false })
+        } catch {
+          set({ loading: false })
+        }
+      },
       validateSession: async () => {
         const token = get().token
         if (!token) return

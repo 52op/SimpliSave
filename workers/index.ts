@@ -46,6 +46,11 @@ import { handleGetEmailConfig, handleUpdateEmailConfig, handleTestEmailConfig, h
 interface Env {
   DB: D1Database;
   JWT_SECRET: string;
+  // SSO 配置（AUTH_MODE=sso 时生效）
+  AUTH_MODE?: string;      // 'standalone'（默认）或 'sso'
+  SSO_ISSUER?: string;     // GoAuth 地址，如 https://auth.sztcrs.com
+  SSO_COOKIE?: string;     // Cookie 名称，默认 _goauth_token
+  SSO_PUBLIC_KEY?: string; // GoAuth RSA 公钥（PEM 格式）
 }
 
 export default {
@@ -101,6 +106,16 @@ export default {
 };
 
 async function handleAuth(request: Request, env: Env, path: string): Promise<Response> {
+  const ssoMode = env.AUTH_MODE === 'sso';
+
+  // SSO 模式下，注册/登录由 GoAuth 负责，本服务只负责验证 token
+  if (ssoMode && (path === '/auth/register' || path === '/auth/login' || path === '/auth/login-code')) {
+    return new Response(
+      JSON.stringify({ code: 302, message: 'SSO 模式，请前往统一认证站登录', sso_url: env.SSO_ISSUER }),
+      { status: 302, headers: { ...corsHeaders(), 'Content-Type': 'application/json' } },
+    );
+  }
+
   switch (path) {
     case '/auth/register': return handleRegister(request, env);
     case '/auth/login': return handleLogin(request, env);

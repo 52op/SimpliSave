@@ -84,3 +84,45 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   const passwordHash = await hashPassword(password);
   return passwordHash === hash;
 }
+
+// RS256 验证（用于 SSO 模式，验证 GoAuth 颁发的 JWT）
+export async function verifyRS256JWT(token: string, publicKeyPem: string): Promise<any | null> {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const [headerB64, payloadB64, signatureB64] = parts;
+
+    const pemBody = publicKeyPem
+      .replace(/-----BEGIN PUBLIC KEY-----/g, '')
+      .replace(/-----END PUBLIC KEY-----/g, '')
+      .replace(/\s/g, '');
+    const keyData = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0));
+
+    const key = await crypto.subtle.importKey(
+      'spki',
+      keyData,
+      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+      false,
+      ['verify'],
+    );
+
+    const sigStr = base64UrlDecode(signatureB64);
+    const sigBytes = new Uint8Array(sigStr.length);
+    for (let i = 0; i < sigStr.length; i++) sigBytes[i] = sigStr.charCodeAt(i);
+
+    const encoder = new TextEncoder();
+    const valid = await crypto.subtle.verify(
+      'RSASSA-PKCS1-v1_5',
+      key,
+      sigBytes,
+      encoder.encode(`${headerB64}.${payloadB64}`),
+    );
+    if (!valid) return null;
+
+    const payload = JSON.parse(base64UrlDecode(payloadB64));
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}

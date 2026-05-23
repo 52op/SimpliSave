@@ -102,6 +102,30 @@ const LoginPage = () => {
   }
 
   const combinedError = error || sendError
+  const isSSOMode = import.meta.env.VITE_AUTH_MODE === 'sso'
+  const ssoUrl = import.meta.env.VITE_SSO_URL as string | undefined
+
+  // SSO 模式：直接跳转到统一认证站
+  if (isSSOMode && ssoUrl) {
+    const redirectTo = `${ssoUrl}/login?redirect=${encodeURIComponent(window.location.origin)}`
+    return (
+      <div className="py-10 flex items-center justify-center">
+        <div className="ui-card p-10 text-center max-w-sm w-full">
+          <div className="w-14 h-14 bg-[var(--color-primary-weak)] rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <Shield className="w-7 h-7 text-[var(--color-primary)]" />
+          </div>
+          <h2 className="text-xl font-bold text-[var(--color-text-main)] mb-2">统一账号登录</h2>
+          <p className="text-[var(--color-text-muted)] text-sm mb-6">本站已接入统一认证，点击下方按钮跳转到认证中心完成登录</p>
+          <a
+            href={redirectTo}
+            className="ui-btn ui-btn-primary w-full py-3 block"
+          >
+            前往统一认证登录
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="py-10 flex items-center justify-center">

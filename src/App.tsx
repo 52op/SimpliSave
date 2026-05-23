@@ -55,11 +55,23 @@ export default function App() {
   const siteSettings = useSiteSettingsStore((s) => s.settings)
   const loadSiteSettings = useSiteSettingsStore((s) => s.load)
 
+  const loginWithSSOToken = useAuthStore((s) => s.loginWithSSOToken)
+
   useEffect(() => {
+    // SSO 回调：GoAuth 登录后以 ?token=<JWT> 跳转回来
+    const params = new URLSearchParams(window.location.search)
+    const ssoToken = params.get('token')
+    if (ssoToken) {
+      params.delete('token')
+      const newSearch = params.toString()
+      window.history.replaceState({}, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''))
+      loginWithSSOToken(ssoToken).catch(() => {})
+    } else {
+      validateSession().catch(() => {})
+    }
     initTheme()
-    validateSession().catch(() => {})
     loadSiteSettings()
-  }, [initTheme, validateSession, loadSiteSettings])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // GA
   useEffect(() => {
