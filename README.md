@@ -2,7 +2,7 @@
 
 现代化网址收藏与备忘录应用，基于 Cloudflare Pages + Workers + D1 构建的全栈应用。
 
-> 📌 **在线演示**: [https://master.simplisave.pages.dev](https://master.simplisave.pages.dev)  
+> 📌 **在线演示**: [https://so.it0731.cn](https://so.it0731.cn)  
 > 📌 **原项目**: 重构自 [so.sztcrs.com](https://so.sztcrs.com)
 
 [![Deploy to Cloudflare Pages](https://img.shields.io/badge/deploy-cloudflare%20pages-f48120?logo=cloudflare)](https://deploy.workers.cloudflare.com/?url=https://github.com/52op/SimpliSave)
@@ -283,6 +283,14 @@ git push
 
 ### 管理员菜单不显示
 确认数据库里该用户 `role='admin'`。
+
+### pages设置好自定义域名提示"Nothing is here yet"
+现象：访问 simplisave-9a6.pages.dev（主域名）会提示 Nothing is here yet，但访问 master.simplisave-9a6.pages.dev 却能正常看到网页。
+解决方法：
+- 在 Pages 项目页面，点击 Settings -> Builds & deployments。
+- 找到 Production branch（生产分支）设置，查看它当前指向的是不是 master。
+如果不是，将其修改为 master。
+- 修改后必须重新触发一次部署（去 master 分支随便提交一个空 commits，或者在 - Deployments 页面点击重新部署），让它生成一个带有 Production 标签的最新版本。
 
 ## 📄 许可证
 
