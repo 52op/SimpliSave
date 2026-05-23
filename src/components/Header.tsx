@@ -164,7 +164,13 @@ export default function Header() {
                 <button
                   onClick={() => {
                     logout()
-                    navigate("/")
+                    const isSSOMode = import.meta.env.VITE_AUTH_MODE === 'sso'
+                    const ssoUrl = import.meta.env.VITE_SSO_URL as string | undefined
+                    if (isSSOMode && ssoUrl) {
+                      window.location.href = `${ssoUrl}/logout?redirect=${encodeURIComponent(window.location.origin)}`
+                    } else {
+                      navigate("/")
+                    }
                   }}
                   className="px-3 py-2 bg-red-500 text-white rounded-md text-sm font-medium hover:bg-red-600 flex items-center gap-1"
                 >
