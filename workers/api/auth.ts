@@ -12,6 +12,33 @@ interface Env {
 }
 
 const USER_SELECT = 'SELECT id, email, name, avatar_url, bio, website, github, twitter, weibo, show_bio, show_website, show_github, show_twitter, show_weibo, role, created_at, updated_at FROM users WHERE id = ?'
+const USER_SELECT_BY_EMAIL = 'SELECT id, email, name, avatar_url, bio, website, github, twitter, weibo, show_bio, show_website, show_github, show_twitter, show_weibo, role, created_at, updated_at FROM users WHERE email = ?'
+
+// SSO 模式下按 email 查找用户，不存在时自动创建影子账户
+async function findOrCreateSSOUser(env: any, auth: { role: string; email: string; username?: string }): Promise<any> {
+  let user = await env.DB.prepare(USER_SELECT_BY_EMAIL).bind(auth.email).first();
+  if (user) return user;
+
+  const name = auth.username || auth.email.split('@')[0];
+  const role = auth.role === 'admin' ? 'admin' : 'user';
+  const randomPwd = await hashPassword(crypto.randomUUID());
+  await env.DB.prepare(
+    'INSERT INTO users (email, name, password_hash, role) VALUES (?, ?, ?, ?)'
+  ).bind(auth.email, name, randomPwd, role).run();
+
+  return env.DB.prepare(USER_SELECT_BY_EMAIL).bind(auth.email).first();
+}
+
+// 统一用户解析：standalone 按 userId 找，SSO 按 email 找（首次自动建影子账户）
+async function resolveAuthUser(env: any, auth: { userId: string; role: string; email?: string; username?: string }): Promise<any | null> {
+  const user = await env.DB.prepare(USER_SELECT).bind(auth.userId).first();
+  if (user) return user;
+
+  if (env.AUTH_MODE === 'sso' && auth.email) {
+    return findOrCreateSSOUser(env, { ...auth, email: auth.email });
+  }
+  return null;
+}
 
 export async function handleRegister(request: Request, env: any): Promise<Response> {
   const body = await request.json() as { email: string; username: string; password: string; code: string };
@@ -110,8 +137,12 @@ export async function handleLoginWithCode(request: Request, env: any): Promise<R
 
 /** POST /api/auth/password/change — 修改密码 */
 export async function handleChangePassword(request: Request, env: any): Promise<Response> {
-  const payload = await getAuthPayload(request, env);
-  if (!payload) return errorResponse('未登录', 401);
+  const auth = await getAuthPayload(request, env);
+  if (!auth) return errorResponse('未登录', 401);
+
+  const resolved = await resolveAuthUser(env, auth);
+  if (!resolved) return errorResponse('用户不存在', 404);
+  const uid = (resolved as any).id;
 
   const body = await request.json() as { old_password: string; new_password: string; confirm_password: string };
   const { old_password, new_password, confirm_password } = body;
@@ -120,7 +151,7 @@ export async function handleChangePassword(request: Request, env: any): Promise<
   if (new_password !== confirm_password) return errorResponse('两次密码不一致', 400);
   if (new_password.length < 6) return errorResponse('新密码至少 6 位', 400);
 
-  const user = await env.DB.prepare('SELECT password_hash FROM users WHERE id = ?').bind(payload.userId).first<{ password_hash: string }>();
+  const user = await env.DB.prepare('SELECT password_hash FROM users WHERE id = ?').bind(uid).first<{ password_hash: string }>();
   if (!user) return errorResponse('用户不存在', 404);
 
   const valid = await verifyPassword(old_password, user.password_hash);
@@ -128,15 +159,15 @@ export async function handleChangePassword(request: Request, env: any): Promise<
 
   const newHash = await hashPassword(new_password);
   await env.DB.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-    .bind(newHash, payload.userId).run();
+    .bind(newHash, uid).run();
 
   return successResponse({ message: '密码已更新' });
 }
 
 /** POST /api/auth/email/request-change — 申请修改邮箱（发验证码到新邮箱） */
 export async function handleRequestEmailChange(request: Request, env: any): Promise<Response> {
-  const payload = await getAuthPayload(request, env);
-  if (!payload) return errorResponse('未登录', 401);
+  const auth = await getAuthPayload(request, env);
+  if (!auth) return errorResponse('未登录', 401);
 
   const body = await request.json() as { new_email: string };
   const { new_email } = body;
@@ -173,15 +204,19 @@ export async function handleRequestEmailChange(request: Request, env: any): Prom
 
 /** POST /api/auth/email/confirm-change — 确认修改邮箱 */
 export async function handleConfirmEmailChange(request: Request, env: any): Promise<Response> {
-  const payload = await getAuthPayload(request, env);
-  if (!payload) return errorResponse('未登录', 401);
+  const auth = await getAuthPayload(request, env);
+  if (!auth) return errorResponse('未登录', 401);
+
+  const resolved = await resolveAuthUser(env, auth);
+  if (!resolved) return errorResponse('用户不存在', 404);
+  const uid = (resolved as any).id;
 
   const body = await request.json() as { new_email: string; code: string };
   const { new_email, code } = body;
   if (!new_email || !code) return errorResponse('新邮箱和验证码为必填项', 400);
 
   // 再次检查新邮箱未被占用
-  const exists = await env.DB.prepare('SELECT id FROM users WHERE email = ? AND id != ?').bind(new_email, payload.userId).first();
+  const exists = await env.DB.prepare('SELECT id FROM users WHERE email = ? AND id != ?').bind(new_email, uid).first();
   if (exists) return errorResponse('该邮箱已被其他账号使用', 409);
 
   const { consumeCode } = await import('../utils/verifyCode');
@@ -189,7 +224,7 @@ export async function handleConfirmEmailChange(request: Request, env: any): Prom
   if (!codeResult.ok) return errorResponse(codeResult.error!, 400);
 
   await env.DB.prepare('UPDATE users SET email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-    .bind(new_email, payload.userId).run();
+    .bind(new_email, uid).run();
 
   return successResponse({ message: '邮箱已更新', new_email });
 }
@@ -202,7 +237,7 @@ export async function handleGetMe(request: Request, env: any): Promise<Response>
   const auth = await getAuthPayload(request, env);
   if (!auth) return errorResponse('Invalid or expired token', 401);
 
-  const user = await env.DB.prepare(USER_SELECT).bind(auth.userId).first();
+  const user = await resolveAuthUser(env, auth);
   if (!user) return errorResponse('User not found', 404);
   return successResponse(user);
 }
@@ -210,6 +245,10 @@ export async function handleGetMe(request: Request, env: any): Promise<Response>
 export async function handleUpdateProfile(request: Request, env: any): Promise<Response> {
   const auth = await getAuthPayload(request, env);
   if (!auth) return errorResponse('Unauthorized', 401);
+
+  const resolved = await resolveAuthUser(env, auth);
+  if (!resolved) return errorResponse('User not found', 404);
+  const uid = (resolved as any).id;
 
   const body = await request.json() as any;
   const updates: string[] = [];
@@ -231,13 +270,13 @@ export async function handleUpdateProfile(request: Request, env: any): Promise<R
   if (updates.length === 0) return errorResponse('No fields to update', 400);
 
   updates.push('updated_at = CURRENT_TIMESTAMP');
-  values.push(auth.userId);
+  values.push(uid);
 
   await env.DB.prepare(
     `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
   ).bind(...values).run();
 
-  const user = await env.DB.prepare(USER_SELECT).bind(auth.userId).first();
+  const user = await env.DB.prepare(USER_SELECT).bind(uid).first();
   return successResponse(user);
 }
 

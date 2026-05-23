@@ -49,11 +49,16 @@ export async function getUserRole(request: Request, env: any): Promise<string | 
   return payload.role || 'user';
 }
 
-export async function getAuthPayload(request: Request, env: any): Promise<{ userId: string; role: string } | null> {
+export async function getAuthPayload(request: Request, env: any): Promise<{ userId: string; role: string; email?: string; username?: string } | null> {
   const payload = await extractAndVerify(request, env);
   if (!payload) return null;
   // 兼容 GoAuth（user_id）和旧 JWT（userId）
   const rawId = payload.userId ?? payload.user_id;
   if (!rawId) return null;
-  return { userId: String(rawId), role: payload.role || 'user' };
+  return {
+    userId: String(rawId),
+    role: payload.role || 'user',
+    email: payload.email || undefined,
+    username: payload.username || undefined,
+  };
 }
