@@ -8,6 +8,8 @@ import ImageUploader from "../components/ImageUploader"
 import { User as UserIcon, Save, Globe, Github, Quote, Copy, ExternalLink } from "lucide-react"
 
 const COOLDOWN = 60
+const isSSOMode = import.meta.env.VITE_AUTH_MODE === 'sso'
+const ssoManageUrl = import.meta.env.VITE_SSO_URL as string | undefined
 
 export default function Profile() {
   const { t } = useTranslation()
@@ -316,6 +318,17 @@ export default function Profile() {
         </button>
       </div>
 
+      {/* 修改密码 + 修改邮箱：SSO 模式下引导至 GoAuth */}
+      {isSSOMode && ssoManageUrl ? (
+        <div className="ui-card p-6 mt-8 flex flex-col items-center text-center space-y-3">
+          <p className="text-sm text-gray-500 dark:text-gray-400">账号密码和邮箱由认证中心统一管理</p>
+          <a href={`${ssoManageUrl}/profile`} target="_blank" rel="noopener noreferrer"
+             className="ui-btn ui-btn-primary px-6 py-2">
+            前往 GoAuth 管理账号
+          </a>
+        </div>
+      ) : (
+        <>
       {/* 修改密码 */}
       <div className="ui-card p-6 space-y-4 mt-8">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">修改密码</h3>
@@ -382,6 +395,8 @@ export default function Profile() {
           {emailSaving ? "确认中..." : "确认修改邮箱"}
         </button>
       </div>
+        </>
+      )}
     </div>
   )
 }

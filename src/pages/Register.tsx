@@ -101,7 +101,7 @@ const RegisterPage = () => {
           </div>
           <h2 className="text-xl font-bold text-[var(--color-text-main)] mb-2">注册账号</h2>
           <p className="text-[var(--color-text-muted)] text-sm mb-6">本站已接入统一认证，请前往认证中心注册账号</p>
-          <a href={`${ssoUrl}/register`} className="ui-btn ui-btn-primary w-full py-3 block">前往认证中心注册</a>
+          <a href={`${ssoUrl}/register?redirect=${encodeURIComponent(window.location.origin)}`} className="ui-btn ui-btn-primary w-full py-3 block">前往认证中心注册</a>
           <div className="mt-4 text-sm text-[var(--color-text-muted)]">已有账号？<Link to="/login" className="text-[var(--color-primary)] font-medium">直接登录</Link></div>
         </div>
       </div>
