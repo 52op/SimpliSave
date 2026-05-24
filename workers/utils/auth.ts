@@ -1,4 +1,4 @@
-import { verifyJWT, verifyRS256JWT } from './jwt';
+import { verifyJWT, verifyRS256JWT, hashPassword } from './jwt';
 
 // 从 Cookie 头中提取指定 cookie 值
 function getCookieValue(request: Request, name: string): string | null {
@@ -34,11 +34,42 @@ async function extractAndVerify(request: Request, env: any): Promise<any | null>
   return verifyJWT(auth.slice(7), env);
 }
 
+const USER_SELECT_BY_EMAIL = 'SELECT id, email, name, avatar_url, bio, website, github, twitter, weibo, show_bio, show_website, show_github, show_twitter, show_weibo, role, created_at, updated_at FROM users WHERE email = ?'
+
+// SSO 模式：按 email 查找用户，不存在时自动创建影子账户
+async function findOrCreateSSOUser(env: any, email: string, username?: string, role?: string): Promise<any> {
+  let user = await env.DB.prepare(USER_SELECT_BY_EMAIL).bind(email).first();
+  if (user) return user;
+
+  const name = username || email.split('@')[0];
+  const userRole = role === 'admin' ? 'admin' : 'user';
+  const randomPwd = await hashPassword(crypto.randomUUID());
+  await env.DB.prepare(
+    'INSERT INTO users (email, name, password_hash, role) VALUES (?, ?, ?, ?)'
+  ).bind(email, name, randomPwd, userRole).run();
+
+  return env.DB.prepare(USER_SELECT_BY_EMAIL).bind(email).first();
+}
+
 export async function getUserId(request: Request, env: any): Promise<string | null> {
   const payload = await extractAndVerify(request, env);
   if (!payload) return null;
-  // GoAuth JWT 用 user_id（number），转为 string
-  return payload.userId ? String(payload.userId) : payload.user_id ? String(payload.user_id) : null;
+
+  const rawId = payload.userId ?? payload.user_id;
+  if (!rawId) return null;
+  const userId = String(rawId);
+
+  // 先按 ID 查 D1
+  const user = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(userId).first();
+  if (user) return userId;
+
+  // SSO 模式：D1 没有该用户，按 email 自动创建影子账户
+  if (env.AUTH_MODE === 'sso' && payload.email) {
+    const created = await findOrCreateSSOUser(env, payload.email, payload.username, payload.role);
+    if (created) return String(created.id);
+  }
+
+  return null;
 }
 
 export async function getUserRole(request: Request, env: any): Promise<string | null> {
