@@ -10,6 +10,8 @@ const VALID_PROVIDERS: Provider[] = ['resend', 'sendgrid', 'mailgun', 'formail',
 async function requireAdmin(request: Request, env: any): Promise<boolean> {
   const auth = await getAuthPayload(request, env)
   if (!auth) return false
+  // SSO 模式：以 JWT 中的 role 为权威源（GoAuth 是唯一来源）
+  if (env.AUTH_MODE === 'sso') return auth.role === 'admin'
   const user = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(auth.userId).first<{ role: string }>()
   return user?.role === 'admin'
 }
