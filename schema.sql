@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS public_bookmarks (
     sort_order INTEGER DEFAULT 0,
     status TEXT DEFAULT 'active' CHECK(status IN ('active','hidden')),
     visit_count INTEGER DEFAULT 0,
-    created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_by TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
