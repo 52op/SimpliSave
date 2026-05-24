@@ -59,6 +59,9 @@ export default function App() {
 
   useEffect(() => {
     const bootstrap = async () => {
+      const isSSOMode = import.meta.env.VITE_AUTH_MODE === 'sso'
+      const ssoUrl = import.meta.env.VITE_SSO_URL as string | undefined
+
       // SSO 回调：GoAuth 登录后以 ?token=<JWT> 跳转回来
       const params = new URLSearchParams(window.location.search)
       const ssoToken = params.get('token')
@@ -70,26 +73,38 @@ export default function App() {
         return
       }
 
-      // 有本地 token → 验证
       const localToken = useAuthStore.getState().token
-      if (localToken) {
-        await validateSession().catch(() => {})
-        return
-      }
 
-      // 无本地 token，SSO 模式 → 静默登录（GoAuth cookie 跨子域共享）
-      const isSSOMode = import.meta.env.VITE_AUTH_MODE === 'sso'
-      const ssoUrl = import.meta.env.VITE_SSO_URL as string | undefined
+      // SSO 模式：每次都检查 GoAuth 会话（保证退出/切换账号能同步）
       if (isSSOMode && ssoUrl) {
         try {
           const res = await fetch(`${ssoUrl}/api/auth/me`, { credentials: 'include' })
           if (res.ok) {
             const data = await res.json()
-            if (data.data?.token) {
-              await loginWithSSOToken(data.data.token).catch(() => {})
+            const goauthToken = data.data?.token
+            if (goauthToken) {
+              if (goauthToken !== localToken) {
+                // GoAuth 用户变了（切换账号/首次检测）→ 更新本地 token
+                await loginWithSSOToken(goauthToken).catch(() => {})
+              } else {
+                // 同一用户 → 正常验证
+                await validateSession().catch(() => {})
+              }
+              return
             }
           }
-        } catch {}
+          // GoAuth 未登录 → 清除本地 token
+          if (localToken) useAuthStore.getState().logout()
+        } catch {
+          // GoAuth 不可达，保留本地 token（不强制退出）
+          if (localToken) await validateSession().catch(() => {})
+        }
+        return
+      }
+
+      // standalone 模式：只验证本地 token
+      if (localToken) {
+        await validateSession().catch(() => {})
       }
     }
 
