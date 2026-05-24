@@ -195,7 +195,7 @@ export default function MemoViewer() {
 
           {memo.content ? (
             <div
-              className="prose prose-sm md:prose-base max-w-none dark:text-gray-300 [&_img]:rounded-lg [&_img]:shadow-sm [&_blockquote]:border-l-blue-500"
+              className="prose prose-sm md:prose-base dark:prose-invert max-w-none [&_img]:rounded-lg [&_img]:shadow-sm [&_blockquote]:border-l-blue-500"
               dangerouslySetInnerHTML={{ __html: memo.content }}
             />
           ) : (

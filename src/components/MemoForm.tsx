@@ -233,7 +233,7 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
     },
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none focus:outline-none min-h-[200px] p-3",
+        class: "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[400px] p-3",
       },
       handlePaste(view, event) {
         const items = event.clipboardData?.items

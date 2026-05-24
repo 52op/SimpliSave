@@ -350,11 +350,11 @@ export default function Memos() {
         </div>
       ) : null}
 
-      <Modal show={showAddModal} title={t("memos.add")} onClose={() => { setShowAddModal(false) }} widthClass="max-w-2xl">
+      <Modal show={showAddModal} title={t("memos.add")} onClose={() => { setShowAddModal(false) }} fullScreen>
         {token && <MemoForm token={token} categories={categories} onSave={handleAddSave} onCancel={() => setShowAddModal(false)} />}
       </Modal>
 
-      <Modal show={showEditModal} title={t("memos.edit")} onClose={() => { setShowEditModal(false); setEditingMemo(null) }} widthClass="max-w-2xl">
+      <Modal show={showEditModal} title={t("memos.edit")} onClose={() => { setShowEditModal(false); setEditingMemo(null) }} fullScreen>
         {token && editingMemo && (
           <MemoForm
             token={token}
