@@ -206,6 +206,7 @@ CREATE TABLE IF NOT EXISTS imagebed_configs (
     region TEXT,
     custom_domain TEXT,
     path_template TEXT DEFAULT '{year}/{month}/{day}/{time}_{md5}.{ext}',
+    include_bucket INTEGER DEFAULT 1,
     enabled INTEGER DEFAULT 1,
     is_default INTEGER DEFAULT 0,
     sort_order INTEGER DEFAULT 0,
