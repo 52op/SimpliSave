@@ -58,17 +58,42 @@ export default function App() {
   const loginWithSSOToken = useAuthStore((s) => s.loginWithSSOToken)
 
   useEffect(() => {
-    // SSO 回调：GoAuth 登录后以 ?token=<JWT> 跳转回来
-    const params = new URLSearchParams(window.location.search)
-    const ssoToken = params.get('token')
-    if (ssoToken) {
-      params.delete('token')
-      const newSearch = params.toString()
-      window.history.replaceState({}, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''))
-      loginWithSSOToken(ssoToken).catch(() => {})
-    } else {
-      validateSession().catch(() => {})
+    const bootstrap = async () => {
+      // SSO 回调：GoAuth 登录后以 ?token=<JWT> 跳转回来
+      const params = new URLSearchParams(window.location.search)
+      const ssoToken = params.get('token')
+      if (ssoToken) {
+        params.delete('token')
+        const newSearch = params.toString()
+        window.history.replaceState({}, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''))
+        await loginWithSSOToken(ssoToken).catch(() => {})
+        return
+      }
+
+      // 有本地 token → 验证
+      const localToken = useAuthStore.getState().token
+      if (localToken) {
+        await validateSession().catch(() => {})
+        return
+      }
+
+      // 无本地 token，SSO 模式 → 静默登录（GoAuth cookie 跨子域共享）
+      const isSSOMode = import.meta.env.VITE_AUTH_MODE === 'sso'
+      const ssoUrl = import.meta.env.VITE_SSO_URL as string | undefined
+      if (isSSOMode && ssoUrl) {
+        try {
+          const res = await fetch(`${ssoUrl}/api/auth/me`, { credentials: 'include' })
+          if (res.ok) {
+            const data = await res.json()
+            if (data.data?.token) {
+              await loginWithSSOToken(data.data.token).catch(() => {})
+            }
+          }
+        } catch {}
+      }
     }
+
+    bootstrap()
     initTheme()
     loadSiteSettings()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
