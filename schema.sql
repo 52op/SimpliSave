@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public_categories (
     icon TEXT,
     color TEXT DEFAULT '#3b82f6',
     sort_order INTEGER DEFAULT 0,
-    created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_by TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS public_card_groups (
     category_id TEXT REFERENCES public_categories(id) ON DELETE SET NULL,
     sort_order INTEGER DEFAULT 0,
     status TEXT DEFAULT 'active' CHECK(status IN ('active','hidden')),
-    created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+    created_by TEXT,
     source_submission_id TEXT,
     visit_count INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
