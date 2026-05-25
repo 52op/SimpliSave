@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom"
 import { pinyinMatch } from "../utils/pinyin"
 
 const STORAGE_KEY = "preferredEngineId"
-const TAG_GROUP_SIZE = 3
+const TAG_GROUP_SIZE = 2
 const MAX_TAGS = 12
 const ROTATE_INTERVAL = 4000
 

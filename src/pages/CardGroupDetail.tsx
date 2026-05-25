@@ -56,13 +56,13 @@ export default function CardGroupDetailPage() {
         <ArrowLeft className="w-4 h-4" /> 返回首页
       </button>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-6 mb-8">
-        <div className="flex items-center gap-4">
-          <Favicon src={group.icon_url} title={group.title} size="xl" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{group.title}</h1>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 sm:p-6 mb-8">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
+          <Favicon src={group.icon_url} title={group.title} size="lg" />
+          <div className="text-center sm:text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{group.title}</h1>
             {group.description && (
-              <p className="text-gray-500 dark:text-gray-400 mt-1">{group.description}</p>
+              <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">{group.description}</p>
             )}
             {group.category_name && (
               <span className="inline-block mt-2 text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded">
