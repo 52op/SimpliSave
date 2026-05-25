@@ -6,6 +6,7 @@ import { useBookmarkStore } from "../stores/bookmarkStore"
 import { userBookmarkApi, userCategoryApi, tagApi, fetchMetaApi, submissionApi } from "../services/api"
 import { Bookmark } from "../types"
 import { Plus, Search, Upload, Download, Folder, X, Loader2, Menu, PanelLeftClose, Trash2, ArrowUpDown, MoreHorizontal } from "lucide-react"
+import { translateText } from "../utils/translate"
 import Modal from "../components/Modal"
 import ImageUploader from "../components/ImageUploader"
 import EmptyState from "../components/EmptyState"
@@ -100,7 +101,10 @@ export default function Bookmarks() {
     setFetching(true)
     try {
       const meta = await fetchMetaApi.fetch(formData.url)
-      setFormData(prev => ({ ...prev, title: meta.title || prev.title, description: meta.description || prev.description, icon_url: meta.icon || prev.icon_url }))
+      const rawTitle = meta.title || formData.title
+      const rawDesc = meta.description || formData.description
+      const [title, description] = await translateText([rawTitle, rawDesc])
+      setFormData(prev => ({ ...prev, title, description, icon_url: meta.icon || prev.icon_url }))
     } catch (err: any) {
       toast(t("bookmarks.fetchFailed", { msg: err.message || t("bookmarks.fetchManual") }), "error")
     } finally {

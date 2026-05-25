@@ -269,6 +269,9 @@ export interface SiteSettings {
   ga_id: string | null
   beian: string | null
   custom_head_html: string | null
+  translate_api: string | null
+  translate_source_lang: string
+  translate_target_lang: string
   created_at: string
   updated_at: string
 }

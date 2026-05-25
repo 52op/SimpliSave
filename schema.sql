@@ -263,6 +263,9 @@ CREATE TABLE IF NOT EXISTS site_settings (
     ga_id TEXT,
     beian TEXT,
     custom_head_html TEXT,
+    translate_api TEXT,
+    translate_source_lang TEXT DEFAULT 'auto',
+    translate_target_lang TEXT DEFAULT 'chinese',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

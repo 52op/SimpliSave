@@ -15,6 +15,9 @@ export async function handleGetSiteSettings(request: Request, env: any): Promise
       ga_id: null,
       beian: null,
       custom_head_html: null,
+      translate_api: null,
+      translate_source_lang: 'auto',
+      translate_target_lang: 'chinese',
     });
   }
   return successResponse(settings);
@@ -31,6 +34,7 @@ export async function handleUpdateSiteSettings(request: Request, env: any): Prom
   const fields = [
     'site_name', 'description', 'keywords', 'logo_url',
     'favicon_url', 'footer_html', 'ga_id', 'beian', 'custom_head_html',
+    'translate_api', 'translate_source_lang', 'translate_target_lang',
   ];
 
   for (const field of fields) {

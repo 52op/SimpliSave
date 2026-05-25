@@ -31,6 +31,9 @@ export default function AdminSiteSettings() {
     ga_id: "",
     beian: "",
     custom_head_html: "",
+    translate_api: "",
+    translate_source_lang: "auto",
+    translate_target_lang: "chinese",
   })
 
   useEffect(() => { loadSettings() }, [])
@@ -50,6 +53,9 @@ export default function AdminSiteSettings() {
         ga_id: res.ga_id || "",
         beian: res.beian || "",
         custom_head_html: res.custom_head_html || "",
+        translate_api: res.translate_api || "",
+        translate_source_lang: res.translate_source_lang || "auto",
+        translate_target_lang: res.translate_target_lang || "chinese",
       })
       setPageError("")
     } catch (err: any) {
@@ -70,6 +76,9 @@ export default function AdminSiteSettings() {
         ga_id: form.ga_id || null,
         beian: form.beian || null,
         custom_head_html: form.custom_head_html || null,
+        translate_api: form.translate_api || null,
+        translate_source_lang: form.translate_source_lang || null,
+        translate_target_lang: form.translate_target_lang || null,
       }
       const res = await updateSiteSettings(token, data)
       setSettings(res)
@@ -153,6 +162,35 @@ export default function AdminSiteSettings() {
           <textarea value={form.custom_head_html} onChange={(e) => setForm({ ...form, custom_head_html: e.target.value })}
             rows={3} placeholder={t("admin.siteSettings.customHeadPlaceholder")}
             className="ui-textarea w-full px-3 py-2 font-mono text-sm" />
+        </div>
+
+        <div className="border-t border-[var(--color-border)] pt-6">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">自动翻译</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">翻译 API 地址</label>
+              <input type="text" value={form.translate_api} onChange={(e) => setForm({ ...form, translate_api: e.target.value })}
+                placeholder="https://translate.example.com/translate"
+                className="ui-input w-full px-3 py-2" />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">POST 请求，body: {`{ source_lang, target_lang, text_list }`}。留空禁用翻译功能。</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">源语言</label>
+                <input type="text" value={form.translate_source_lang} onChange={(e) => setForm({ ...form, translate_source_lang: e.target.value })}
+                  placeholder="auto"
+                  className="ui-input w-full px-3 py-2" />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">默认 auto（自动检测）</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">目标语言</label>
+                <input type="text" value={form.translate_target_lang} onChange={(e) => setForm({ ...form, translate_target_lang: e.target.value })}
+                  placeholder="chinese"
+                  className="ui-input w-full px-3 py-2" />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">默认 chinese</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <button onClick={handleSave} disabled={saving}
