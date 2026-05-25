@@ -440,7 +440,8 @@ export default function AdminBookmarks() {
                 ))}
               </tbody>
             </table>
-          )}
+            )}
+        </div>
         </>
       )}
 
