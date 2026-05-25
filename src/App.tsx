@@ -77,6 +77,11 @@ export default function App() {
 
       // SSO 模式：每次都检查 GoAuth 会话（保证退出/切换账号能同步）
       if (isSSOMode && ssoUrl) {
+        // HTTP 访问无法发送 Secure cookie，自动升级到 HTTPS
+        if (window.location.protocol === 'http:') {
+          window.location.replace(window.location.href.replace(/^http:/, 'https:'))
+          return
+        }
         try {
           const res = await fetch(`${ssoUrl}/api/auth/me`, { credentials: 'include' })
           if (res.ok) {
