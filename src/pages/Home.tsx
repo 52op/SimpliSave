@@ -306,10 +306,10 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setShowEngines(!showEngines)}
-                className="flex h-full min-w-[112px] items-center gap-2 rounded-l-xl border-r border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 hover:bg-[var(--color-surface-muted)]"
+                className="flex h-full sm:min-w-[112px] items-center gap-1 sm:gap-2 rounded-l-xl border-r border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 sm:px-4 py-3 hover:bg-[var(--color-surface-muted)]"
               >
                 {selectedEngine?.icon_url && <img src={selectedEngine.icon_url} alt="" className="w-4 h-4" />}
-                <span className="text-sm font-medium dark:text-gray-200">{selectedEngine?.name || t("home.search")}</span>
+                <span className="hidden sm:inline text-sm font-medium dark:text-gray-200">{selectedEngine?.name || t("home.search")}</span>
               </button>
               {showEngines && (
                 <div className="absolute left-0 top-full z-50 mt-2 max-h-64 min-w-full overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">
@@ -341,10 +341,10 @@ export default function Home() {
             />
             <button
               type="submit"
-              className="flex min-w-[108px] items-center justify-center gap-2 rounded-r-xl bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+              className="flex sm:min-w-[108px] items-center justify-center gap-1 sm:gap-2 rounded-r-xl bg-blue-600 px-3 sm:px-6 py-3 text-white hover:bg-blue-700"
             >
               <Search className="w-5 h-5" />
-              {t("home.search")}
+              <span className="hidden sm:inline">{t("home.search")}</span>
             </button>
           </div>
           {showSuggestions && suggestions.length > 0 && (
@@ -391,12 +391,12 @@ export default function Home() {
             onMouseLeave={() => resetTagTimer()}
           >
             <div className="flex items-center justify-center overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 h-8 px-4">
-              <div key={tagGroupIndex} className="flex items-center justify-center gap-1 animate-tag-fade">
+              <div key={tagGroupIndex} className="flex items-center justify-center gap-0.5 sm:gap-1 animate-tag-fade">
                 {currentTagGroup.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => handleTagClick(tag)}
-                    className="text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-3 whitespace-nowrap"
+                    className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-1.5 sm:px-3 whitespace-nowrap"
                   >
                     {tag}
                   </button>
