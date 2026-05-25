@@ -348,10 +348,7 @@ export default function AdminBookmarks() {
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:90}}>{t("admin.bookmarks.id")}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:140}}>{t("bookmarks.title")}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:200}}>{t("bookmarks.url")}</th>
-                    {!selectedGroupId && !bmSearch && (
-                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:120}}>所属卡片组</th>
-                    )}
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:90}}>{t("bookmarks.category")}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:120}}>所属卡片组</th>
                     <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:80}}>{t("bookmarks.visitCount")}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:100}}>{t("common.createdAt")}</th>
                     <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:80}}>{t("common.actions")}</th>
@@ -374,12 +371,7 @@ export default function AdminBookmarks() {
                           {b.url.length > 40 ? b.url.slice(0, 40) + "..." : b.url}
                         </a>
                       </td>
-        {!selectedGroupId && !bmSearch && (
-                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                          {(b as any).group_title || "-"}
-                        </td>
-                      )}
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{b.category_name || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{(b as any).group_title || "-"}</td>
                       <td className="px-4 py-3 text-sm text-center text-gray-500 dark:text-gray-400">{b.visit_count ?? 0}</td>
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{new Date(b.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
@@ -449,63 +441,6 @@ export default function AdminBookmarks() {
               </tbody>
             </table>
           )}
-        </div>
-
-        {/* 跨组链接搜索结果 */}
-        {bmSearch && (
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              {t("admin.bookmarks.matchingLinks")}（{bookmarks.length}）
-            </h3>
-            {loading ? (
-              <div className="text-center py-6"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div></div>
-            ) : bookmarks.length === 0 ? (
-              <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 text-gray-400 dark:text-gray-500 text-sm">{t("admin.bookmarks.noSubLinks")}</div>
-            ) : (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                  <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:140}}>{t("bookmarks.title")}</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:200}}>{t("bookmarks.url")}</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:120}}>所属卡片组</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:90}}>{t("bookmarks.category")}</th>
-                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:80}}>{t("common.actions")}</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                    {bookmarks.slice(0, 15).map(b => (
-                      <tr key={b.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <Favicon src={b.icon_url} title={b.title} size="sm" />
-                            <span className="font-medium text-gray-900 dark:text-gray-100">{b.title}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <a href={b.url} target="_blank" rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-1">
-                            <ExternalLink className="w-3 h-3" />
-                            {b.url.length > 40 ? b.url.slice(0, 40) + "..." : b.url}
-                          </a>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{(b as any).group_title || "-"}</td>
-                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{b.category_name || "-"}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-1 justify-center">
-                            <button onClick={() => openEdit(b)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                            <button onClick={() => handleDelete(b.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
         </>
       )}
 
