@@ -172,7 +172,7 @@ export default function AdminSiteSettings() {
               <input type="text" value={form.translate_api} onChange={(e) => setForm({ ...form, translate_api: e.target.value })}
                 placeholder="https://translate.example.com/translate"
                 className="ui-input w-full px-3 py-2" />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">POST 请求，body: {`{ source_lang, target_lang, text_list }`}。留空禁用翻译功能。</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">POST 请求，body: {`{ source_lang, target_lang, text_list }`}。留空禁用翻译功能。可自行部署<a href="https://github.com/52op/translate-cloudflare-ai" target="_blank">translate-cloudflare-ai</a>获取接口</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

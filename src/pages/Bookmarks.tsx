@@ -105,8 +105,9 @@ export default function Bookmarks() {
       const rawDesc = meta.description || formData.description
       const [title, description] = await translateText([rawTitle, rawDesc])
       setFormData(prev => ({ ...prev, title, description, icon_url: meta.icon || prev.icon_url }))
+      toast(t("bookmarks.fetchSuccess"), "success")
     } catch (err: any) {
-      toast(t("bookmarks.fetchFailed", { msg: err.message || t("bookmarks.fetchManual") }), "error")
+      toast(t("bookmarks.fetchFailed", { msg: err?.message || t("bookmarks.fetchManual") }), "error")
     } finally {
       setFetching(false)
     }

@@ -2,15 +2,16 @@ import { useState, useEffect } from "react"
 import { useToast } from "../../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
-import { publicBookmarkApi, publicCategoryApi, cardGroupApi } from "../../services/api"
+import { publicBookmarkApi, publicCategoryApi, cardGroupApi, fetchMetaApi } from "../../services/api"
 import { PublicBookmark, Category, CardGroup } from "../../types"
-import { Plus, Trash2, Edit2, X, ExternalLink, Globe, FolderOpen, Search, Star } from "lucide-react"
+import { Plus, Trash2, Edit2, X, ExternalLink, Globe, FolderOpen, Search, Star, Loader2 } from "lucide-react"
 import Favicon from "../../components/Favicon"
 import ImageUploader from "../../components/ImageUploader"
 import EmptyState from "../../components/EmptyState"
 import PageHeader from "../../components/PageHeader"
 import Modal from "../../components/Modal"
 import { pinyinMatch } from "../../utils/pinyin"
+import { translateText } from "../../utils/translate"
 
 export default function AdminBookmarks() {
   const { t } = useTranslation()
@@ -47,6 +48,7 @@ export default function AdminBookmarks() {
   const [form, setForm] = useState(defaultForm)
   const [formGroupId, setFormGroupId] = useState("")
   const [formNewGroup, setFormNewGroup] = useState("")
+  const [fetching, setFetching] = useState(false)
 
   const cleanText = (value?: string | null) =>
     (value || "")
@@ -189,6 +191,23 @@ export default function AdminBookmarks() {
     setFormGroupId("")
     setFormNewGroup("")
     setShowModal(true)
+  }
+
+  async function handleFetchMeta() {
+    if (!form.url.trim()) return
+    setFetching(true)
+    try {
+      const meta = await fetchMetaApi.fetch(form.url)
+      const rawTitle = meta.title || form.title
+      const rawDesc = meta.description || form.description
+      const [title, description] = await translateText([rawTitle, rawDesc])
+      setForm(prev => ({ ...prev, title, description, icon_url: meta.icon || prev.icon_url }))
+      toast(t("bookmarks.fetchSuccess"), "success")
+    } catch (err: any) {
+      toast(err?.message || t("bookmarks.fetchFailed", { msg: "" }), "error")
+    } finally {
+      setFetching(false)
+    }
   }
 
   async function handleSaveGroup() {
@@ -390,9 +409,16 @@ export default function AdminBookmarks() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formUrl")}</label>
-                    <input type="text" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })}
-                      placeholder="https://example.com"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                    <div className="flex gap-2">
+                      <input type="text" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })}
+                        placeholder="https://example.com"
+                        className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                      <button onClick={handleFetchMeta} disabled={fetching || !form.url.trim()}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1 shrink-0 text-sm">
+                        {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : "🔍"}
+                        {fetching ? t("bookmarks.fetching") : t("bookmarks.fetch")}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formDescription")}</label>
