@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
@@ -197,6 +197,7 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
   const [imgUploading, setImgUploading] = useState(false)
 
   const contentRef = useRef(initialData?.content || "")
+  const editorRef = useRef<any>(null)
 
   const uploadImageToEditor = useCallback(async (file: File, editor: any) => {
     if (!token || !editor) return
@@ -242,7 +243,7 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
           if (item.type.startsWith('image/')) {
             event.preventDefault()
             const file = item.getAsFile()
-            if (file) uploadImageToEditor(file, view.editor)
+            if (file) uploadImageToEditor(file, editorRef.current)
             return true
           }
         }
@@ -254,11 +255,14 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
         const imageFile = Array.from(files).find(f => f.type.startsWith('image/'))
         if (!imageFile) return false
         event.preventDefault()
-        uploadImageToEditor(imageFile, view.editor)
+        uploadImageToEditor(imageFile, editorRef.current)
         return true
       },
     },
   })
+
+  // 保持 ref 同步，供 handlePaste/handleDrop 闭包安全访问
+  useEffect(() => { editorRef.current = editor }, [editor])
 
   async function handleSubmit() {
     if (!title.trim() || saving) return

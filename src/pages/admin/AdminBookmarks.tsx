@@ -10,6 +10,7 @@ import ImageUploader from "../../components/ImageUploader"
 import EmptyState from "../../components/EmptyState"
 import PageHeader from "../../components/PageHeader"
 import Modal from "../../components/Modal"
+import GroupSelector from "../../components/GroupSelector"
 import { pinyinMatch } from "../../utils/pinyin"
 import { translateText } from "../../utils/translate"
 
@@ -60,8 +61,8 @@ export default function AdminBookmarks() {
   useEffect(() => { loadGroups(); loadCategories() }, [])
 
   useEffect(() => {
-    if (selectedGroupId) loadBookmarks()
-  }, [selectedGroupId])
+    if (selectedGroupId || bmSearch) loadBookmarks()
+  }, [selectedGroupId, bmSearch, bmCategoryFilter])
 
   useEffect(() => { setPage(1) }, [bmSearch, bmCategoryFilter])
 
@@ -86,10 +87,12 @@ export default function AdminBookmarks() {
   }
 
   async function loadBookmarks() {
-    if (!token || !selectedGroupId) return
+    if (!token) return
+    if (!selectedGroupId && !bmSearch) { setBookmarks([]); setLoading(false); return }
     setLoading(true)
     try {
-      const params: { group_id?: string; category_id?: string; q?: string } = { group_id: selectedGroupId }
+      const params: { group_id?: string; category_id?: string; q?: string } = {}
+      if (selectedGroupId) params.group_id = selectedGroupId
       if (bmCategoryFilter) params.category_id = bmCategoryFilter
       if (bmSearch) params.q = bmSearch
       const res = await publicBookmarkApi.list(params)
@@ -274,21 +277,25 @@ export default function AdminBookmarks() {
       <div className="ui-card p-4 mb-6 space-y-3">
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-gray-600 dark:text-gray-400 shrink-0">{t("admin.bookmarks.selectGroup")}</label>
-          <select
-            value={selectedGroupId}
-            onChange={(e) => { setSelectedGroupId(e.target.value); setPage(1) }}
-            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-          >
-            <option value="">{t("admin.bookmarks.groupPlaceholder")}</option>
-            {groups.map(g => (
-              <option key={g.id} value={g.id}>{g.title}</option>
-            ))}
-          </select>
+          <div className="flex-1">
+            <GroupSelector
+              groups={groups}
+              value={selectedGroupId}
+              onChange={(id) => { setSelectedGroupId(id); setPage(1) }}
+              placeholder={t("admin.bookmarks.groupPlaceholder")}
+            />
+          </div>
           {selectedGroup && (
-            <button onClick={() => openEditGroup(selectedGroup)}
-              className="px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50 text-sm">
-              {t("admin.bookmarks.editGroup")}
-            </button>
+            <>
+              <button onClick={() => { setSelectedGroupId(""); setPage(1) }}
+                className="px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50 text-sm flex items-center gap-1">
+                <X className="w-4 h-4" />清除
+              </button>
+              <button onClick={() => openEditGroup(selectedGroup)}
+                className="px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50 text-sm">
+                {t("admin.bookmarks.editGroup")}
+              </button>
+            </>
           )}
         </div>
         {!selectedGroupId && (
@@ -310,28 +317,40 @@ export default function AdminBookmarks() {
         )}
       </div>
 
-      {selectedGroupId ? (
+      {/* 全局搜索（跨组/组内） */}
+      {(selectedGroupId || bmSearch) && (
+        <div className="mb-4 flex gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input type="text" value={bmSearchInput} onChange={(e) => setBmSearchInput(e.target.value)}
+              placeholder={t("bookmarks.search")}
+              className="w-full pl-9 pr-9 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            {bmSearch && (
+              <button onClick={() => { setBmSearchInput(""); setBmSearch("") }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <select value={bmCategoryFilter} onChange={(e) => setBmCategoryFilter(e.target.value)}
+            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            <option value="">{t("bookmarks.allCategories")}</option>
+            {categories.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {(selectedGroupId || bmSearch) ? (
         <>
-          {selectedGroup && (
+          {selectedGroup && !bmSearch && (
             <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
               <FolderOpen className="w-5 h-5 text-blue-600" />
               <span className="font-medium text-blue-800">{selectedGroup.title}</span>
               <span className="text-sm text-blue-500">({t("admin.bookmarks.subLinks", { count: bookmarks.length })})</span>
             </div>
           )}
-
-          <div className="flex gap-4 mb-6">
-            <input type="text" value={bmSearchInput} onChange={(e) => setBmSearchInput(e.target.value)}
-              placeholder={t("bookmarks.search")}
-              className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-            <select value={bmCategoryFilter} onChange={(e) => setBmCategoryFilter(e.target.value)}
-              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-              <option value="">{t("bookmarks.allCategories")}</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
 
           {loading ? (
             <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div></div>
@@ -348,6 +367,9 @@ export default function AdminBookmarks() {
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("admin.bookmarks.id")}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.title")}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.url")}</th>
+                    {!selectedGroupId && (
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">所属卡片组</th>
+                    )}
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.category")}</th>
                     <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.visitCount")}</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("common.createdAt")}</th>
@@ -371,6 +393,11 @@ export default function AdminBookmarks() {
                           {b.url.length > 40 ? b.url.slice(0, 40) + "..." : b.url}
                         </a>
                       </td>
+                      {!selectedGroupId && (
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                          {(b as any).group_title || "-"}
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{b.category_name || "-"}</td>
                       <td className="px-4 py-3 text-sm text-center text-gray-500 dark:text-gray-400">{b.visit_count ?? 0}</td>
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{new Date(b.created_at).toLocaleDateString()}</td>
@@ -398,78 +425,6 @@ export default function AdminBookmarks() {
                 className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">{t("common.nextPage")}</button>
             </div>
           )}
-
-          {/* 子链接编辑模态框 */}
-          <Modal show={showModal} title={editingBm ? t("admin.bookmarks.edit") : t("admin.bookmarks.add")} onClose={() => setShowModal(false)} widthClass="max-w-lg">
-            <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formTitle")}</label>
-                    <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formUrl")}</label>
-                    <div className="flex gap-2">
-                      <input type="text" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })}
-                        placeholder="https://example.com"
-                        className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                      <button onClick={handleFetchMeta} disabled={fetching || !form.url.trim()}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1 shrink-0 text-sm">
-                        {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : "🔍"}
-                        {fetching ? t("bookmarks.fetching") : t("bookmarks.fetch")}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formDescription")}</label>
-                    <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                      rows={2}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formIcon")}</label>
-                    <div className="flex gap-2">
-                      <ImageUploader type="icon" value={form.icon_url} onChange={(url) => setForm({ ...form, icon_url: url })} className="w-12 h-12 shrink-0" />
-                      <input type="text" value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })}
-                        placeholder="https://example.com/favicon.ico"
-                        className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formCardGroup")}</label>
-                    <select value={formNewGroup ? "_new" : formGroupId} onChange={(e) => {
-                      if (e.target.value === "_new") { setFormNewGroup("new"); setFormGroupId("") }
-                      else { setFormGroupId(e.target.value); setFormNewGroup("") }
-                    }}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                      <option value="">{selectedGroup ? selectedGroup.title : t("admin.bookmarks.formSelectGroup")}</option>
-                      <option value="_new">{t("admin.bookmarks.formCreateGroup")}</option>
-                      {groups.filter(g => g.id !== selectedGroupId).map(g => (
-                        <option key={g.id} value={g.id}>{g.title}</option>
-                      ))}
-                    </select>
-                    {!!formNewGroup && (
-                      <input type="text" value={formNewGroup === "new" ? "" : formNewGroup} onChange={(e) => setFormNewGroup(e.target.value)}
-                        placeholder={t("admin.bookmarks.formNewGroupPlaceholder")}
-                        className="w-full mt-2 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formCategory")}</label>
-                    <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                      <option value="">{t("common.noCategory")}</option>
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">{t("common.cancel")}</button>
-                    <button onClick={handleSave} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
-                  </div>
-            </div>
-          </Modal>
         </>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
@@ -514,6 +469,88 @@ export default function AdminBookmarks() {
           )}
         </div>
       )}
+
+      {/* 子链接编辑模态框 — 始终渲染，由 showModal 控制显隐 */}
+      <Modal show={showModal} title={editingBm ? t("admin.bookmarks.edit") : t("admin.bookmarks.add")} onClose={() => setShowModal(false)} widthClass="max-w-lg">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formTitle")}</label>
+            <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formUrl")}</label>
+            <div className="flex gap-2">
+              <input type="text" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })}
+                placeholder="https://example.com"
+                className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              <button onClick={handleFetchMeta} disabled={fetching || !form.url.trim()}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1 shrink-0 text-sm">
+                {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : "🔍"}
+                {fetching ? t("bookmarks.fetching") : t("bookmarks.fetch")}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formDescription")}</label>
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={2}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formIcon")}</label>
+            <div className="flex gap-2">
+              <ImageUploader type="icon" value={form.icon_url} onChange={(url) => setForm({ ...form, icon_url: url })} className="w-12 h-12 shrink-0" />
+              <input type="text" value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })}
+                placeholder="https://example.com/favicon.ico"
+                className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formCardGroup")}</label>
+            <GroupSelector
+              groups={groups}
+              value={formGroupId}
+              onChange={(id) => {
+                setFormGroupId(id)
+                setFormNewGroup("")
+                if (id) {
+                  const target = groups.find(g => g.id === id)
+                  if (target?.category_id) {
+                    setForm(prev => ({ ...prev, category_id: target.category_id! }))
+                  }
+                }
+              }}
+              placeholder={t("admin.bookmarks.formSelectGroup")}
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs text-gray-400 dark:text-gray-500">或</span>
+              <button type="button"
+                onClick={() => { setFormNewGroup("new"); setFormGroupId("") }}
+                className="text-xs text-blue-600 hover:underline">新建卡片组</button>
+            </div>
+            {!!formNewGroup && (
+              <input type="text" value={formNewGroup === "new" ? "" : formNewGroup} onChange={(e) => setFormNewGroup(e.target.value)}
+                placeholder={t("admin.bookmarks.formNewGroupPlaceholder")}
+                className="w-full mt-2 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">{t("admin.bookmarks.formCategory")}</label>
+            <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="">{t("common.noCategory")}</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">{t("common.cancel")}</button>
+            <button onClick={handleSave} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+          </div>
+        </div>
+      </Modal>
 
       {/* 卡片组编辑模态框 */}
       <Modal show={showGroupModal} title={editingGroup ? t("admin.bookmarks.editGroup") : t("admin.bookmarks.createGroup")} onClose={() => setShowGroupModal(false)} widthClass="max-w-lg">
