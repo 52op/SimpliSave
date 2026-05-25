@@ -400,7 +400,7 @@ export default function AdminBookmarks() {
                           {b.url.length > 40 ? b.url.slice(0, 40) + "..." : b.url}
                         </a>
                       </td>
-                      {!selectedGroupId && (
+        {!selectedGroupId && !bmSearch && (
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                           {(b as any).group_title || "-"}
                         </td>
