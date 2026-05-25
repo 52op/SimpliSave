@@ -287,7 +287,7 @@ export default function AdminBookmarks() {
           </div>
           {selectedGroup && (
             <>
-              <button onClick={() => { setSelectedGroupId(""); setPage(1) }}
+              <button onClick={() => { setSelectedGroupId(""); setBmSearchInput(""); setBmSearch(""); setPage(1) }}
                 className="px-3 py-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50 text-sm flex items-center gap-1">
                 <X className="w-4 h-4" />清除
               </button>
@@ -302,13 +302,20 @@ export default function AdminBookmarks() {
           <div className="flex gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-                <input type="text" value={groupSearch} onChange={(e) => setGroupSearch(e.target.value)}
-                placeholder={t("admin.bookmarks.groupSearch")}
-                className="w-full pl-9 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
-              </div>
-              <select value={groupCategoryFilter} onChange={(e) => setGroupCategoryFilter(e.target.value)}
-                className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
-                <option value="">{t("admin.bookmarks.allCategories")}</option>
+              <input type="text" value={groupSearch}
+                onChange={(e) => { setGroupSearch(e.target.value); setBmSearchInput(e.target.value) }}
+                placeholder={t("admin.bookmarks.groupSearch") + " / " + t("bookmarks.search")}
+                className="w-full pl-9 pr-9 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              {groupSearch && (
+                <button onClick={() => { setGroupSearch(""); setBmSearchInput(""); setBmSearch("") }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <select value={groupCategoryFilter} onChange={(e) => setGroupCategoryFilter(e.target.value)}
+              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              <option value="">{t("admin.bookmarks.allCategories")}</option>
               {categories.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
@@ -427,6 +434,7 @@ export default function AdminBookmarks() {
           )}
         </>
       ) : (
+        <>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
           {filteredGroups.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -468,6 +476,63 @@ export default function AdminBookmarks() {
             </table>
           )}
         </div>
+
+        {/* 跨组链接搜索结果 */}
+        {bmSearch && (
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              {t("admin.bookmarks.matchingLinks")}（{bookmarks.length}）
+            </h3>
+            {loading ? (
+              <div className="text-center py-6"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div></div>
+            ) : bookmarks.length === 0 ? (
+              <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 text-gray-400 dark:text-gray-500 text-sm">{t("admin.bookmarks.noSubLinks")}</div>
+            ) : (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.title")}</th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.url")}</th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">所属卡片组</th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.category")}</th>
+                      <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("common.actions")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bookmarks.slice(0, 15).map(b => (
+                      <tr key={b.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700 dark:bg-gray-800/50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Favicon src={b.icon_url} title={b.title} size="sm" />
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{b.title}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <a href={b.url} target="_blank" rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+                            <ExternalLink className="w-3 h-3" />
+                            {b.url.length > 40 ? b.url.slice(0, 40) + "..." : b.url}
+                          </a>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{(b as any).group_title || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{b.category_name || "-"}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1 justify-center">
+                            <button onClick={() => openEdit(b)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => handleDelete(b.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+        </>
       )}
 
       {/* 子链接编辑模态框 — 始终渲染，由 showModal 控制显隐 */}
