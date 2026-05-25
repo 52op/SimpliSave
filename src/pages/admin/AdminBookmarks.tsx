@@ -191,7 +191,7 @@ export default function AdminBookmarks() {
   function openAdd() {
     setEditingBm(null)
     setForm({ ...defaultForm })
-    setFormGroupId("")
+    setFormGroupId(selectedGroupId)
     setFormNewGroup("")
     setShowModal(true)
   }
@@ -345,16 +345,16 @@ export default function AdminBookmarks() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("admin.bookmarks.id")}</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.title")}</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.url")}</th>
-                    {!selectedGroupId && (
-                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">所属卡片组</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:90}}>{t("admin.bookmarks.id")}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:140}}>{t("bookmarks.title")}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:200}}>{t("bookmarks.url")}</th>
+                    {!selectedGroupId && !bmSearch && (
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:120}}>所属卡片组</th>
                     )}
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.category")}</th>
-                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.visitCount")}</th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("common.createdAt")}</th>
-                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("common.actions")}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:90}}>{t("bookmarks.category")}</th>
+                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:80}}>{t("bookmarks.visitCount")}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:100}}>{t("common.createdAt")}</th>
+                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:80}}>{t("common.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -466,13 +466,13 @@ export default function AdminBookmarks() {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30 overflow-hidden">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
-                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.title")}</th>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.url")}</th>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">所属卡片组</th>
-                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("bookmarks.category")}</th>
-                      <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t("common.actions")}</th>
-                    </tr>
+                  <tr className="border-b bg-gray-50 dark:bg-gray-800/50">
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:140}}>{t("bookmarks.title")}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:200}}>{t("bookmarks.url")}</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:120}}>所属卡片组</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:90}}>{t("bookmarks.category")}</th>
+                    <th className="text-center px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400" style={{minWidth:80}}>{t("common.actions")}</th>
+                  </tr>
                   </thead>
                   <tbody>
                     {bookmarks.slice(0, 15).map(b => (

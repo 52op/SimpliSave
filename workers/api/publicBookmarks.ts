@@ -46,13 +46,14 @@ export async function handleCreatePublicBookmark(request: Request, env: any): Pr
   if (!/^https?:\/\//i.test(body.url)) return errorResponse('Invalid URL format', 400);
 
   const result = await env.DB.prepare(
-    'INSERT INTO public_bookmarks (title, url, description, icon_url, category_id, tags, sort_order, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO public_bookmarks (title, url, description, icon_url, category_id, group_id, tags, sort_order, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     body.title,
     body.url,
     body.description || null,
     body.icon_url || null,
     body.category_id || null,
+    body.group_id || null,
     JSON.stringify(body.tags || []),
     body.sort_order || 0,
     userId
@@ -91,6 +92,7 @@ export async function handleUpdatePublicBookmark(request: Request, env: any, id:
   if (body.tags !== undefined) { updates.push('tags = ?'); values.push(JSON.stringify(body.tags)); }
   if (body.sort_order !== undefined) { updates.push('sort_order = ?'); values.push(body.sort_order); }
   if (body.status !== undefined) { updates.push('status = ?'); values.push(body.status); }
+  if (body.group_id !== undefined) { updates.push('group_id = ?'); values.push(body.group_id); }
 
   if (updates.length === 0) return errorResponse('No fields to update', 400);
   updates.push('updated_at = CURRENT_TIMESTAMP');
