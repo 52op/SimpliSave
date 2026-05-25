@@ -298,56 +298,30 @@ export default function AdminBookmarks() {
             </>
           )}
         </div>
-        {!selectedGroupId && !bmSearch && (
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-              <input type="text" value={groupSearch}
-                onChange={(e) => { setGroupSearch(e.target.value); setBmSearchInput(e.target.value) }}
-                placeholder={t("admin.bookmarks.groupSearch") + " / " + t("bookmarks.search")}
-                className="w-full pl-9 pr-9 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
-              {groupSearch && (
-                <button onClick={() => { setGroupSearch(""); setBmSearchInput(""); setBmSearch("") }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <select value={groupCategoryFilter} onChange={(e) => setGroupCategoryFilter(e.target.value)}
-              className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
-              <option value="">{t("admin.bookmarks.allCategories")}</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
-
-      {/* 全局搜索（跨组/组内） */}
-      {(selectedGroupId || bmSearch) && (
-        <div className="mb-4 flex gap-4">
+        <div className="flex gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" value={bmSearchInput} onChange={(e) => setBmSearchInput(e.target.value)}
-              placeholder={t("bookmarks.search")}
-              className="w-full pl-9 pr-9 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
-            {bmSearch && (
-              <button onClick={() => { setBmSearchInput(""); setBmSearch("") }}
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <input type="text" value={groupSearch}
+              onChange={(e) => { setGroupSearch(e.target.value); setBmSearchInput(e.target.value) }}
+              placeholder={t("admin.bookmarks.groupSearch") + " / " + t("bookmarks.search")}
+              className="w-full pl-9 pr-9 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+            {groupSearch && (
+              <button onClick={() => { setGroupSearch(""); setBmSearchInput(""); setBmSearch("") }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
-          <select value={bmCategoryFilter} onChange={(e) => setBmCategoryFilter(e.target.value)}
-            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-            <option value="">{t("bookmarks.allCategories")}</option>
+          <select value={groupCategoryFilter} onChange={(e) => { setGroupCategoryFilter(e.target.value); setBmCategoryFilter(e.target.value) }}
+            className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+            <option value="">{t("admin.bookmarks.allCategories")}</option>
             {categories.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
         </div>
-      )}
+      </div>
+
 
       {(selectedGroupId || bmSearch) ? (
         <>
