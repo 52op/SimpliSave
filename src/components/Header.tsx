@@ -84,7 +84,7 @@ export default function Header() {
                   <span className="text-white font-bold text-sm">S</span>
                 </div>
               )}
-              <span className="text-xl font-bold text-[var(--color-text-main)]">{siteSettings?.site_name || "SimpliSave"}</span>
+              <span className="hidden md:inline text-xl font-bold text-[var(--color-text-main)]">{siteSettings?.site_name || "SimpliSave"}</span>
             </Link>
             <nav className="hidden md:flex gap-1">
               {navs.map((n) => (
@@ -179,7 +179,7 @@ export default function Header() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2">
                 <Link
                   to="/login"
                   className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition"

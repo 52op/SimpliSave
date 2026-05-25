@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
+import { useSiteSettingsStore } from "../stores/siteSettingsStore"
 import { emailApi } from "../services/api"
 import { Link, useNavigate } from "react-router-dom"
 import { Bookmark, FileText, Search, Shield } from "lucide-react"
@@ -17,6 +18,7 @@ const FEATURES = [
 const LoginPage = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const siteSettings = useSiteSettingsStore((s) => s.settings)
   const login = useAuthStore((state) => state.login)
   const loginWithCode = useAuthStore((state) => state.loginWithCode)
   const error = useAuthStore((state) => state.error)
@@ -138,8 +140,8 @@ const LoginPage = () => {
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
               <span className="text-white font-bold text-xl">S</span>
             </div>
-            <h2 className="text-3xl font-bold mb-3">SimpliSave</h2>
-            <p className="text-blue-100 mb-10 leading-relaxed">{t("app.description")}</p>
+            <h2 className="text-3xl font-bold mb-3">{siteSettings?.site_name || "SimpliSave"}</h2>
+            <p className="text-blue-100 mb-10 leading-relaxed">{siteSettings?.description || t("app.description")}</p>
             <ul className="space-y-5">
               {FEATURES.map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-center gap-3">

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
+import { useSiteSettingsStore } from "../stores/siteSettingsStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
 import { Search, Folder, Globe, Zap, Loader2, X } from "lucide-react"
@@ -49,6 +50,7 @@ export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const token = useAuthStore((s) => s.token)
+  const siteSettings = useSiteSettingsStore((s) => s.settings)
   const { toast } = useToast()
 
   const [loading, setLoading] = useState(true)
@@ -279,7 +281,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6">
-      <PageHeader title="SimpliSave" description="集中管理常用网址、公开导航与快速搜索，打造更清爽高效个人工作台。" />
+      <PageHeader title={siteSettings?.site_name || "SimpliSave"} description={siteSettings?.description || "集中管理常用网址、公开导航与快速搜索，打造更清爽高效个人工作台。"} />
         <div className="flex justify-center items-center py-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -294,8 +296,8 @@ export default function Home() {
     <div className="max-w-7xl mx-auto dark:text-gray-300">
       {/* 搜索区域 */}
       <div className="ui-card text-center py-10 px-4 mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">SimpliSave</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">{t("app.description")}</p>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{siteSettings?.site_name || "SimpliSave"}</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-8">{siteSettings?.description || t("app.description")}</p>
         
         {/* 搜索框 */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}>
