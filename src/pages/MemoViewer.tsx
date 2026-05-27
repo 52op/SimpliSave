@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
@@ -145,6 +145,45 @@ export default function MemoViewer() {
   }
 
   const tagsArr = typeof memo.tags === "string" ? JSON.parse(memo.tags || "[]") : (memo.tags || [])
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const pres = contentRef.current?.querySelectorAll("pre")
+    if (!pres) return
+    pres.forEach((pre) => {
+      if (pre.querySelector(".code-copy-btn")) return
+      const wrapper = document.createElement("div")
+      wrapper.style.position = "relative"
+      pre.parentNode!.insertBefore(wrapper, pre)
+      wrapper.appendChild(pre)
+      pre.style.position = "relative"
+
+      const btn = document.createElement("button")
+      btn.className = "code-copy-btn absolute top-1.5 right-1.5 px-2 py-0.5 text-xs rounded bg-white/80 dark:bg-gray-700/80 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-gray-600 opacity-0 hover:opacity-100 transition-opacity focus:opacity-100"
+      btn.textContent = "复制"
+      pre.addEventListener("mouseenter", () => { btn.style.opacity = "1" })
+      pre.addEventListener("mouseleave", () => { btn.style.opacity = "0" })
+      btn.addEventListener("click", async () => {
+        const code = pre.querySelector("code") || pre
+        const text = code.textContent || ""
+        try {
+          await navigator.clipboard.writeText(text)
+        } catch {
+          const ta = document.createElement("textarea")
+          ta.value = text
+          ta.style.position = "fixed"
+          ta.style.opacity = "0"
+          document.body.appendChild(ta)
+          ta.select()
+          document.execCommand("copy")
+          document.body.removeChild(ta)
+        }
+        btn.textContent = "已复制"
+        setTimeout(() => { btn.textContent = "复制" }, 1500)
+      })
+      wrapper.appendChild(btn)
+    })
+  }, [memo?.content])
 
   return (
     <div className="max-w-3xl mx-auto p-6">
@@ -195,6 +234,7 @@ export default function MemoViewer() {
 
           {memo.content ? (
             <div
+              ref={contentRef}
               className="prose prose-sm md:prose-base dark:prose-invert max-w-none [&_img]:rounded-lg [&_img]:shadow-sm [&_blockquote]:border-l-blue-500"
               dangerouslySetInnerHTML={{ __html: memo.content }}
             />
