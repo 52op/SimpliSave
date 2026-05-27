@@ -7,6 +7,7 @@ import Header from "./components/Header"
 import AdminLayout from "./components/AdminLayout"
 import { useThemeStore } from "./stores/themeStore"
 import { useSiteSettingsStore } from "./stores/siteSettingsStore"
+import BackToTop from "./components/BackToTop"
 import "./index.css"
 
 const Home = lazy(() => import("./pages/Home"))
@@ -202,6 +203,7 @@ export default function App() {
           </div>
         </footer>
       </div>
+      <BackToTop />
     </Router>
   )
 }
