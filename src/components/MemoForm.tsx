@@ -6,6 +6,8 @@ import Placeholder from "@tiptap/extension-placeholder"
 import ImageExt from "@tiptap/extension-image"
 import Underline from "@tiptap/extension-underline"
 import Link from "@tiptap/extension-link"
+import { marked } from "marked"
+import { DOMParser } from "@tiptap/pm/model"
 import { imagebedApi } from "../services/api"
 import { useImagebedStore } from "../stores/imagebedStore"
 import { Category } from "../types"
@@ -239,6 +241,8 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
       handlePaste(view, event) {
         const items = event.clipboardData?.items
         if (!items) return false
+
+        // 原有图片逻辑不动
         for (const item of items) {
           if (item.type.startsWith('image/')) {
             event.preventDefault()
@@ -247,6 +251,22 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
             return true
           }
         }
+
+        // 新增：粘贴 Markdown 文本自动转换
+        const text = event.clipboardData?.getData('text/plain') || ''
+        const looksLikeMarkdown = /^#{1,6}\s|^\s*[-*]\s|^\s*\d+\.\s|\*\*.*\*\*|`/.test(text)
+
+        if (looksLikeMarkdown) {
+          event.preventDefault()
+          const html = marked.parse(text) as string
+          const dom = document.createElement('div')
+          dom.innerHTML = html
+          const parser = DOMParser.fromSchema(view.state.schema)
+          const slice = parser.parseSlice(dom, { preserveWhitespace: true })
+          view.dispatch(view.state.tr.replaceSelection(slice))
+          return true
+        }
+
         return false
       },
       handleDrop(view, event) {
