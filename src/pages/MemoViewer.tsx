@@ -21,6 +21,9 @@ export default function MemoViewer() {
   const [verified, setVerified] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  // ✅ useRef 必须在所有条件 return 之前声明
+  const contentRef = useRef<HTMLDivElement>(null)
+
   const requiresPassword = (item: Memo | (Memo & { has_password?: number | boolean }) | null) =>
     Boolean(item && ((item as any).has_password || item.share_password))
 
@@ -28,6 +31,41 @@ export default function MemoViewer() {
     if (!id) return
     loadMemo()
   }, [id])
+
+  // ✅ 注入复制按钮的 useEffect 也必须在条件 return 之前
+  useEffect(() => {
+    const container = contentRef.current
+    if (!container) return
+
+    const blocks = container.querySelectorAll("pre")
+    blocks.forEach((pre) => {
+      if (pre.querySelector(".copy-btn")) return
+
+      pre.style.position = "relative"
+
+      const btn = document.createElement("button")
+      btn.className = "copy-btn"
+      btn.textContent = "复制"
+      btn.style.cssText = `
+        position: absolute; top: 8px; right: 8px;
+        padding: 2px 10px; font-size: 12px;
+        background: rgba(255,255,255,0.15); color: #e5e7eb;
+        border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;
+        cursor: pointer; transition: background 0.15s;
+      `
+
+      btn.addEventListener("click", async () => {
+        const code = pre.querySelector("code")?.innerText || pre.innerText
+        await navigator.clipboard.writeText(code)
+        btn.textContent = "已复制 ✓"
+        setTimeout(() => {
+          btn.textContent = "复制"
+        }, 2000)
+      })
+
+      pre.appendChild(btn)
+    })
+  }, [memo?.content, verified])
 
   async function loadMemo() {
     if (!id) return
@@ -145,58 +183,6 @@ export default function MemoViewer() {
   }
 
   const tagsArr = typeof memo.tags === "string" ? JSON.parse(memo.tags || "[]") : (memo.tags || [])
-  const contentRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const pres = contentRef.current?.querySelectorAll("pre")
-    if (!pres) return
-    pres.forEach((pre) => {
-      if (pre.dataset.hasCopyBtn === "true") return
-      pre.dataset.hasCopyBtn = "true"
-      pre.style.position = "relative"
-
-      const btn = document.createElement("button")
-      btn.innerHTML = "&copy;"
-      Object.assign(btn.style, {
-        position: "absolute",
-        top: "6px",
-        right: "8px",
-        padding: "2px 8px",
-        fontSize: "11px",
-        lineHeight: "1",
-        borderRadius: "4px",
-        border: "1px solid",
-        borderColor: "rgba(200,200,200,0.4)",
-        background: "rgba(255,255,255,0.7)",
-        color: "#6b7280",
-        cursor: "pointer",
-        opacity: "0",
-        transition: "opacity .15s",
-        zIndex: "10",
-      })
-      pre.addEventListener("mouseenter", () => { btn.style.opacity = "1" })
-      pre.addEventListener("mouseleave", () => { btn.style.opacity = "0" })
-      btn.addEventListener("click", async (e) => {
-        e.stopPropagation()
-        const code = pre.querySelector("code") || pre
-        const text = code.textContent || ""
-        try {
-          await navigator.clipboard.writeText(text)
-        } catch {
-          const ta = document.createElement("textarea")
-          ta.value = text
-          ta.style.cssText = "position:fixed;opacity:0"
-          document.body.appendChild(ta)
-          ta.select()
-          document.execCommand("copy")
-          document.body.removeChild(ta)
-        }
-        btn.textContent = "✓"
-        setTimeout(() => { btn.innerHTML = "&copy;" }, 1500)
-      })
-      pre.appendChild(btn)
-    })
-  }, [memo?.content])
 
   return (
     <div className="max-w-3xl mx-auto p-6">
