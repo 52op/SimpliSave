@@ -151,19 +151,33 @@ export default function MemoViewer() {
     const pres = contentRef.current?.querySelectorAll("pre")
     if (!pres) return
     pres.forEach((pre) => {
-      if (pre.querySelector(".code-copy-btn")) return
-      const wrapper = document.createElement("div")
-      wrapper.style.position = "relative"
-      pre.parentNode!.insertBefore(wrapper, pre)
-      wrapper.appendChild(pre)
+      if (pre.dataset.hasCopyBtn === "true") return
+      pre.dataset.hasCopyBtn = "true"
       pre.style.position = "relative"
 
       const btn = document.createElement("button")
-      btn.className = "code-copy-btn absolute top-1.5 right-1.5 px-2 py-0.5 text-xs rounded bg-white/80 dark:bg-gray-700/80 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 border border-gray-200 dark:border-gray-600 opacity-0 hover:opacity-100 transition-opacity focus:opacity-100"
-      btn.textContent = "复制"
+      btn.innerHTML = "&copy;"
+      Object.assign(btn.style, {
+        position: "absolute",
+        top: "6px",
+        right: "8px",
+        padding: "2px 8px",
+        fontSize: "11px",
+        lineHeight: "1",
+        borderRadius: "4px",
+        border: "1px solid",
+        borderColor: "rgba(200,200,200,0.4)",
+        background: "rgba(255,255,255,0.7)",
+        color: "#6b7280",
+        cursor: "pointer",
+        opacity: "0",
+        transition: "opacity .15s",
+        zIndex: "10",
+      })
       pre.addEventListener("mouseenter", () => { btn.style.opacity = "1" })
       pre.addEventListener("mouseleave", () => { btn.style.opacity = "0" })
-      btn.addEventListener("click", async () => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation()
         const code = pre.querySelector("code") || pre
         const text = code.textContent || ""
         try {
@@ -171,17 +185,16 @@ export default function MemoViewer() {
         } catch {
           const ta = document.createElement("textarea")
           ta.value = text
-          ta.style.position = "fixed"
-          ta.style.opacity = "0"
+          ta.style.cssText = "position:fixed;opacity:0"
           document.body.appendChild(ta)
           ta.select()
           document.execCommand("copy")
           document.body.removeChild(ta)
         }
-        btn.textContent = "已复制"
-        setTimeout(() => { btn.textContent = "复制" }, 1500)
+        btn.textContent = "✓"
+        setTimeout(() => { btn.innerHTML = "&copy;" }, 1500)
       })
-      wrapper.appendChild(btn)
+      pre.appendChild(btn)
     })
   }, [memo?.content])
 
