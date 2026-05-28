@@ -118,10 +118,6 @@ export default function Home() {
     return () => clearInterval(tagTimerRef.current)
   }, [displayTags.length])
 
-  const currentPlaceholder = displayTags.length > 0
-    ? displayTags[placeholderIndex % displayTags.length]
-    : `${t("home.searchIn")} ${selectedEngine?.name || ""}`
-
   const doSuggest = useCallback(async (q: string) => {
     if (!q.trim()) { setSuggestions([]); setShowSuggestions(false); return }
     try {
@@ -203,6 +199,10 @@ export default function Home() {
   }
 
   const selectedEngine = engines.find(e => e.id === selectedEngineId) || engines[0]
+
+  const currentPlaceholder = displayTags.length > 0
+    ? displayTags[placeholderIndex % displayTags.length]
+    : `${t("home.searchIn")} ${selectedEngine?.name || ""}`
 
   const filteredGroups = cardGroups.filter((g) => {
     const matchesSearch = !searchQuery ||
