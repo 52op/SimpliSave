@@ -9,6 +9,7 @@ type AuthStore = AuthState & {
   setToken: (token: string | null) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
+  updateAvatar: (url: string) => void
   login: (email: string, password: string) => Promise<void>
   loginWithCode: (email: string, code: string) => Promise<void>
   register: (name: string, email: string, password: string, code: string) => Promise<void>
@@ -29,6 +30,10 @@ export const useAuthStore = create<AuthStore>()(
       setToken: (token) => set({ token }),
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
+      updateAvatar: (url) => {
+        const current = get().user
+        if (current) set({ user: { ...current, avatar_url: url } })
+      },
       login: async (email, password) => {
         set({ loading: true, error: null })
         try {

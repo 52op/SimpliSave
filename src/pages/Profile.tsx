@@ -58,7 +58,19 @@ export default function Profile() {
 
   useEffect(() => {
     if (!token) return
-    authApi.me(token).then(setUser).catch(() => {})
+    authApi.me(token).then((userData) => {
+      setUser(userData)
+      if (isSSOMode && ssoManageUrl) {
+        fetch(`${ssoManageUrl}/api/auth/me`, { credentials: 'include' })
+          .then(r => r.json())
+          .then(d => {
+            if (d.data?.avatar_url && d.data.avatar_url !== (userData.avatar_url || '')) {
+              setAvatarUrl(d.data.avatar_url)
+              useAuthStore.getState().updateAvatar(d.data.avatar_url)
+            }
+          }).catch(() => {})
+      }
+    }).catch(() => {})
   }, [token])
 
   useEffect(() => {
@@ -207,10 +219,21 @@ export default function Profile() {
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("profile.avatar") || "头像"}</label>
-          <ImageUploader type="avatar" value={avatarUrl} onChange={setAvatarUrl} aspectRatio={1} className="w-24 h-24 rounded-full" placeholder={t("profile.uploadAvatar") || "点击上传头像"} />
-        </div>
+        {isSSOMode ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("profile.avatar") || "头像"}</label>
+            <p className="text-sm text-gray-500 dark:text-gray-400">头像由认证中心统一管理</p>
+            <a href={`${ssoManageUrl}/profile`} target="_blank" rel="noopener noreferrer"
+               className="text-blue-600 hover:text-blue-700 text-sm">
+              前往认证中心修改
+            </a>
+          </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("profile.avatar") || "头像"}</label>
+            <ImageUploader type="avatar" value={avatarUrl} onChange={setAvatarUrl} aspectRatio={1} className="w-24 h-24 rounded-full" placeholder={t("profile.uploadAvatar") || "点击上传头像"} />
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("profile.nickname") || "昵称"}</label>

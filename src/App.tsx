@@ -96,6 +96,14 @@ export default function App() {
                 // 同一用户 → 正常验证
                 await validateSession().catch(() => {})
               }
+              // 同步 GoAuth 頭像到本地 store
+              const avatarUrl = data.data?.avatar_url
+              if (avatarUrl) {
+                const currentUser = useAuthStore.getState().user
+                if (currentUser && currentUser.avatar_url !== avatarUrl) {
+                  useAuthStore.getState().updateAvatar(avatarUrl)
+                }
+              }
               return
             }
           }
