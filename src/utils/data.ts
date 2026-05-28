@@ -93,5 +93,5 @@ function md5(s: string): string {
 export function getAvatarUrl(avatarUrl: string | null | undefined, email: string, size: number = 80): string {
   if (avatarUrl) return avatarUrl
   const hash = md5((email || '').trim().toLowerCase())
-  return `https://cn.cravatar.com/avatar/${hash}?s=${size}&d=Monsterid`
+  return `https://cn.cravatar.com/avatar/${hash}?s=${size}&d=monsterid`
 }
