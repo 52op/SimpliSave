@@ -1,6 +1,6 @@
 ﻿import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { BookmarkState, Bookmark, Category, Tag } from '../types'
+import { BookmarkState, Bookmark, Category } from '../types'
 
 export const useBookmarkStore = create<BookmarkState>()(
   persist(
@@ -13,7 +13,7 @@ export const useBookmarkStore = create<BookmarkState>()(
       
       setBookmarks: (bookmarks: Bookmark[]) => set({ bookmarks }),
       setCategories: (categories: Category[]) => set({ categories }),
-      setTags: (tags: Tag[]) => set({ tags }),
+      setTags: (tags: string[]) => set({ tags }),
       setLoading: (isLoading: boolean) => set({ isLoading }),
       setError: (error: string | null) => set({ error }),
       
@@ -35,7 +35,7 @@ export const useBookmarkStore = create<BookmarkState>()(
       addCategory: (category: Category) =>
         set(state => ({ categories: [...state.categories, category] })),
         
-      addTag: (tag: Tag) =>
+      addTag: (tag: string) =>
         set(state => ({ tags: [...state.tags, tag] })),
         
       clearError: () => set({ error: null })

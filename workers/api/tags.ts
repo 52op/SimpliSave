@@ -9,11 +9,21 @@ export async function handleListTags(request: Request, env: any): Promise<Respon
    if (!userId) return errorResponse('Unauthorized', 401)
    const url = new URL(request.url)
    const type = url.searchParams.get('type') || 'bookmark'
+   const table = type === 'memo' ? 'memos' : 'user_bookmarks'
 
-   const tags = await env.DB.prepare(
-     'SELECT * FROM tags WHERE user_id = ? AND type = ? ORDER BY name ASC'
-   ).bind(userId, type).all()
-   return successResponse(tags.results)
+   const rows = await env.DB.prepare(
+     `SELECT DISTINCT tags FROM ${table} WHERE user_id = ? AND tags IS NOT NULL AND tags != '[]'`
+   ).bind(userId).all()
+
+   const tagSet = new Set<string>()
+   for (const row of rows.results as any[]) {
+     try {
+       const parsed = JSON.parse(row.tags)
+       if (Array.isArray(parsed)) parsed.forEach((t: string) => tagSet.add(t))
+     } catch {}
+   }
+
+   return successResponse(Array.from(tagSet).sort())
  }
 
  export async function handleCreateTag(request: Request, env: any): Promise<Response> {

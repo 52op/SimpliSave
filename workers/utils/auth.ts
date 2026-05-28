@@ -1,5 +1,13 @@
 import { verifyJWT, verifyRS256JWT, hashPassword } from './jwt';
 
+// Lightweight in-request user validation cache (TTL 5 min via Cache API)
+const USER_CACHE_TTL = 300;
+const USER_CACHE_PREFIX = 'ss:auth:';
+
+function getUserCacheKey(userId: string): string {
+  return USER_CACHE_PREFIX + userId;
+}
+
 // 从 Cookie 头中提取指定 cookie 值
 function getCookieValue(request: Request, name: string): string | null {
   const cookie = request.headers.get('Cookie');
@@ -59,14 +67,29 @@ export async function getUserId(request: Request, env: any): Promise<string | nu
   if (!rawId) return null;
   const userId = String(rawId);
 
-  // 先按 ID 查 D1
+  // Check Cache API first — skip D1 query for known valid users
+  const cacheKey = getUserCacheKey(userId);
+  const cached = await caches.default.match(cacheKey);
+  if (cached) return userId;
+
+  // Cache miss — query D1 to verify user exists
   const user = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(userId).first();
-  if (user) return userId;
+  if (user) {
+    // Cache the valid user for 5 min (fire and forget)
+    const resp = new Response(userId, { status: 200, headers: { 'Cache-Control': `max-age=${USER_CACHE_TTL}` } });
+    caches.default.put(cacheKey, resp).catch(() => {});
+    return userId;
+  }
 
   // SSO 模式：D1 没有该用户，按 email 自动创建影子账户
   if (env.AUTH_MODE === 'sso' && payload.email) {
     const created = await findOrCreateSSOUser(env, payload.email, payload.username, payload.role);
-    if (created) return String(created.id);
+    if (created) {
+      // Cache newly created user
+      const resp = new Response(String(created.id), { status: 200, headers: { 'Cache-Control': `max-age=${USER_CACHE_TTL}` } });
+      caches.default.put(getUserCacheKey(String(created.id)), resp).catch(() => {});
+      return String(created.id);
+    }
   }
 
   return null;

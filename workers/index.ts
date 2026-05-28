@@ -1,5 +1,6 @@
 ﻿// Cloudflare Worker entry point
 import { corsHeaders, handleCors } from './utils/response';
+import { withCache, cacheDelete, TTL } from './utils/cache';
 import { handleRegister, handleLogin, handleLogout, handleGetMe, handleUpdateProfile, handleLoginWithCode, handleChangePassword, handleRequestEmailChange, handleConfirmEmailChange } from './api/auth';
 import {
   handleListPublicBookmarks, handleCreatePublicBookmark, handleGetPublicBookmark,
@@ -77,19 +78,19 @@ export default {
       if (path.startsWith('/search-engines')) return handleSearchEngines(request, env, path);
       if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
       if (path.startsWith('/site-settings')) return handleSiteSettings(request, env);
-      if (path === '/hot-tags') return handleHotTags();
+      if (path === '/hot-tags') return withCache(request.url, TTL.HOT_TAGS, () => handleHotTags());
 
       const publicMemoVerifyMatch = path.match(/^\/public-memos\/([^\/]+)\/verify$/);
       const publicMemoMatch = path.match(/^\/public-memos\/([^\/]+)$/);
       if (publicMemoVerifyMatch && request.method === 'POST') return handleVerifyPublicMemoPassword(request, env, publicMemoVerifyMatch[1]);
-      if (publicMemoMatch && request.method === 'GET') return handleGetPublicMemo(request, env, publicMemoMatch[1]);
+      if (publicMemoMatch && request.method === 'GET') return withCache(request.url, TTL.PUBLIC_MEMO, () => handleGetPublicMemo(request, env, publicMemoMatch[1]));
 
       const publicUserMemosMatch = path.match(/^\/public\/users\/([^\/]+)\/memos$/);
       const publicUserBookmarksMatch = path.match(/^\/public\/users\/([^\/]+)\/bookmarks$/);
       const publicUserMatch = path.match(/^\/public\/users\/([^\/]+)$/);
-      if (publicUserMemosMatch && request.method === 'GET') return handleListPublicMemosByUser(request, env, publicUserMemosMatch[1]);
-      if (publicUserBookmarksMatch && request.method === 'GET') return handleListPublicBookmarksByUser(request, env, publicUserBookmarksMatch[1]);
-      if (publicUserMatch && request.method === 'GET') return handleGetPublicUser(request, env, publicUserMatch[1]);
+      if (publicUserMemosMatch && request.method === 'GET') return withCache(request.url, TTL.PUBLIC_USER, () => handleListPublicMemosByUser(request, env, publicUserMemosMatch[1]));
+      if (publicUserBookmarksMatch && request.method === 'GET') return withCache(request.url, TTL.PUBLIC_USER, () => handleListPublicBookmarksByUser(request, env, publicUserBookmarksMatch[1]));
+      if (publicUserMatch && request.method === 'GET') return withCache(request.url, TTL.PUBLIC_USER, () => handleGetPublicUser(request, env, publicUserMatch[1]));
 
       return new Response('Not Found', { status: 404, headers: corsHeaders() });
     } catch (err: any) {
@@ -150,16 +151,22 @@ async function handlePublicBookmarks(request: Request, env: Env, path: string): 
 
   switch (request.method) {
     case 'GET':
-      if (id) return handleGetPublicBookmark(request, env, id);
-      return handleListPublicBookmarks(request, env);
+      if (id) return withCache(request.url, TTL.PUBLIC_BOOKMARKS, () => handleGetPublicBookmark(request, env, id));
+      return withCache(request.url, TTL.PUBLIC_BOOKMARKS, () => handleListPublicBookmarks(request, env));
     case 'POST':
-      return handleCreatePublicBookmark(request, env);
+      const created = await handleCreatePublicBookmark(request, env);
+      await cacheDelete('/public-bookmarks');
+      return created;
     case 'PUT':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return handleUpdatePublicBookmark(request, env, id);
+      const updated = await handleUpdatePublicBookmark(request, env, id);
+      await cacheDelete('/public-bookmarks');
+      return updated;
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return handleDeletePublicBookmark(request, env, id);
+      const deleted = await handleDeletePublicBookmark(request, env, id);
+      await cacheDelete('/public-bookmarks');
+      return deleted;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }
@@ -206,15 +213,21 @@ async function handlePublicCategories(request: Request, env: Env, path: string):
 
   switch (request.method) {
     case 'GET':
-      return handleListPublicCategories(request, env);
+      return withCache(request.url, TTL.PUBLIC_CATEGORIES, () => handleListPublicCategories(request, env));
     case 'POST':
-      return handleCreatePublicCategory(request, env);
+      const created = await handleCreatePublicCategory(request, env);
+      await Promise.all([cacheDelete('/public-categories'), cacheDelete('/public-bookmarks')]);
+      return created;
     case 'PUT':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return handleUpdatePublicCategory(request, env, id);
+      const updated = await handleUpdatePublicCategory(request, env, id);
+      await Promise.all([cacheDelete('/public-categories'), cacheDelete('/public-bookmarks')]);
+      return updated;
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return handleDeletePublicCategory(request, env, id);
+      const deleted = await handleDeletePublicCategory(request, env, id);
+      await Promise.all([cacheDelete('/public-categories'), cacheDelete('/public-bookmarks')]);
+      return deleted;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }
@@ -243,7 +256,12 @@ async function handleSubmissions(request: Request, env: Env, path: string): Prom
   const approveMatch = path.match(/^\/submissions\/([^\/]+)\/approve$/);
   const rejectMatch = path.match(/^\/submissions\/([^\/]+)\/reject$/);
 
-  if (approveMatch) return handleApproveSubmission(request, env, approveMatch[1]);
+  if (approveMatch) {
+    const result = await handleApproveSubmission(request, env, approveMatch[1]);
+    // Approval creates public bookmarks — invalidate related caches
+    await Promise.all([cacheDelete('/public-bookmarks'), cacheDelete('/card-groups')]);
+    return result;
+  }
   if (rejectMatch) return handleRejectSubmission(request, env, rejectMatch[1]);
 
   switch (request.method) {
@@ -284,20 +302,26 @@ async function handleCardGroups(request: Request, env: Env, path: string): Promi
   const visitMatch = path.match(/^\/card-groups\/([^\/]+)\/visit$/);
   const idMatch = path.match(/^\/card-groups\/([^\/]+)$/);
 
-  if (bySlugMatch && request.method === 'GET') return handleGetCardGroupBySlug(request, env, bySlugMatch[1]);
+  if (bySlugMatch && request.method === 'GET') return withCache(request.url, TTL.CARD_GROUPS, () => handleGetCardGroupBySlug(request, env, bySlugMatch[1]));
   if (visitMatch && request.method === 'POST') return handleVisitCardGroup(request, env, visitMatch[1]);
 
   switch (request.method) {
     case 'GET':
-      return handleListCardGroups(request, env);
+      return withCache(request.url, TTL.CARD_GROUPS, () => handleListCardGroups(request, env));
     case 'POST':
-      return handleCreateCardGroup(request, env);
+      const created = await handleCreateCardGroup(request, env);
+      await cacheDelete('/card-groups');
+      return created;
     case 'PUT':
       if (!idMatch) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return handleUpdateCardGroup(request, env, idMatch[1]);
+      const updated = await handleUpdateCardGroup(request, env, idMatch[1]);
+      await cacheDelete('/card-groups');
+      return updated;
     case 'DELETE':
       if (!idMatch) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return handleDeleteCardGroup(request, env, idMatch[1]);
+      const deleted = await handleDeleteCardGroup(request, env, idMatch[1]);
+      await cacheDelete('/card-groups');
+      return deleted;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }
@@ -308,15 +332,21 @@ async function handleSearchEngines(request: Request, env: Env, path: string): Pr
 
   switch (request.method) {
     case 'GET':
-      return handleListSearchEngines(request, env);
+      return withCache(request.url, TTL.SEARCH_ENGINES, () => handleListSearchEngines(request, env));
     case 'POST':
-      return handleCreateSearchEngine(request, env);
+      const created = await handleCreateSearchEngine(request, env);
+      await cacheDelete('/search-engines');
+      return created;
     case 'PUT':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return handleUpdateSearchEngine(request, env, id);
+      const updated = await handleUpdateSearchEngine(request, env, id);
+      await cacheDelete('/search-engines');
+      return updated;
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
-      return handleDeleteSearchEngine(request, env, id);
+      const deleted = await handleDeleteSearchEngine(request, env, id);
+      await cacheDelete('/search-engines');
+      return deleted;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }
@@ -370,9 +400,11 @@ async function handleImagebed(request: Request, env: Env, path: string): Promise
 async function handleSiteSettings(request: Request, env: Env): Promise<Response> {
   switch (request.method) {
     case 'GET':
-      return handleGetSiteSettings(request, env);
+      return withCache(request.url, TTL.SITE_SETTINGS, () => handleGetSiteSettings(request, env));
     case 'PUT':
-      return handleUpdateSiteSettings(request, env);
+      const result = await handleUpdateSiteSettings(request, env);
+      await cacheDelete('/site-settings');
+      return result;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
   }

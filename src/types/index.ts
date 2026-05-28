@@ -146,38 +146,38 @@ export interface AuthState {
 export interface BookmarkState {
   bookmarks: Bookmark[]
   categories: Category[]
-  tags: Tag[]
+  tags: string[]
   isLoading: boolean
   error: string | null
   setBookmarks: (bookmarks: Bookmark[]) => void
   setCategories: (categories: Category[]) => void
-  setTags: (tags: Tag[]) => void
+  setTags: (tags: string[]) => void
   setLoading: (isLoading: boolean) => void
   setError: (error: string | null) => void
   addBookmark: (bookmark: Bookmark) => void
   updateBookmark: (id: string, updates: Partial<Bookmark>) => void
   removeBookmark: (id: string) => void
   addCategory: (category: Category) => void
-  addTag: (tag: Tag) => void
+  addTag: (tag: string) => void
   clearError: () => void
 }
 
 export interface MemoState {
   memos: Memo[]
   categories: Category[]
-  tags: Tag[]
+  tags: string[]
   isLoading: boolean
   error: string | null
   setMemos: (memos: Memo[]) => void
   setCategories: (categories: Category[]) => void
-  setTags: (tags: Tag[]) => void
+  setTags: (tags: string[]) => void
   setLoading: (isLoading: boolean) => void
   setError: (error: string | null) => void
   addMemo: (memo: Memo) => void
   updateMemo: (id: string, updates: Partial<Memo>) => void
   removeMemo: (id: string) => void
   addCategory: (category: Category) => void
-  addTag: (tag: Tag) => void
+  addTag: (tag: string) => void
   clearError: () => void
 }
 

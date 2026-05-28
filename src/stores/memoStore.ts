@@ -1,6 +1,6 @@
 ﻿import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { MemoState, Memo, Category, Tag } from '../types'
+import { MemoState, Memo, Category } from '../types'
 
 export const useMemoStore = create<MemoState>()(
   persist(
@@ -13,7 +13,7 @@ export const useMemoStore = create<MemoState>()(
       
       setMemos: (memos: Memo[]) => set({ memos }),
       setCategories: (categories: Category[]) => set({ categories }),
-      setTags: (tags: Tag[]) => set({ tags }),
+      setTags: (tags: string[]) => set({ tags }),
       setLoading: (isLoading: boolean) => set({ isLoading }),
       setError: (error: string | null) => set({ error }),
       
@@ -35,7 +35,7 @@ export const useMemoStore = create<MemoState>()(
       addCategory: (category: Category) =>
         set(state => ({ categories: [...state.categories, category] })),
         
-      addTag: (tag: Tag) =>
+      addTag: (tag: string) =>
         set(state => ({ tags: [...state.tags, tag] })),
         
       clearError: () => set({ error: null })
