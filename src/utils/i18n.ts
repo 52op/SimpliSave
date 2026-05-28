@@ -448,6 +448,7 @@ const resources = {
       // Common additions
       "common.loginRequired": "Please login first",
       "common.noResults": "No results",
+      "common.all": "All",
     }
   },
   zh: {
@@ -896,6 +897,7 @@ const resources = {
       // 通用
       "common.loginRequired": "请先登录",
       "common.noResults": "无结果",
+      "common.all": "全部",
     }
   }
 };

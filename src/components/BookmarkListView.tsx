@@ -154,6 +154,13 @@ export default function BookmarkListView({
                     )}
                   </div>
                 </td>
+                <td className="px-2 py-2.5 hidden md:table-cell max-w-[200px]">
+                  <a href={b.url} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-gray-400 dark:text-gray-500 hover:text-blue-500 truncate block max-w-[200px]"
+                    onClick={e => e.stopPropagation()}>
+                    {b.url}
+                  </a>
+                </td>
                 <td className="px-2 py-2.5 hidden sm:table-cell whitespace-nowrap text-gray-500 dark:text-gray-400 text-xs">
                   {formatDate(b.created_at, t)}
                 </td>
