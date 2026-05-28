@@ -241,7 +241,7 @@ export default function ImageUploader({
     >
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
-          <span className="font-semibold text-gray-900 dark:text-gray-100">替换图片</span>
+          <span className="font-semibold text-gray-900 dark:text-gray-100">{value ? '替换图片' : '上传图片'}</span>
           <button
             onClick={() => setShowEditDialog(false)}
             className="p-1 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -252,11 +252,13 @@ export default function ImageUploader({
 
         <div className="p-5 space-y-4">
           {/* 当前图片预览 */}
-          <div className="flex justify-center">
-            <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
-              <img src={value} alt="当前图片" className="w-full h-full object-cover" />
+          {value && (
+            <div className="flex justify-center">
+              <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
+                <img src={value} alt="当前图片" className="w-full h-full object-cover" />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 上传进度 */}
           {uploading && (
@@ -322,7 +324,7 @@ export default function ImageUploader({
           )}
 
           {/* 删除按钮 */}
-          {!uploading && (
+          {!uploading && value && (
             <button
               onClick={handleRemove}
               className="w-full flex items-center justify-center gap-2 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
@@ -394,7 +396,7 @@ export default function ImageUploader({
         </div>
       ) : (
         <div
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => { setShowEditDialog(true); setSyncUrlInput(''); setErrorMessage('') }}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
