@@ -1,4 +1,6 @@
 // Cloudflare Cache API helpers
+import { corsHeaders } from './response';
+
 // Cache key prefix for SimpliSave public data
 const CACHE_PREFIX = 'simplisave:';
 
@@ -55,6 +57,7 @@ export async function cachePut(url: string, response: Response, ttl: number): Pr
       'Content-Type': response.headers.get('Content-Type') || 'application/json',
       'Cache-Control': `public, max-age=${ttl}`,
       'X-Cache': 'HIT',
+      ...corsHeaders(),
     },
   });
 
@@ -98,10 +101,17 @@ export async function withCache(
   // Check cache first
   const cached = await cacheGet(requestUrl);
   if (cached) {
-    // Add a header so the client knows it was cached
-    const resp = new Response(cached.body, cached);
-    resp.headers.set('X-Cache', 'HIT');
-    return resp;
+    // Clone and re-add CORS headers (Cache API strips response headers on retrieval)
+    const body = await cached.text();
+    return new Response(body, {
+      status: 200,
+      headers: {
+        'Content-Type': cached.headers.get('Content-Type') || 'application/json',
+        'Cache-Control': cached.headers.get('Cache-Control') || `public, max-age=${ttl}`,
+        'X-Cache': 'HIT',
+        ...corsHeaders(),
+      },
+    });
   }
 
   // Cache miss — run the actual handler

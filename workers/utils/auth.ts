@@ -1,4 +1,5 @@
 import { verifyJWT, verifyRS256JWT, hashPassword } from './jwt';
+import { corsHeaders } from './response';
 
 // Lightweight in-request user validation cache (TTL 5 min via Cache API)
 const USER_CACHE_TTL = 300;
