@@ -5,7 +5,7 @@ import { useAuthStore } from "../stores/authStore"
 import { useSiteSettingsStore } from "../stores/siteSettingsStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
-import { Search, Folder, Globe, Zap, Loader2, X } from "lucide-react"
+import { Search, Folder, Globe, Zap, Loader2, X, RefreshCw } from "lucide-react"
 import Favicon from "../components/Favicon"
 import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
@@ -164,8 +164,9 @@ export default function Home() {
     }
   }
 
-  async function loadData() {
+  async function loadData(retry = true) {
     setLoading(true)
+    setPageError("")
     try {
       const [groups, cats, engs, tags] = await Promise.all([
         cardGroupApi.list(),
@@ -177,11 +178,19 @@ export default function Home() {
       setCategories(cats)
       setSearchEngines(engs)
       setHotTags(tags)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load data:", err)
-    } finally {
-      setLoading(false)
+      if (retry) {
+        setTimeout(() => loadData(false), 2000)
+        return
+      }
+      setPageError(err?.message || t("common.error"))
+      setCardGroups([])
+      setCategories([])
+      setSearchEngines([])
+      setHotTags([])
     }
+    setLoading(false)
   }
 
   const selectedEngine = engines.find(e => e.id === selectedEngineId) || engines[0]
@@ -423,14 +432,18 @@ export default function Home() {
       </div>
 
       {/* 卡片组列表 */}
-      {Object.keys(groupedGroups).length === 0 ? (
+      {pageError ? (
+        <EmptyState title="加载失败" description={pageError} tone="error" action={
+          <button onClick={() => loadData()} className="ui-btn ui-btn-primary flex items-center gap-1.5 mx-auto">
+            <RefreshCw className="w-4 h-4" />重试
+          </button>
+        } />
+      ) : Object.keys(groupedGroups).length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30">
           <Globe className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400 mb-2">{t("home.noGroups")}</p>
           <p className="text-sm text-gray-400 dark:text-gray-500">{t("home.loginToAdd")}</p>
         </div>
-      ) : pageError ? (
-        <EmptyState title="加载失败" description={pageError} tone="error" />
       ) : (
         <div className="space-y-8">
           {Object.entries(groupedGroups).map(([catId, items]) => {
