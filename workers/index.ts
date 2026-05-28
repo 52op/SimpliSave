@@ -1,6 +1,6 @@
 ﻿// Cloudflare Worker entry point
 import { corsHeaders, handleCors } from './utils/response';
-import { withCache, cacheDelete, TTL } from './utils/cache';
+import { withCache, cacheDelete, fullUrl, TTL } from './utils/cache';
 import { handleRegister, handleLogin, handleLogout, handleGetMe, handleUpdateProfile, handleLoginWithCode, handleChangePassword, handleRequestEmailChange, handleConfirmEmailChange } from './api/auth';
 import {
   handleListPublicBookmarks, handleCreatePublicBookmark, handleGetPublicBookmark,
@@ -155,17 +155,17 @@ async function handlePublicBookmarks(request: Request, env: Env, path: string): 
       return withCache(request.url, TTL.PUBLIC_BOOKMARKS, () => handleListPublicBookmarks(request, env));
     case 'POST':
       const created = await handleCreatePublicBookmark(request, env);
-      await cacheDelete('/public-bookmarks');
+      await cacheDelete(fullUrl(request, '/public-bookmarks'));
       return created;
     case 'PUT':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       const updated = await handleUpdatePublicBookmark(request, env, id);
-      await cacheDelete('/public-bookmarks');
+      await cacheDelete(fullUrl(request, '/public-bookmarks'));
       return updated;
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       const deleted = await handleDeletePublicBookmark(request, env, id);
-      await cacheDelete('/public-bookmarks');
+      await cacheDelete(fullUrl(request, '/public-bookmarks'));
       return deleted;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
@@ -216,17 +216,26 @@ async function handlePublicCategories(request: Request, env: Env, path: string):
       return withCache(request.url, TTL.PUBLIC_CATEGORIES, () => handleListPublicCategories(request, env));
     case 'POST':
       const created = await handleCreatePublicCategory(request, env);
-      await Promise.all([cacheDelete('/public-categories'), cacheDelete('/public-bookmarks')]);
+      await Promise.all([
+        cacheDelete(fullUrl(request, '/public-categories')),
+        cacheDelete(fullUrl(request, '/public-bookmarks')),
+      ]);
       return created;
     case 'PUT':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       const updated = await handleUpdatePublicCategory(request, env, id);
-      await Promise.all([cacheDelete('/public-categories'), cacheDelete('/public-bookmarks')]);
+      await Promise.all([
+        cacheDelete(fullUrl(request, '/public-categories')),
+        cacheDelete(fullUrl(request, '/public-bookmarks')),
+      ]);
       return updated;
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       const deleted = await handleDeletePublicCategory(request, env, id);
-      await Promise.all([cacheDelete('/public-categories'), cacheDelete('/public-bookmarks')]);
+      await Promise.all([
+        cacheDelete(fullUrl(request, '/public-categories')),
+        cacheDelete(fullUrl(request, '/public-bookmarks')),
+      ]);
       return deleted;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
@@ -259,7 +268,10 @@ async function handleSubmissions(request: Request, env: Env, path: string): Prom
   if (approveMatch) {
     const result = await handleApproveSubmission(request, env, approveMatch[1]);
     // Approval creates public bookmarks — invalidate related caches
-    await Promise.all([cacheDelete('/public-bookmarks'), cacheDelete('/card-groups')]);
+    await Promise.all([
+      cacheDelete(fullUrl(request, '/public-bookmarks')),
+      cacheDelete(fullUrl(request, '/card-groups')),
+    ]);
     return result;
   }
   if (rejectMatch) return handleRejectSubmission(request, env, rejectMatch[1]);
@@ -310,17 +322,17 @@ async function handleCardGroups(request: Request, env: Env, path: string): Promi
       return withCache(request.url, TTL.CARD_GROUPS, () => handleListCardGroups(request, env));
     case 'POST':
       const created = await handleCreateCardGroup(request, env);
-      await cacheDelete('/card-groups');
+      await cacheDelete(fullUrl(request, '/card-groups'));
       return created;
     case 'PUT':
       if (!idMatch) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       const updated = await handleUpdateCardGroup(request, env, idMatch[1]);
-      await cacheDelete('/card-groups');
+      await cacheDelete(fullUrl(request, '/card-groups'));
       return updated;
     case 'DELETE':
       if (!idMatch) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       const deleted = await handleDeleteCardGroup(request, env, idMatch[1]);
-      await cacheDelete('/card-groups');
+      await cacheDelete(fullUrl(request, '/card-groups'));
       return deleted;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
@@ -335,17 +347,17 @@ async function handleSearchEngines(request: Request, env: Env, path: string): Pr
       return withCache(request.url, TTL.SEARCH_ENGINES, () => handleListSearchEngines(request, env));
     case 'POST':
       const created = await handleCreateSearchEngine(request, env);
-      await cacheDelete('/search-engines');
+      await cacheDelete(fullUrl(request, '/search-engines'));
       return created;
     case 'PUT':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       const updated = await handleUpdateSearchEngine(request, env, id);
-      await cacheDelete('/search-engines');
+      await cacheDelete(fullUrl(request, '/search-engines'));
       return updated;
     case 'DELETE':
       if (!id) return new Response('Bad Request', { status: 400, headers: corsHeaders() });
       const deleted = await handleDeleteSearchEngine(request, env, id);
-      await cacheDelete('/search-engines');
+      await cacheDelete(fullUrl(request, '/search-engines'));
       return deleted;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });
@@ -403,7 +415,7 @@ async function handleSiteSettings(request: Request, env: Env): Promise<Response>
       return withCache(request.url, TTL.SITE_SETTINGS, () => handleGetSiteSettings(request, env));
     case 'PUT':
       const result = await handleUpdateSiteSettings(request, env);
-      await cacheDelete('/site-settings');
+      await cacheDelete(fullUrl(request, '/site-settings'));
       return result;
     default:
       return new Response('Method Not Allowed', { status: 405, headers: corsHeaders() });

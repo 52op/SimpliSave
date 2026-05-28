@@ -1,13 +1,12 @@
 // Cloudflare Cache API helpers
 import { corsHeaders } from './response';
 
-// Cache key prefix for SimpliSave public data
-const CACHE_PREFIX = 'simplisave:';
-
-/** Build a cache key from a request URL */
-export function cacheKey(url: string): string {
-  // Strip the origin to make keys portable across edge locations
-  return CACHE_PREFIX + url;
+/**
+ * Construct a full URL from a request and a relative path.
+ * Cache API requires fully-qualified URLs as keys.
+ */
+export function fullUrl(request: Request, path: string): string {
+  return new URL(path, request.url).href;
 }
 
 /** TTL constants (seconds) */
@@ -33,8 +32,7 @@ function getDefaultCache(): Cache {
  */
 export async function cacheGet(url: string): Promise<Response | null> {
   const cache = getDefaultCache();
-  const key = cacheKey(url);
-  const cached = await cache.match(key);
+  const cached = await cache.match(url);
   return cached || null;
 }
 
@@ -46,7 +44,6 @@ export async function cachePut(url: string, response: Response, ttl: number): Pr
   if (response.status !== 200) return;
 
   const cache = getDefaultCache();
-  const key = cacheKey(url);
 
   // Clone the response because Response bodies can only be consumed once
   const body = await response.text();
@@ -61,7 +58,7 @@ export async function cachePut(url: string, response: Response, ttl: number): Pr
     },
   });
 
-  await cache.put(key, cachedResponse);
+  await cache.put(url, cachedResponse);
 }
 
 /**
@@ -69,22 +66,7 @@ export async function cachePut(url: string, response: Response, ttl: number): Pr
  */
 export async function cacheDelete(url: string): Promise<void> {
   const cache = getDefaultCache();
-  const key = cacheKey(url);
-  await cache.delete(key);
-}
-
-/**
- * Invalidate multiple cache entries by URL patterns.
- * Each pattern is a string that should be a prefix match for cache keys.
- */
-export async function cacheDeleteByPrefix(urlPatterns: string[]): Promise<void> {
-  const cache = getDefaultCache();
-  for (const pattern of urlPatterns) {
-    // We need to delete all possible URLs that start with this pattern.
-    // Since Cache API doesn't support prefix deletion, we delete known keys.
-    const key = cacheKey(pattern);
-    await cache.delete(key);
-  }
+  await cache.delete(url);
 }
 
 /**
@@ -101,7 +83,7 @@ export async function withCache(
   // Check cache first
   const cached = await cacheGet(requestUrl);
   if (cached) {
-    // Clone and re-add CORS headers (Cache API strips response headers on retrieval)
+    // Re-create response with CORS headers (Cache API strips them on retrieval)
     const body = await cached.text();
     return new Response(body, {
       status: 200,
@@ -119,8 +101,6 @@ export async function withCache(
 
   // Only cache successful responses
   if (response.status === 200) {
-    // We need to clone the response since we return it to the client
-    const clone = response.clone();
     // Don't await — fire and forget to avoid blocking the response
     cachePut(requestUrl, response, ttl).catch(() => {});
   }
