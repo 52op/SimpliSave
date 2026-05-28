@@ -106,7 +106,7 @@ export default function Home() {
 
   const displayTags = hotTags.slice(0, MAX_TAGS)
 
-  useEffect(() => {
+  function startRotate() {
     if (displayTags.length <= 1) return
     tagTimerRef.current = setInterval(() => {
       setPlaceholderVisible(false)
@@ -115,6 +115,10 @@ export default function Home() {
         setPlaceholderVisible(true)
       }, 300)
     }, ROTATE_INTERVAL)
+  }
+
+  useEffect(() => {
+    startRotate()
     return () => clearInterval(tagTimerRef.current)
   }, [displayTags.length])
 
@@ -290,7 +294,10 @@ export default function Home() {
         <p className="text-gray-600 dark:text-gray-400 mb-8">{siteSettings?.description || t("app.description")}</p>
         
         {/* 搜索框 */}
-        <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}>
+        <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}
+          onMouseEnter={() => clearInterval(tagTimerRef.current)}
+          onMouseLeave={() => startRotate()}
+        >
           <div className="flex items-stretch rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
             <div className="relative" ref={engineRef}>
               <button
