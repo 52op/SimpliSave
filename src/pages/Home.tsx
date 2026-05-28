@@ -35,16 +35,6 @@ function jsonp(url: string, callbackName: string): Promise<string[]> {
   })
 }
 
-async function fetchSuggestions(query: string): Promise<string[]> {
-  const response = await fetch(`https://www.baidu.com/sugrec?prod=pc&wd=${encodeURIComponent(query)}`)
-  if (!response.ok) throw new Error("suggest failed")
-  const data = await response.json()
-  if (Array.isArray(data?.g)) {
-    return data.g.map((item: { q?: string }) => item.q || "").filter(Boolean)
-  }
-  return []
-}
-
 export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -73,7 +63,6 @@ export default function Home() {
   const engineRef = useRef<HTMLDivElement>(null)
   const suggestRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const suggestTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const tagTimerRef = useRef<ReturnType<typeof setInterval>>()
 
   useEffect(() => {
@@ -125,26 +114,19 @@ export default function Home() {
   const doSuggest = useCallback(async (q: string) => {
     if (!q.trim()) { setSuggestions([]); setShowSuggestions(false); return }
     try {
-      const words = await fetchSuggestions(q)
+      const words = await jsonp(`https://suggestion.baidu.com/su?wd=${encodeURIComponent(q)}`, "baidu")
       setSuggestions(words)
       setShowSuggestions(words.length > 0)
     } catch {
-      try {
-        const words = await jsonp(`https://suggestion.baidu.com/su?wd=${encodeURIComponent(q)}`, "baidu")
-        setSuggestions(words)
-        setShowSuggestions(words.length > 0)
-      } catch {
-        setSuggestions([])
-        setShowSuggestions(false)
-      }
+      setSuggestions([])
+      setShowSuggestions(false)
     }
   }, [])
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value
     setSearchQuery(val)
-    if (suggestTimerRef.current) clearTimeout(suggestTimerRef.current)
-    suggestTimerRef.current = setTimeout(() => doSuggest(val), 80)
+    doSuggest(val)
   }
 
   function handleSuggestionClick(word: string) {
