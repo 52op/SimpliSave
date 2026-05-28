@@ -284,7 +284,7 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto dark:text-gray-300">
       {/* 搜索区域 */}
-      <div className="relative ui-card text-center py-12 px-4 mb-8 overflow-hidden">
+      <div className="relative ui-card text-center py-12 px-4 mb-8 overflow-hidden z-10">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 via-transparent to-purple-50/30 dark:from-blue-900/10 dark:via-transparent dark:to-purple-900/10 pointer-events-none" />
         <div className="relative">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">{siteSettings?.site_name || "SimpliSave"}</h1>
