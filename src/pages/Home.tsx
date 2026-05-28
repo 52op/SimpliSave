@@ -14,9 +14,8 @@ import { useNavigate } from "react-router-dom"
 import { pinyinMatch } from "../utils/pinyin"
 
 const STORAGE_KEY = "preferredEngineId"
-const TAG_GROUP_SIZE = 2
 const MAX_TAGS = 12
-const ROTATE_INTERVAL = 4000
+const ROTATE_INTERVAL = 3000
 
 function jsonp(url: string, callbackName: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
@@ -69,7 +68,8 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hotTags, setHotTags] = useState<string[]>([])
   const [pageError, setPageError] = useState("")
-  const [tagGroupIndex, setTagGroupIndex] = useState(0)
+  const [placeholderIndex, setPlaceholderIndex] = useState(0)
+  const [placeholderVisible, setPlaceholderVisible] = useState(true)
   const engineRef = useRef<HTMLDivElement>(null)
   const suggestRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -105,32 +105,22 @@ export default function Home() {
   }, [showSuggestions])
 
   const displayTags = hotTags.slice(0, MAX_TAGS)
-  const tagGroups: string[][] = []
-  for (let i = 0; i < displayTags.length; i += TAG_GROUP_SIZE) {
-    tagGroups.push(displayTags.slice(i, i + TAG_GROUP_SIZE))
-  }
-  const currentTagGroup = tagGroups[tagGroupIndex % Math.max(tagGroups.length, 1)] ?? []
 
   useEffect(() => {
-    if (tagGroups.length <= 1) return
+    if (displayTags.length <= 1) return
     tagTimerRef.current = setInterval(() => {
-      setTagGroupIndex((i) => (i + 1) % tagGroups.length)
+      setPlaceholderVisible(false)
+      setTimeout(() => {
+        setPlaceholderIndex(i => (i + 1) % displayTags.length)
+        setPlaceholderVisible(true)
+      }, 300)
     }, ROTATE_INTERVAL)
     return () => clearInterval(tagTimerRef.current)
-  }, [tagGroups.length])
+  }, [displayTags.length])
 
-  function resetTagTimer() {
-    clearInterval(tagTimerRef.current)
-    if (tagGroups.length <= 1) return
-    tagTimerRef.current = setInterval(() => {
-      setTagGroupIndex((i) => (i + 1) % tagGroups.length)
-    }, ROTATE_INTERVAL)
-  }
-
-  function handleTagClick(tag: string) {
-    setSearchQuery(tag)
-    handleSearchDirect(tag)
-  }
+  const currentPlaceholder = displayTags.length > 0
+    ? displayTags[placeholderIndex % displayTags.length]
+    : `${t("home.searchIn")} ${selectedEngine?.name || ""}`
 
   const doSuggest = useCallback(async (q: string) => {
     if (!q.trim()) { setSuggestions([]); setShowSuggestions(false); return }
@@ -181,7 +171,7 @@ export default function Home() {
   }
 
   function handleSearchDirect(query?: string) {
-    const q = (query || searchQuery).trim()
+    const q = (query || searchQuery || currentPlaceholder).trim()
     if (!q || !selectedEngine) return
     setShowSuggestions(false)
     if (selectedEngine.is_site_search) {
@@ -335,8 +325,8 @@ export default function Home() {
               onChange={handleInputChange}
               onKeyDown={handleInputKeyDown}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              placeholder={`${t("home.searchIn")} ${selectedEngine?.name || ""}`}
-              className="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-[var(--color-text-main)] outline-none focus:ring-0"
+              placeholder={currentPlaceholder}
+              className={`min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-[var(--color-text-main)] outline-none focus:ring-0 transition-opacity duration-300 ${placeholderVisible ? "placeholder:opacity-100" : "placeholder:opacity-0"}`}
               autoComplete="off"
             />
             <button
@@ -382,41 +372,6 @@ export default function Home() {
             </button>
           )}
         </form>
-
-        {/* 热搜词 — 分组切换 */}
-        {tagGroups.length > 0 && (
-          <div
-            className="mx-auto mt-3 max-w-2xl"
-            onMouseEnter={() => clearInterval(tagTimerRef.current)}
-            onMouseLeave={() => resetTagTimer()}
-          >
-            <div className="flex items-center justify-center overflow-hidden rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 h-8 px-4">
-              <div key={tagGroupIndex} className="flex items-center justify-center gap-0.5 sm:gap-1 animate-tag-fade">
-                {currentTagGroup.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => handleTagClick(tag)}
-                    className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors px-1.5 sm:px-3 whitespace-nowrap"
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {tagGroups.length > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-1.5">
-                {tagGroups.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => { setTagGroupIndex(i); resetTagTimer() }}
-                    className={`rounded-full transition-all duration-300 ${i === tagGroupIndex % tagGroups.length ? "w-3 h-1.5 bg-blue-500" : "w-1.5 h-1.5 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500"}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* 常用推荐 */}
