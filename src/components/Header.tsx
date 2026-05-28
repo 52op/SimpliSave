@@ -158,10 +158,10 @@ export default function Header() {
                 >
                   <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
                     <img
-                      src={getAvatarUrl(user?.avatar_url, user?.email || '', 24)}
+                      src={getAvatarUrl(user?.avatar_url, user?.email || '', 80)}
                       alt=""
                       className="w-full h-full object-cover"
-                      onError={(e) => { e.currentTarget.src = getAvatarUrl('', user?.email || '', 24) }}
+                      onError={(e) => { e.currentTarget.src = getAvatarUrl('', user?.email || '', 80) }}
                     />
                   </div>
                   <span className="text-sm text-gray-700 dark:text-gray-300">{user?.name || user?.email}</span>
