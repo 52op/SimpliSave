@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { publicUserApi } from "../services/api"
+import { getAvatarUrl } from "../utils/data"
 import { ArrowLeft, User as UserIcon, Globe, Github, Quote, Loader2, BookOpen, FileText, Calendar, Tag, Link as LinkIcon, FolderOpen, ExternalLink, ChevronDown } from "lucide-react"
 import type { Memo } from "../types"
 import Favicon from "../components/Favicon"
@@ -100,11 +101,12 @@ export default function UserPublicPage() {
         <div className="px-8 pb-8">
           <div className="-mt-16 mb-6 flex items-end gap-4">
             <div className="w-24 h-24 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center shadow-lg">
-              {user.avatar_url ? (
-                <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                <UserIcon className="w-10 h-10 text-gray-400" />
-              )}
+              <img
+                src={getAvatarUrl(user.avatar_url, user.email, 96)}
+                alt={user.name}
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = getAvatarUrl('', user.email, 96) }}
+              />
             </div>
             <div className="pb-2">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{user.name}</h1>

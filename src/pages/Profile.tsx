@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { authApi, emailApi } from "../services/api"
 import ImageUploader from "../components/ImageUploader"
+import { getAvatarUrl } from "../utils/data"
 import { User as UserIcon, Save, Globe, Github, Quote, Copy, ExternalLink } from "lucide-react"
 
 const COOLDOWN = 60
@@ -207,11 +208,12 @@ export default function Profile() {
       <div className="ui-card p-6 space-y-6">
         <div className="flex items-center gap-4">
           <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <UserIcon className="w-10 h-10 text-gray-400 dark:text-gray-500" />
-            )}
+            <img
+              src={getAvatarUrl(avatarUrl, user?.email || '', 80)}
+              alt="Avatar"
+              className="w-full h-full object-cover"
+              onError={(e) => { e.currentTarget.src = getAvatarUrl('', user?.email || '', 80) }}
+            />
           </div>
           <div>
             <h3 className="font-medium text-gray-900 dark:text-gray-100">{user?.name}</h3>
