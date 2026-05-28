@@ -13,6 +13,7 @@ export async function handleListMemos(request: Request, env: any): Promise<Respo
   const q = url.searchParams.get('q');
   const pinnedOnly = url.searchParams.get('pinned') === '1';
   const archived = url.searchParams.get('archived') === '1';
+  const tag = url.searchParams.get('tag');
 
   let sql = 'SELECT * FROM memos WHERE user_id = ? AND archived = ?';
   const params: any[] = [userId, archived ? 1 : 0];
@@ -27,6 +28,10 @@ export async function handleListMemos(request: Request, env: any): Promise<Respo
   if (q) {
     sql += ' AND (title LIKE ? OR content LIKE ?)';
     params.push(`%${q}%`, `%${q}%`);
+  }
+  if (tag) {
+    sql += ' AND tags LIKE ?';
+    params.push(`%"${tag}"%`);
   }
 
   sql += ' ORDER BY is_pinned DESC, created_at DESC';

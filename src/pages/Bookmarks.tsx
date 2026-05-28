@@ -32,6 +32,7 @@ export default function Bookmarks() {
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>("all")
+  const [selectedTag, setSelectedTag] = useState<string>("")
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
   const [fetching, setFetching] = useState(false)
@@ -94,7 +95,9 @@ export default function Bookmarks() {
       b.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (b.description && pinyinMatch(b.description, searchQuery))
     const matchesCategory = selectedCategoryId === null || b.category_id === selectedCategoryId
-    return matchesSearch && matchesCategory
+    const tagsArr = typeof b.tags === "string" ? JSON.parse(b.tags || "[]") : (b.tags || [])
+    const matchesTag = !selectedTag || tagsArr.includes(selectedTag)
+    return matchesSearch && matchesCategory && matchesTag
   })
 
   async function handleFetchMeta() {
@@ -443,6 +446,20 @@ export default function Bookmarks() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800" />
         </div>
+        {tags.length > 0 && (
+          <div className="flex gap-2 mt-3 flex-wrap">
+            <button onClick={() => setSelectedTag("")}
+              className={`px-3 py-1 text-sm rounded-lg transition ${!selectedTag ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+              {t("common.all")}
+            </button>
+            {tags.map((tag: string) => (
+              <button key={tag} onClick={() => setSelectedTag(selectedTag === tag ? "" : tag)}
+                className={`px-3 py-1 text-sm rounded-lg transition ${selectedTag === tag ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"}`}>
+                #{tag}
+              </button>
+            ))}
+          </div>
+        )}
       </SectionCard>
 
       {pageError ? (

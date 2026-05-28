@@ -82,6 +82,7 @@ export default function Memos() {
   const [timeFilter, setTimeFilter] = useState<string>("all")
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [pageError, setPageError] = useState("")
+  const [selectedTag, setSelectedTag] = useState<string>("")
 
   const [categoryNameState, setCategoryNameState] = useState("")
   const [categoryColorState, setCategoryColorState] = useState("#3b82f6")
@@ -117,7 +118,9 @@ export default function Memos() {
       const matchesTime = isInTimeRange(m.created_at, timeFilter)
       const mDate = m.created_at.slice(0, 10)
       const matchesDateRange = !dateRange.start || !dateRange.end || (mDate >= dateRange.start && mDate <= dateRange.end)
-      return matchesSearch && matchesCategory && matchesPinned && matchesTime && matchesDateRange
+      const tagsArr = typeof m.tags === "string" ? JSON.parse(m.tags || "[]") : (m.tags || [])
+      const matchesTag = !selectedTag || tagsArr.includes(selectedTag)
+      return matchesSearch && matchesCategory && matchesPinned && matchesTime && matchesDateRange && matchesTag
     })
     .sort((a, b) => {
       if (a.is_pinned !== b.is_pinned) return b.is_pinned - a.is_pinned
@@ -264,6 +267,20 @@ export default function Memos() {
             </button>
           ))}
         </div>
+        {tags.length > 0 && (
+          <div className="flex gap-2 mt-2 flex-wrap">
+            <button onClick={() => setSelectedTag("")}
+              className={`px-3 py-1 text-sm rounded-lg transition ${!selectedTag ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+              {t("common.all")}
+            </button>
+            {tags.map((tag: string) => (
+              <button key={tag} onClick={() => setSelectedTag(selectedTag === tag ? "" : tag)}
+                className={`px-3 py-1 text-sm rounded-lg transition ${selectedTag === tag ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"}`}>
+                #{tag}
+              </button>
+            ))}
+          </div>
+        )}
       </SectionCard>
 
       {pageError ? (
@@ -321,7 +338,8 @@ export default function Memos() {
                                 </span>
                               )}
                               {tagsArr.slice(0, 3).map((tag: string, i: number) => (
-                                <span key={i} className="text-xs px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded">#{tag}</span>
+                                <button key={i} onClick={() => setSelectedTag(selectedTag === tag ? "" : tag)}
+                                  className={`text-xs px-2 py-0.5 rounded ${selectedTag === tag ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"}`}>#{tag}</button>
                               ))}
                             </div>
                           </div>

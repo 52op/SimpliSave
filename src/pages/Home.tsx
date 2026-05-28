@@ -472,6 +472,12 @@ export default function Home() {
               }`}
               style={selectedCategory === c.id ? { backgroundColor: c.color } : {}}
             >
+              {c.icon && (
+                <span className="w-5 h-5 flex items-center justify-center overflow-hidden [&_svg]:max-w-full [&_svg]:max-h-full" dangerouslySetInnerHTML={{ __html: c.icon.startsWith('<svg') ? c.icon : '' }} />
+              )}
+              {c.icon && !c.icon.startsWith('<svg') && (
+                <img src={c.icon} alt="" className="w-5 h-5 object-contain" />
+              )}
               {c.name}
             </button>
           ))}

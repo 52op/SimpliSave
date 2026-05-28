@@ -101,6 +101,7 @@ export default function BookmarkListView({
             <th className="px-2 py-2 text-left hidden md:table-cell cursor-pointer select-none" onClick={() => toggleSort('url')}>
               <div className="flex items-center gap-1"><SortIcon field="url" />{t("bookmarks.columnUrl")}</div>
             </th>
+            <th className="px-2 py-2 text-left hidden md:table-cell w-32">{t("bookmarks.tags")}</th>
             <th className="px-2 py-2 text-left hidden sm:table-cell cursor-pointer select-none w-24" onClick={() => toggleSort('created_at')}>
               <div className="flex items-center gap-1"><SortIcon field="created_at" />{t("bookmarks.columnCreatedAt")}</div>
             </th>
@@ -156,7 +157,14 @@ export default function BookmarkListView({
                   </div>
                 </td>
                 <td className="px-2 py-2.5 hidden md:table-cell">
-                  <span className="text-gray-400 dark:text-gray-500 truncate max-w-[250px] inline-block align-bottom">{b.url}</span>
+                  <div className="flex flex-wrap gap-1">
+                    {tagsArray.slice(0, 3).map((tag: string, i: number) => (
+                      <span key={i} className="text-xs px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded">#{tag}</span>
+                    ))}
+                    {tagsArray.length > 3 && (
+                      <span className="text-xs text-gray-400">+{tagsArray.length - 3}</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-2 py-2.5 hidden sm:table-cell whitespace-nowrap text-gray-500 dark:text-gray-400 text-xs">
                   {formatDate(b.created_at, t)}

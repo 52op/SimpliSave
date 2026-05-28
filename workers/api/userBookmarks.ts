@@ -12,6 +12,7 @@ export async function handleListUserBookmarks(request: Request, env: any): Promi
   const q = url.searchParams.get('q');
   const favorites = url.searchParams.get('favorites') === '1';
   const archived = url.searchParams.get('archived') === '1';
+  const tag = url.searchParams.get('tag');
 
   let sql = 'SELECT * FROM user_bookmarks WHERE user_id = ? AND archived = ?';
   const params: any[] = [userId, archived ? 1 : 0];
@@ -26,6 +27,10 @@ export async function handleListUserBookmarks(request: Request, env: any): Promi
   if (q) {
     sql += ' AND (title LIKE ? OR url LIKE ? OR description LIKE ?)';
     params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+  }
+  if (tag) {
+    sql += ' AND tags LIKE ?';
+    params.push(`%"${tag}"%`);
   }
 
   sql += ' ORDER BY is_favorite DESC, created_at DESC';

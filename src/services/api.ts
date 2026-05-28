@@ -80,12 +80,13 @@ export const cardGroupApi = {
 
 // 私有收藏夹 API
 export const userBookmarkApi = {
-  list: (token: string, params?: { category_id?: string; q?: string; favorites?: boolean; archived?: boolean }) => {
+  list: (token: string, params?: { category_id?: string; q?: string; favorites?: boolean; archived?: boolean; tag?: string }) => {
     const search = new URLSearchParams();
     if (params?.category_id) search.set('category_id', params.category_id);
     if (params?.q) search.set('q', params.q);
     if (params?.favorites) search.set('favorites', '1');
     if (params?.archived) search.set('archived', '1');
+    if (params?.tag) search.set('tag', params.tag);
     return request<Bookmark[]>('GET', `/user-bookmarks${search.toString() ? `?${search.toString()}` : ''}`, undefined, token).then((items) => items.map(normalizeBookmark));
   },
   create: (token: string, data: any) => request<Bookmark>('POST', '/user-bookmarks', { ...data, tags: serializeTags(data.tags) }, token).then(normalizeBookmark),
@@ -133,7 +134,13 @@ export const userCategoryApi = {
 };
 
 export const memoApi = {
-  list: (token: string) => request<Memo[]>('GET', '/memos', undefined, token).then((items) => items.map(normalizeMemo)),
+  list: (token: string, params?: { category_id?: string; q?: string; tag?: string }) => {
+    const search = new URLSearchParams();
+    if (params?.category_id) search.set('category_id', params.category_id);
+    if (params?.q) search.set('q', params.q);
+    if (params?.tag) search.set('tag', params.tag);
+    return request<Memo[]>('GET', `/memos${search.toString() ? `?${search.toString()}` : ''}`, undefined, token).then((items) => items.map(normalizeMemo));
+  },
   create: (token: string, data: any) => request<Memo>('POST', '/memos', { ...data, tags: serializeTags(data.tags) }, token).then(normalizeMemo),
   get: (token: string, id: string) => request<Memo>('GET', `/memos/${id}`, undefined, token).then(normalizeMemo),
   update: (token: string, id: string, data: any) => request<Memo>('PUT', `/memos/${id}`, { ...data, tags: serializeTags(data.tags) }, token).then(normalizeMemo),
