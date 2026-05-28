@@ -9,6 +9,7 @@ import { Search, Folder, Globe, Zap, Loader2, X, RefreshCw } from "lucide-react"
 import Favicon from "../components/Favicon"
 import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
+import { SkeletonCard, SkeletonCategory } from "../components/Skeleton"
 import Modal from "../components/Modal"
 import { useNavigate } from "react-router-dom"
 import { pinyinMatch } from "../utils/pinyin"
@@ -266,13 +267,16 @@ export default function Home() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto p-6">
-      <PageHeader title={siteSettings?.site_name || "SimpliSave"} description={siteSettings?.description || "集中管理常用网址、公开导航与快速搜索，打造更清爽高效个人工作台。"} />
-        <div className="flex justify-center items-center py-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
-          </div>
+        <PageHeader title={siteSettings?.site_name || "SimpliSave"} description={siteSettings?.description || t("app.description")} />
+        <div className="ui-card text-center py-10 px-4 mb-8">
+          <div className="skeleton h-8 w-64 mx-auto mb-3 rounded" />
+          <div className="skeleton h-4 w-96 max-w-full mx-auto mb-8 rounded" />
+          <div className="skeleton h-12 w-full max-w-xl mx-auto rounded-xl" />
         </div>
+        <div className="flex gap-2 mb-6">
+          <SkeletonCategory />
+        </div>
+        <SkeletonCard count={8} />
       </div>
     )
   }
@@ -280,24 +284,26 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto dark:text-gray-300">
       {/* 搜索区域 */}
-      <div className="ui-card text-center py-10 px-4 mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">{siteSettings?.site_name || "SimpliSave"}</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">{siteSettings?.description || t("app.description")}</p>
+      <div className="relative ui-card text-center py-12 px-4 mb-8 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/40 via-transparent to-purple-50/30 dark:from-blue-900/10 dark:via-transparent dark:to-purple-900/10 pointer-events-none" />
+        <div className="relative">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">{siteSettings?.site_name || "SimpliSave"}</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">{siteSettings?.description || t("app.description")}</p>
         
         {/* 搜索框 */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}
           onMouseEnter={() => clearInterval(tagTimerRef.current)}
           onMouseLeave={() => startRotate()}
         >
-          <div className="flex items-stretch rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+          <div className="search-glow flex items-stretch rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
             <div className="relative" ref={engineRef}>
               <button
                 type="button"
                 onClick={() => setShowEngines(!showEngines)}
-                className="flex h-full sm:min-w-[112px] items-center gap-1 sm:gap-2 rounded-l-xl border-r border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 sm:px-4 py-3 hover:bg-[var(--color-surface-muted)]"
+                className="flex sm:min-w-[112px] items-center gap-1 sm:gap-2 rounded-l-xl border-r border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 sm:px-4 py-3 hover:bg-[var(--color-surface-muted)] text-sm"
               >
-                {selectedEngine?.icon_url && <img src={selectedEngine.icon_url} alt="" className="w-4 h-4" />}
-                <span className="hidden sm:inline text-sm font-medium dark:text-gray-200">{selectedEngine?.name || t("home.search")}</span>
+                {selectedEngine?.icon_url && <img src={selectedEngine.icon_url} alt="" className="w-4 h-4 shrink-0" />}
+                <span className="text-xs sm:text-sm font-medium dark:text-gray-200 truncate max-w-[80px] sm:max-w-none">{selectedEngine?.name || t("home.search")}</span>
               </button>
               {showEngines && (
                 <div className="absolute left-0 top-full z-50 mt-2 max-h-64 min-w-full overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">
@@ -306,7 +312,7 @@ export default function Home() {
                       key={engine.id}
                       type="button"
                       onClick={() => handleSelectEngine(engine)}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 whitespace-nowrap dark:text-gray-200"
+                      className="w-full px-4 py-2 text-left hover:bg-[var(--color-surface-2)] flex items-center gap-2 whitespace-nowrap dark:text-gray-200"
                     >
                       {engine.icon_url && <img src={engine.icon_url} alt="" className="w-4 h-4" />}
                       <span>{engine.name}</span>
@@ -329,9 +335,11 @@ export default function Home() {
             />
             <button
               type="submit"
-              className="flex sm:min-w-[108px] items-center justify-center gap-1 sm:gap-2 rounded-r-xl bg-blue-600 px-3 sm:px-6 py-3 text-white hover:bg-blue-700"
+              className="flex items-center justify-center gap-1.5 rounded-r-xl bg-blue-600 px-4 sm:px-6 py-3 text-white text-sm font-medium hover:bg-blue-700 transition-colors shrink-0"
+              aria-label={t("home.search")}
             >
               <Search className="w-5 h-5" />
+              <span className="hidden xs:inline sm:hidden">搜索</span>
               <span className="hidden sm:inline">{t("home.search")}</span>
             </button>
           </div>
@@ -343,7 +351,7 @@ export default function Home() {
                   type="button"
                   onClick={() => handleSuggestionClick(word)}
                   onKeyDown={(e) => handleSuggestionKeyDown(e, word)}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm dark:text-gray-200 flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left hover:bg-[var(--color-surface-2)] text-sm dark:text-gray-200 flex items-center gap-2"
                 >
                   <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                   <span>{word}</span>
@@ -352,10 +360,10 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => { setShowSuggestions(false); navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`) }}
-                className="w-full px-4 py-2 text-left hover:bg-blue-50 dark:hover:bg-blue-900/30 text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2 border-t border-[var(--color-border)]"
+                className="w-full px-4 py-2 text-left hover:bg-[var(--color-primary-weak)] text-sm text-[var(--color-primary)] flex items-center gap-2 border-t border-[var(--color-border)]"
               >
                 <Search className="w-3.5 h-3.5 shrink-0" />
-                <span>在站内搜索 "{searchQuery}"</span>
+                <span>{t("home.inSiteSearch") || "在站内搜索"} &ldquo;{searchQuery}&rdquo;</span>
               </button>
             </div>
           )}
@@ -363,34 +371,37 @@ export default function Home() {
             <button
               type="button"
               onClick={() => { setShowSuggestions(false); navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`) }}
-              className="mt-2 w-full flex items-center justify-center gap-2 py-2 px-4 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-xl border border-blue-200 dark:border-blue-800 transition-colors"
+              className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 px-4 text-sm text-[var(--color-primary)] bg-[var(--color-primary-weak)] hover:bg-[var(--color-primary)] hover:text-white rounded-xl transition-colors"
+              aria-label={`${t("home.inSiteSearch") || "在站内搜索"} ${searchQuery}`}
             >
               <Search className="w-3.5 h-3.5 shrink-0" />
-              在站内搜索 "{searchQuery}"
+              {t("home.inSiteSearch") || "\u5728\u7ad9\u5185\u641c\u7d22"} &ldquo;{searchQuery}&rdquo;
             </button>
           )}
         </form>
+        </div>
       </div>
 
       {/* 常用推荐 */}
       {topGroups.length > 0 && (
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-4">
-            <Zap className="w-5 h-5 text-yellow-500" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t("home.recommended")}</h2>
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-sm">
+              <Zap className="w-3.5 h-3.5 text-white" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("home.recommended")}</h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <div className="stagger-enter grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {topGroups.map((g) => (
               <a
                 key={g.id}
                 href={`/g/${g.slug}`}
                 onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                className="ui-card p-3 flex items-center gap-2.5 hover:shadow-md transition-shadow group"
+                className="ui-card-link !p-3 flex items-center gap-2.5"
+                aria-label={g.title}
               >
-                <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-[var(--color-surface-2)] flex items-center justify-center">
-                  <Favicon src={g.icon_url} title={g.title} size="md" />
-                </div>
-                <p className="text-sm font-medium text-[var(--color-text-main)] truncate group-hover:text-[var(--color-primary)] transition-colors" title={g.title}>{g.title}</p>
+                <Favicon src={g.icon_url} title={g.title} size="sm" />
+                <p className="text-sm font-medium text-[var(--color-text-main)] truncate" title={g.title}>{g.title}</p>
               </a>
             ))}
           </div>
@@ -400,17 +411,20 @@ export default function Home() {
       {/* 分类导航 */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <Folder className="w-5 h-5 text-blue-600" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t("home.categories")}</h2>
+          <div className="w-5 h-5 rounded-md bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-sm">
+            <Folder className="w-3.5 h-3.5 text-white" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("home.categories")}</h2>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setSelectedCategory("all")}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
               selectedCategory === "all"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                ? "bg-[var(--color-primary)] text-white shadow-sm"
+                : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text-main)]"
             }`}
+            aria-label={t("home.all")}
           >
             {t("home.all")}
           </button>
@@ -418,13 +432,18 @@ export default function Home() {
             <button
               key={c.id}
               onClick={() => setSelectedCategory(c.id)}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1.5 ${
                 selectedCategory === c.id
-                  ? "text-white"
-                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                  ? "text-white shadow-sm"
+                  : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text-main)]"
               }`}
               style={selectedCategory === c.id ? { backgroundColor: c.color } : {}}
+              aria-label={c.name}
             >
+              {c.icon && (
+                <span className="w-4 h-4 flex items-center justify-center overflow-hidden [&_svg]:max-w-full [&_svg]:max-h-full" dangerouslySetInnerHTML={{ __html: c.icon.startsWith('<svg') ? c.icon : '' }} />
+              )}
+              {c.icon && !c.icon.startsWith('<svg') && <img src={c.icon} alt="" className="w-4 h-4 object-contain" />}
               {c.name}
             </button>
           ))}
@@ -439,10 +458,12 @@ export default function Home() {
           </button>
         } />
       ) : Object.keys(groupedGroups).length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30">
-          <Globe className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 mb-2">{t("home.noGroups")}</p>
-          <p className="text-sm text-gray-400 dark:text-gray-500">{t("home.loginToAdd")}</p>
+        <div className="ui-card text-center py-16 px-4">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--color-surface-2)] flex items-center justify-center">
+            <Globe className="w-8 h-8 text-[var(--color-text-muted)]" />
+          </div>
+          <p className="text-[var(--color-text-main)] font-medium mb-1">{t("home.noGroups")}</p>
+          <p className="text-sm text-[var(--color-text-muted)]">{t("home.loginToAdd")}</p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -455,7 +476,7 @@ export default function Home() {
               <div key={catId}>
                 <div className="flex items-center gap-2 mb-3">
                   <div
-                    className="w-1 h-6 rounded"
+                    className="w-1 h-5 rounded-full"
                     style={{ backgroundColor: catColor }}
                   />
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
@@ -467,23 +488,24 @@ export default function Home() {
                     )}
                     {catName}
                   </h3>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">({items.length})</span>
+                  <span className="text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-2)] px-2 py-0.5 rounded-full">{items.length}</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="stagger-enter grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {items.map((g) => (
                     <a
                       key={g.id}
                       href={`/g/${g.slug}`}
                       onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                      className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition group border-l-4 border-l-transparent hover:[border-left-color:var(--cat-color)]"
+                      className="ui-card-link"
                       style={{ '--cat-color': catColor } as React.CSSProperties}
+                      aria-label={`${g.title}${g.description ? `: ${g.description}` : ''}`}
                     >
                       <div className="flex items-start gap-3">
                         <Favicon src={g.icon_url} title={g.title} size="md" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600">{g.title}</p>
+                          <p className="font-medium text-[var(--color-text-main)] truncate">{g.title}</p>
                           {g.description && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{g.description}</p>
+                            <p className="text-xs text-[var(--color-text-muted)] mt-1 line-clamp-2">{g.description}</p>
                           )}
                         </div>
                       </div>

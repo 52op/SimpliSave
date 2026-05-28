@@ -4,32 +4,42 @@
 
 :root {
   color-scheme: light;
-  --color-page: #f6f7fb;
+  --color-page: #f2f4f8;
   --color-surface: #ffffff;
   --color-surface-2: #f3f4f6;
   --color-surface-muted: #e5e7eb;
   --color-border: #d1d5db;
+  --color-border-strong: #9ca3af;
   --color-text-main: #111827;
   --color-text-muted: #6b7280;
   --color-primary: #2563eb;
   --color-primary-weak: rgba(37, 99, 235, 0.12);
+  --color-primary-glow: rgba(37, 99, 235, 0.25);
   --color-danger: #dc2626;
-  --color-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --color-card-hover: #f9fafb;
+  --color-skeleton: #e5e7eb;
+  --color-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  --color-shadow-hover: 0 8px 32px rgba(15, 23, 42, 0.10);
 }
 
 .dark {
   color-scheme: dark;
   --color-page: #0b1220;
   --color-surface: #111827;
-  --color-surface-2: #1f2937;
-  --color-surface-muted: #374151;
-  --color-border: #334155;
-  --color-text-main: #e5e7eb;
+  --color-surface-2: #1e293b;
+  --color-surface-muted: #334155;
+  --color-border: #475569;
+  --color-border-strong: #64748b;
+  --color-text-main: #e2e8f0;
   --color-text-muted: #94a3b8;
   --color-primary: #60a5fa;
   --color-primary-weak: rgba(96, 165, 250, 0.15);
+  --color-primary-glow: rgba(96, 165, 250, 0.25);
   --color-danger: #f87171;
-  --color-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --color-card-hover: #1e293b;
+  --color-skeleton: #1e293b;
+  --color-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --color-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 body {
@@ -45,35 +55,35 @@ body {
   box-sizing: border-box;
 }
 
-@keyframes slide-in {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-.animate-slide-in { animation: slide-in 0.25s ease-out; }
-
-.sidebar-enter {
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-}
-.sidebar-enter-active {
-  max-height: 500px;
-  opacity: 1;
-}
-
+/* ──────── UI Card ──────── */
 .ui-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 1rem;
   box-shadow: var(--color-shadow);
+  transition: box-shadow .2s ease, border-color .2s ease;
 }
 
-.ui-muted {
-  color: var(--color-text-muted);
+/* ──────── UI Card Group Link ──────── */
+.ui-card-link {
+  display: block;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: var(--color-shadow);
+  transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+}
+.ui-card-link:hover {
+  box-shadow: var(--color-shadow-hover);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+}
+.ui-card-link:active {
+  transform: translateY(0);
 }
 
+/* ──────── UI Input / Select / Textarea ──────── */
 .ui-input,
 .ui-select,
 .ui-textarea {
@@ -85,7 +95,6 @@ body {
   outline: none;
   transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
-
 .ui-input:focus,
 .ui-select:focus,
 .ui-textarea:focus {
@@ -93,6 +102,7 @@ body {
   box-shadow: 0 0 0 3px var(--color-primary-weak);
 }
 
+/* ──────── UI Button ──────── */
 .ui-btn {
   display: inline-flex;
   align-items: center;
@@ -101,14 +111,74 @@ body {
   border-radius: .75rem;
   padding: .65rem 1rem;
   font-weight: 600;
-  transition: transform .15s ease, background-color .15s ease, color .15s ease, border-color .15s ease;
+  transition: transform .15s ease, background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
-
 .ui-btn:hover { transform: translateY(-1px); }
+.ui-btn:active { transform: translateY(0); }
 .ui-btn-primary { background: var(--color-primary); color: white; }
+.ui-btn-primary:hover { box-shadow: 0 0 20px var(--color-primary-glow); }
 .ui-btn-ghost { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-main); }
 .ui-btn-secondary { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-main); }
 .ui-btn-danger { background: var(--color-danger); color: white; }
+
+.ui-muted { color: var(--color-text-muted); }
+
+/* ──────── Skeleton ──────── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--color-skeleton) 25%, transparent 50%, var(--color-skeleton) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+/* ──────── Stagger Entry ──────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stagger-enter > * {
+  animation: fade-up .4s ease-out both;
+}
+.stagger-enter > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-enter > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-enter > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-enter > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-enter > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-enter > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-enter > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-enter > *:nth-child(8) { animation-delay: 280ms; }
+.stagger-enter > *:nth-child(9) { animation-delay: 320ms; }
+.stagger-enter > *:nth-child(10) { animation-delay: 360ms; }
+.stagger-enter > *:nth-child(11) { animation-delay: 400ms; }
+.stagger-enter > *:nth-child(12) { animation-delay: 440ms; }
+
+/* ──────── Search Glow ──────── */
+.search-glow {
+  position: relative;
+  transition: box-shadow .3s ease;
+}
+.search-glow:focus-within {
+  box-shadow: 0 0 0 2px var(--color-primary-weak), 0 0 30px var(--color-primary-glow);
+}
+
+/* ──────── Existing Animations ──────── */
+@keyframes slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.animate-slide-in { animation: slide-in 0.25s ease-out; }
+
+.sidebar-enter {
+  max-height: 0; opacity: 0; overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+.sidebar-enter-active {
+  max-height: 500px; opacity: 1;
+}
 
 @keyframes tag-fade {
   from { opacity: 0; transform: translateY(4px); }
