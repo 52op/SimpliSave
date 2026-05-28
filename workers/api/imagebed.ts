@@ -250,7 +250,8 @@ export async function handleUploadImage(request: Request, env: any): Promise<Res
   const ext = filename.split('.').pop()?.toLowerCase() || 'bin';
   const webpSettings = await env.DB.prepare('SELECT convert_to_webp FROM imagebed_settings WHERE id = ?').bind('global').first() as any;
   const convertToWebP = webpSettings ? webpSettings.convert_to_webp === 1 : true;
-  const finalExt = convertToWebP && ext !== 'gif' ? 'webp' : ext;
+  const rasterExts = ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'tiff', 'tif'];
+  const finalExt = convertToWebP && rasterExts.includes(ext) ? 'webp' : ext;
   const objectKey = parsePathTemplate(config.path_template, filename, finalExt, type, userId);
 
   const s3Response = await s3PutObject(
@@ -269,6 +270,87 @@ export async function handleUploadImage(request: Request, env: any): Promise<Res
   const publicUrl = `${baseUrl.replace(/\/+$/, '')}/${uploadPath}`;
 
   // 写入图片记录
+  const fileId = crypto.randomUUID().replace(/-/g, '');
+  await env.DB.prepare(
+    `INSERT INTO imagebed_files (id, user_id, config_id, object_key, public_url, file_type, file_size, content_type, bed_name)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(
+    fileId, userId, config.id, objectKey, publicUrl,
+    type, body.byteLength, contentType, config.name
+  ).run();
+
+  return successResponse({ public_url: publicUrl, bed_name: config.name, object_key: objectKey });
+}
+
+export async function handleUploadByUrl(request: Request, env: any): Promise<Response> {
+  const userId = await getUserId(request, env);
+  if (!userId) return errorResponse('Unauthorized', 401);
+
+  const { url, type = 'icon' } = await request.json() as { url: string; type: string };
+  if (!url) return errorResponse('url is required', 400);
+
+  // 如果 URL 已属于当前图床，直接返回，避免无效下载+存储
+  const configs = await env.DB.prepare(
+    'SELECT * FROM imagebed_configs WHERE enabled = 1 ORDER BY is_default DESC, sort_order ASC'
+  ).all();
+
+  if (!configs.results || configs.results.length === 0) {
+    return errorResponse('No enabled imagebed configs found', 404);
+  }
+
+  const matchedConfig = (configs.results as any[]).find((c: any) => {
+    const domain = c.custom_domain || c.endpoint;
+    if (!domain) return false;
+    return url.startsWith(domain.replace(/\/+$/, '') + '/');
+  });
+  if (matchedConfig) {
+    return successResponse({ public_url: url, bed_name: matchedConfig.name || '', object_key: '' });
+  }
+
+  let remoteResp: Response;
+  try {
+    remoteResp = await fetch(url);
+  } catch {
+    return errorResponse('Failed to fetch the URL', 502);
+  }
+  if (!remoteResp.ok) return errorResponse(`Remote server returned ${remoteResp.status}`, 502);
+
+  const body = await remoteResp.arrayBuffer();
+  if (!body || body.byteLength === 0) return errorResponse('Empty image from remote', 502);
+
+  const contentType = remoteResp.headers.get('Content-Type') || 'application/octet-stream';
+  const urlPath = new URL(url).pathname;
+  let filename = urlPath.split('/').pop() || `favicon_${Date.now()}.png`;
+
+  const isSvg = contentType === 'image/svg+xml';
+  if (isSvg) {
+    filename = filename.replace(/\.[^.]+$/, '') + '.svg';
+  }
+
+  const ext = filename.split('.').pop()?.toLowerCase() || 'png';
+  const webpSettings = await env.DB.prepare('SELECT convert_to_webp FROM imagebed_settings WHERE id = ?').bind('global').first() as any;
+  const convertToWebP = webpSettings ? webpSettings.convert_to_webp === 1 : true;
+  const rasterExts = ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'tiff', 'tif'];
+  const finalExt = convertToWebP && rasterExts.includes(ext) ? 'webp' : ext;
+  const randomIndex = Math.floor(Math.random() * configs.results.length);
+  const config: any = configs.results[randomIndex];
+  const objectKey = parsePathTemplate(config.path_template, filename, finalExt, type, userId);
+
+  const s3Response = await s3PutObject(
+    config.endpoint, config.access_key, config.secret_key,
+    config.region || 'auto', config.bucket, objectKey,
+    body, contentType,
+  );
+
+  if (!s3Response.ok) {
+    const errText = await s3Response.text();
+    return errorResponse(`S3 upload failed: ${s3Response.status} ${errText}`, 502);
+  }
+
+  const uploadPath = config.include_bucket ? `${config.bucket}/${objectKey}` : objectKey;
+  const baseUrl = config.custom_domain || config.endpoint;
+  const publicUrl = `${baseUrl.replace(/\/+$/, '')}/${uploadPath}`;
+
   const fileId = crypto.randomUUID().replace(/-/g, '');
   await env.DB.prepare(
     `INSERT INTO imagebed_files (id, user_id, config_id, object_key, public_url, file_type, file_size, content_type, bed_name)

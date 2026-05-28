@@ -3,7 +3,7 @@ import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useBookmarkStore } from "../stores/bookmarkStore"
-import { userBookmarkApi, userCategoryApi, tagApi, fetchMetaApi, submissionApi } from "../services/api"
+import { userBookmarkApi, userCategoryApi, tagApi, fetchMetaApi, submissionApi, imagebedApi } from "../services/api"
 import { Bookmark } from "../types"
 import { Plus, Search, Upload, Download, Folder, X, Loader2, Menu, PanelLeftClose, Trash2, ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { translateText } from "../utils/translate"
@@ -45,6 +45,7 @@ export default function Bookmarks() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
+  const [syncIconLoading, setSyncIconLoading] = useState(false)
 
   useEffect(() => {
     if (!moreOpen) return
@@ -586,6 +587,27 @@ export default function Bookmarks() {
             <div className="flex gap-2">
               <ImageUploader type="icon" value={formData.icon_url} onChange={(url) => setFormData({ ...formData, icon_url: url })} className="w-16 h-16" />
               <input type="text" value={formData.icon_url} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} placeholder="https://example.com/icon.png" className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              <button
+                type="button"
+                disabled={syncIconLoading || !formData.icon_url}
+                onClick={async () => {
+                  if (!token || !formData.icon_url) return
+                  setSyncIconLoading(true)
+                  try {
+                    const res = await imagebedApi.uploadByUrl(token, formData.icon_url, 'icon')
+                    setFormData({ ...formData, icon_url: res.public_url })
+                    toast(t("common.success"), "success")
+                  } catch (e: any) {
+                    toast(e.message || t("common.error"), "error")
+                  } finally {
+                    setSyncIconLoading(false)
+                  }
+                }}
+                className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40"
+                title={t("bookmarks.syncIcon")}
+              >
+                <Loader2 className={`w-4 h-4 ${syncIconLoading ? "animate-spin" : ""}`} />
+              </button>
             </div>
           </div>
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} placeholder={t("bookmarks.tagsPlaceholder")} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
@@ -605,6 +627,27 @@ export default function Bookmarks() {
             <div className="flex gap-2">
               <ImageUploader type="icon" value={formData.icon_url} onChange={(url) => setFormData({ ...formData, icon_url: url })} className="w-16 h-16" />
               <input type="text" value={formData.icon_url} onChange={(e) => setFormData({ ...formData, icon_url: e.target.value })} placeholder="https://example.com/icon.png" className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              <button
+                type="button"
+                disabled={syncIconLoading || !formData.icon_url}
+                onClick={async () => {
+                  if (!token || !formData.icon_url) return
+                  setSyncIconLoading(true)
+                  try {
+                    const res = await imagebedApi.uploadByUrl(token, formData.icon_url, 'icon')
+                    setFormData({ ...formData, icon_url: res.public_url })
+                    toast(t("common.success"), "success")
+                  } catch (e: any) {
+                    toast(e.message || t("common.error"), "error")
+                  } finally {
+                    setSyncIconLoading(false)
+                  }
+                }}
+                className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40"
+                title={t("bookmarks.syncIcon")}
+              >
+                <Loader2 className={`w-4 h-4 ${syncIconLoading ? "animate-spin" : ""}`} />
+              </button>
             </div>
           </div>
           <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>

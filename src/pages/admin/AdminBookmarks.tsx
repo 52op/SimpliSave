@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useToast } from "../../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
-import { publicBookmarkApi, publicCategoryApi, cardGroupApi, fetchMetaApi } from "../../services/api"
+import { publicBookmarkApi, publicCategoryApi, cardGroupApi, fetchMetaApi, imagebedApi } from "../../services/api"
 import { PublicBookmark, Category, CardGroup } from "../../types"
 import { Plus, Trash2, Edit2, X, ExternalLink, Globe, FolderOpen, Search, Star, Loader2 } from "lucide-react"
 import Favicon from "../../components/Favicon"
@@ -50,6 +50,8 @@ export default function AdminBookmarks() {
   const [formGroupId, setFormGroupId] = useState("")
   const [formNewGroup, setFormNewGroup] = useState("")
   const [fetching, setFetching] = useState(false)
+  const [syncIconLoading, setSyncIconLoading] = useState(false)
+  const token = useAuthStore((s) => s.token)
 
   const cleanText = (value?: string | null) =>
     (value || "")
@@ -479,6 +481,27 @@ export default function AdminBookmarks() {
               <input type="text" value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })}
                 placeholder="https://example.com/favicon.ico"
                 className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              <button
+                type="button"
+                disabled={syncIconLoading || !form.icon_url}
+                onClick={async () => {
+                  if (!token || !form.icon_url) return
+                  setSyncIconLoading(true)
+                  try {
+                    const res = await imagebedApi.uploadByUrl(token, form.icon_url, 'icon')
+                    setForm({ ...form, icon_url: res.public_url })
+                    toast(t("common.success"), "success")
+                  } catch (e: any) {
+                    toast(e.message || t("common.error"), "error")
+                  } finally {
+                    setSyncIconLoading(false)
+                  }
+                }}
+                className="p-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40"
+                title={t("bookmarks.syncIcon")}
+              >
+                <Loader2 className={`w-4 h-4 ${syncIconLoading ? "animate-spin" : ""}`} />
+              </button>
             </div>
           </div>
           <div>

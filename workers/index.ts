@@ -31,7 +31,7 @@ import {
   handleListImagebedConfigs, handleCreateImagebedConfig, handleUpdateImagebedConfig,
   handleDeleteImagebedConfig, handleToggleImagebedConfig, handleGetImagebedSettings,
   handleUpdateImagebedSettings, handleGetUploadToken, handleGetAvailableImagebeds,
-  handleUploadImage,
+  handleUploadImage, handleUploadByUrl,
   handleListImagebedFiles,
   handleDeleteImagebedFile,
   handleBatchDeleteImagebedFiles,
@@ -349,6 +349,7 @@ async function handleImagebed(request: Request, env: Env, path: string): Promise
   if (path === '/imagebed/settings' && request.method === 'PUT') return handleUpdateImagebedSettings(request, env);
   if (path === '/imagebed/upload-token' && request.method === 'POST') return handleGetUploadToken(request, env);
   if (path === '/imagebed/upload' && request.method === 'POST') return handleUploadImage(request, env);
+  if (path === '/imagebed/upload-by-url' && request.method === 'POST') return handleUploadByUrl(request, env);
   if (path === '/imagebed/available' && request.method === 'GET') return handleGetAvailableImagebeds(request, env);
   if (path === '/imagebed/files' && request.method === 'GET') return handleListImagebedFiles(request, env);
   if (path === '/imagebed/files/batch-delete' && request.method === 'POST') return handleBatchDeleteImagebedFiles(request, env);

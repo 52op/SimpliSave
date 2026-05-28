@@ -6,7 +6,7 @@ import { imagebedApi } from '../services/api'
 import { compressImage, validateImageFile } from '../utils/imageCompress'
 import ImageCropper from './ImageCropper'
 import UploadProgress from './UploadProgress'
-import { Upload, X, Image as ImageIcon, Trash2 } from 'lucide-react'
+import { Upload, X, Image as ImageIcon, Trash2, Loader2 } from 'lucide-react'
 import type { ImageType } from '../types'
 
 interface ImageUploaderProps {
@@ -17,6 +17,7 @@ interface ImageUploaderProps {
   className?: string
   placeholder?: string
   raw?: boolean
+  urlSync?: boolean
 }
 
 export default function ImageUploader({
@@ -27,6 +28,7 @@ export default function ImageUploader({
   className = '',
   placeholder = '点击上传',
   raw = false,
+  urlSync = true,
 }: ImageUploaderProps) {
   const token = useAuthStore((s) => s.token)
   const settings = useImagebedStore((s) => s.settings)
@@ -40,6 +42,8 @@ export default function ImageUploader({
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'compressing' | 'uploading' | 'done' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [dragOver, setDragOver] = useState(false)
+  const [syncUrlInput, setSyncUrlInput] = useState('')
+  const [syncLoading, setSyncLoading] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dialogFileInputRef = useRef<HTMLInputElement>(null)
@@ -214,6 +218,22 @@ export default function ImageUploader({
     [handleFileSelect]
   )
 
+  const handleSyncUrl = async () => {
+    if (!token || !syncUrlInput) return
+    setSyncLoading(true)
+    setErrorMessage('')
+    try {
+      const res = await imagebedApi.uploadByUrl(token, syncUrlInput, type)
+      onChange(res.public_url)
+      setShowEditDialog(false)
+      setSyncUrlInput('')
+    } catch (err: any) {
+      setErrorMessage(err.message || '同步失败')
+    } finally {
+      setSyncLoading(false)
+    }
+  }
+
   const editDialog = showEditDialog && createPortal(
     <div
       className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
@@ -268,6 +288,39 @@ export default function ImageUploader({
             <p className="text-sm text-red-600 text-center">{errorMessage}</p>
           )}
 
+          {/* URL 同步 */}
+          {!uploading && urlSync && (
+            <>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white dark:bg-gray-800 px-2 text-gray-400">或</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={syncUrlInput}
+                  onChange={(e) => setSyncUrlInput(e.target.value)}
+                  placeholder="粘贴图片 URL..."
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSyncUrl() }}
+                />
+                <button
+                  type="button"
+                  disabled={syncLoading || !syncUrlInput}
+                  onClick={handleSyncUrl}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 flex items-center gap-1"
+                >
+                  <Loader2 className={`w-4 h-4 ${syncLoading ? 'animate-spin' : ''}`} />
+                  同步
+                </button>
+              </div>
+            </>
+          )}
+
           {/* 删除按钮 */}
           {!uploading && (
             <button
@@ -315,7 +368,7 @@ export default function ImageUploader({
       {value ? (
         <div
           className="relative w-full h-full group cursor-pointer"
-          onClick={() => setShowEditDialog(true)}
+          onClick={() => { setShowEditDialog(true); setSyncUrlInput(''); setErrorMessage('') }}
         >
           <img
             src={value}

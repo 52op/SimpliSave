@@ -194,6 +194,7 @@ export const imagebedApi = {
   updateSettings: (token: string, data: any) => request<ImagebedSettings>('PUT', '/imagebed/settings', data, token),
   getUploadToken: (token: string, type: string, filename: string) => request<UploadTokenResponse>('POST', '/imagebed/upload-token', { type, filename }, token),
   upload: (token: string, file: Blob, type: string, filename: string) => uploadFile(token, `/imagebed/upload?type=${encodeURIComponent(type)}&filename=${encodeURIComponent(filename)}`, file, file.type),
+  uploadByUrl: (token: string, url: string, type: string = 'icon') => request<{ public_url: string }>('POST', '/imagebed/upload-by-url', { url, type }, token),
   getAvailable: (token: string) => request<ImagebedConfig[]>('GET', '/imagebed/available', undefined, token),
   listFiles: (token: string, params?: { page?: number; page_size?: number; file_type?: string }) => {
     const search = new URLSearchParams();
