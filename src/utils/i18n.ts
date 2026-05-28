@@ -232,6 +232,8 @@ const resources = {
       "common.selectCategory": "Select category",
       "common.noCategory": "No category",
       "common.createCategory": "Create category",
+      "common.filterBy": "Filter by",
+      "common.clear": "Clear",
 
       // Admin - Bookmarks
       "admin.bookmarks.title": "Public Bookmarks",
@@ -678,6 +680,8 @@ const resources = {
       "common.selectCategory": "选择分类",
       "common.noCategory": "无分类",
       "common.createCategory": "创建分类",
+      "common.filterBy": "筛选",
+      "common.clear": "清除",
 
       // Admin - 公开链接
       "admin.bookmarks.title": "公开链接",

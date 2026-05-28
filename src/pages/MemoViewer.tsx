@@ -225,7 +225,8 @@ export default function MemoViewer() {
               <span className="flex items-center gap-1 flex-wrap">
                 <Tag className="w-4 h-4" />
                 {tagsArr.map((tag: string, i: number) => (
-                  <span key={i} className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded text-xs">#{tag}</span>
+                  <button key={i} onClick={() => navigate(`/memos?tag=${encodeURIComponent(tag)}`)}
+                    className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 rounded text-xs hover:bg-blue-100 dark:hover:bg-blue-900/50">#{tag}</button>
                 ))}
               </span>
             )}

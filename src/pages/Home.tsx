@@ -472,12 +472,6 @@ export default function Home() {
               }`}
               style={selectedCategory === c.id ? { backgroundColor: c.color } : {}}
             >
-              {c.icon && (
-                <span className="w-5 h-5 flex items-center justify-center overflow-hidden [&_svg]:max-w-full [&_svg]:max-h-full" dangerouslySetInnerHTML={{ __html: c.icon.startsWith('<svg') ? c.icon : '' }} />
-              )}
-              {c.icon && !c.icon.startsWith('<svg') && (
-                <img src={c.icon} alt="" className="w-5 h-5 object-contain" />
-              )}
               {c.name}
             </button>
           ))}
@@ -507,7 +501,15 @@ export default function Home() {
                     className="w-1 h-6 rounded"
                     style={{ backgroundColor: catColor }}
                   />
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{catName}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                    {category?.icon && (
+                      <span className="w-5 h-5 flex items-center justify-center overflow-hidden [&_svg]:max-w-full [&_svg]:max-h-full" dangerouslySetInnerHTML={{ __html: category.icon.startsWith('<svg') ? category.icon : '' }} />
+                    )}
+                    {category?.icon && !category.icon.startsWith('<svg') && (
+                      <img src={category.icon} alt="" className="w-5 h-5 object-contain" />
+                    )}
+                    {catName}
+                  </h3>
                   <span className="text-sm text-gray-500 dark:text-gray-400">({items.length})</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

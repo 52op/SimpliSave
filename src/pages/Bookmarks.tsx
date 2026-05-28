@@ -16,6 +16,7 @@ import FilterBar from "../components/FilterBar"
 import CategoryTree from "../components/CategoryTree"
 import BookmarkListView from "../components/BookmarkListView"
 import ImportPreviewDialog from "../components/ImportPreviewDialog"
+import TagInput from "../components/TagInput"
 import { pinyinMatch } from "../utils/pinyin"
 
 export default function Bookmarks() {
@@ -47,6 +48,7 @@ export default function Bookmarks() {
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef<HTMLDivElement>(null)
   const [syncIconLoading, setSyncIconLoading] = useState(false)
+  const [newTag, setNewTag] = useState("")
 
   useEffect(() => {
     if (!moreOpen) return
@@ -627,7 +629,10 @@ export default function Bookmarks() {
               </button>
             </div>
           </div>
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} placeholder={t("bookmarks.tagsPlaceholder")} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.tags")}</label>
+            <TagInput tags={formData.tags} onTagsChange={(tags) => setFormData({ ...formData, tags })} value={newTag} onChange={setNewTag} />
+          </div>
           <div className="flex gap-2 pt-4"><button onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button><button onClick={handleAddBookmark} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
         </div>
       </Modal>
@@ -667,7 +672,7 @@ export default function Bookmarks() {
               </button>
             </div>
           </div>
-          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.tags")}</label><input type="text" value={typeof formData.tags === "string" ? formData.tags : formData.tags.join(", ")} onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(",") })} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.tags")}</label><TagInput tags={formData.tags} onTagsChange={(tags) => setFormData({ ...formData, tags })} value={newTag} onChange={setNewTag} /></div>
           <div className="flex gap-2 pt-4"><button onClick={() => setShowEditModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button><button onClick={handleUpdateBookmark} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button></div>
         </div>
       </Modal>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
@@ -86,6 +86,20 @@ export default function Memos() {
 
   const [categoryNameState, setCategoryNameState] = useState("")
   const [categoryColorState, setCategoryColorState] = useState("#3b82f6")
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    const tagParam = searchParams.get("tag")
+    if (tagParam) setSelectedTag(tagParam)
+  }, [])
+
+  useEffect(() => {
+    if (selectedTag) {
+      setSearchParams({ tag: selectedTag }, { replace: true })
+    } else {
+      if (searchParams.get("tag")) setSearchParams({}, { replace: true })
+    }
+  }, [selectedTag])
 
   useEffect(() => { loadData() }, [])
 
@@ -267,15 +281,21 @@ export default function Memos() {
             </button>
           ))}
         </div>
+        {selectedTag && (
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <span className="text-gray-500 dark:text-gray-400">{t("common.filterBy")}:</span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded text-sm">
+              #{selectedTag}
+              <button onClick={() => setSelectedTag("")} className="text-white/80 hover:text-white ml-0.5">×</button>
+            </span>
+            <button onClick={() => setSelectedTag("")} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline">{t("common.clear")}</button>
+          </div>
+        )}
         {tags.length > 0 && (
           <div className="flex gap-2 mt-2 flex-wrap">
-            <button onClick={() => setSelectedTag("")}
-              className={`px-3 py-1 text-sm rounded-lg transition ${!selectedTag ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-              {t("common.all")}
-            </button>
             {tags.map((tag: string) => (
               <button key={tag} onClick={() => setSelectedTag(selectedTag === tag ? "" : tag)}
-                className={`px-3 py-1 text-sm rounded-lg transition ${selectedTag === tag ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"}`}>
+                className="px-3 py-1 text-sm rounded-lg transition bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50">
                 #{tag}
               </button>
             ))}
