@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useMemoStore } from "../stores/memoStore"
 import { memoApi, userCategoryApi, tagApi } from "../services/api"
-import { Plus, Search, Trash2, Edit2, Pin, PinOff, Globe, Lock, Eye, FileText, Folder } from "lucide-react"
+import { Plus, Search, Trash2, Edit2, Pin, PinOff, Globe, Lock, Eye, FileText, Folder, Tag } from "lucide-react"
 import Modal from "../components/Modal"
 import MemoForm, { type MemoFormData } from "../components/MemoForm"
 import EmptyState from "../components/EmptyState"
@@ -83,6 +83,7 @@ export default function Memos() {
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [pageError, setPageError] = useState("")
   const [selectedTag, setSelectedTag] = useState<string>("")
+  const [showTagCloud, setShowTagCloud] = useState(false)
 
   const [categoryNameState, setCategoryNameState] = useState("")
   const [categoryColorState, setCategoryColorState] = useState("#3b82f6")
@@ -245,41 +246,47 @@ export default function Memos() {
       </SectionCard>
 
       <SectionCard className="mb-6">
-        <FilterBar className="items-stretch">
-          <div className="relative min-w-0 w-full lg:basis-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
-            <input type="text" placeholder={t("memos.search")} value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="ui-input h-11 w-full pl-10 pr-4" />
-          </div>
-          <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
-            className="ui-select h-11 w-full px-4 sm:w-auto sm:min-w-[180px]">
-            <option value="all">{t("bookmarks.allCategories")}</option>
-            {categories.filter(c => c.type === "memo").map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          <button onClick={() => setShowPinnedOnly((prev) => !prev)} className={`${showPinnedOnly ? "ui-btn ui-btn-primary" : "ui-btn ui-btn-ghost"} h-11 w-full sm:w-auto`}>
-            {t("memos.pinnedOnly")}
-          </button>
-          <div className="flex items-center gap-1.5 w-full sm:w-auto">
-            <input type="date" value={dateRange.start} onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
-              className="ui-input h-11 px-2 text-sm w-full sm:w-[140px]" />
-            <span className="text-gray-400 text-sm flex-shrink-0">—</span>
-            <input type="date" value={dateRange.end} onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
-              className="ui-input h-11 px-2 text-sm w-full sm:w-[140px]" />
-            {(dateRange.start || dateRange.end) && (
-              <button onClick={() => setDateRange({ start: "", end: "" })} className="text-gray-400 hover:text-red-500 flex-shrink-0 p-1">×</button>
-            )}
-          </div>
-        </FilterBar>
-        <div className="flex gap-2 mt-3 flex-wrap">
-          {TIME_FILTERS.map((f) => (
-            <button key={f.value} onClick={() => setTimeFilter(f.value)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition ${timeFilter === f.value ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-              {t(f.labelKey)}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <input type="text" placeholder={t("memos.search")} value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="ui-input h-11 w-full pl-10 pr-4" />
+            </div>
+            <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}
+              className="ui-select h-11 px-4 sm:w-auto sm:min-w-[160px]">
+              <option value="all">{t("bookmarks.allCategories")}</option>
+              {categories.filter(c => c.type === "memo").map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <button onClick={() => setShowPinnedOnly((prev) => !prev)} className={`${showPinnedOnly ? "ui-btn ui-btn-primary" : "ui-btn ui-btn-ghost"} h-11 whitespace-nowrap`}>
+              {t("memos.pinnedOnly")}
             </button>
-          ))}
+            <button onClick={() => setShowTagCloud(true)}
+              className={`ui-btn h-11 whitespace-nowrap ${selectedTag ? "ui-btn-primary" : "ui-btn-ghost"}`}>
+              <Tag className="w-4 h-4" />{t("bookmarks.tags")}
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {TIME_FILTERS.map((f) => (
+              <button key={f.value} onClick={() => setTimeFilter(f.value)}
+                className={`px-3 py-1.5 text-sm rounded-lg transition ${timeFilter === f.value ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+                {t(f.labelKey)}
+              </button>
+            ))}
+            <div className="flex items-center gap-1.5 ml-auto">
+              <input type="date" value={dateRange.start} onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
+                className="ui-input h-9 px-2 text-sm w-[140px]" />
+              <span className="text-gray-400 text-sm flex-shrink-0">—</span>
+              <input type="date" value={dateRange.end} onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
+                className="ui-input h-9 px-2 text-sm w-[140px]" />
+              {(dateRange.start || dateRange.end) && (
+                <button onClick={() => setDateRange({ start: "", end: "" })} className="text-gray-400 hover:text-red-500 flex-shrink-0 p-1">×</button>
+              )}
+            </div>
+          </div>
         </div>
         {selectedTag && (
           <div className="mt-3 flex items-center gap-2 text-sm">
@@ -288,17 +295,6 @@ export default function Memos() {
               #{selectedTag}
               <button onClick={() => setSelectedTag("")} className="text-white/80 hover:text-white ml-0.5">×</button>
             </span>
-            <button onClick={() => setSelectedTag("")} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline">{t("common.clear")}</button>
-          </div>
-        )}
-        {tags.length > 0 && (
-          <div className="flex gap-2 mt-2 flex-wrap">
-            {tags.map((tag: string) => (
-              <button key={tag} onClick={() => setSelectedTag(selectedTag === tag ? "" : tag)}
-                className="px-3 py-1 text-sm rounded-lg transition bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50">
-                #{tag}
-              </button>
-            ))}
           </div>
         )}
       </SectionCard>
@@ -411,6 +407,32 @@ export default function Memos() {
             onCancel={() => { setShowEditModal(false); setEditingMemo(null) }}
           />
         )}
+      </Modal>
+
+      <Modal show={showTagCloud} title={t("bookmarks.tags")} onClose={() => setShowTagCloud(false)}>
+        <div className="space-y-4">
+          {selectedTag && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">{t("common.filterBy")}:</span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded text-sm">
+                #{selectedTag}
+                <button onClick={() => setSelectedTag("")} className="text-white/80 hover:text-white ml-0.5">×</button>
+              </span>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => { setSelectedTag(""); setShowTagCloud(false) }}
+              className={`px-3 py-1.5 rounded-lg text-sm ${!selectedTag ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+              {t("common.all")}
+            </button>
+            {tags.map((tag: string) => (
+              <button key={tag} onClick={() => { setSelectedTag(tag === selectedTag ? "" : tag); setShowTagCloud(false) }}
+                className={`px-3 py-1.5 rounded-lg text-sm ${selectedTag === tag ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"}`}>
+                #{tag}
+              </button>
+            ))}
+          </div>
+        </div>
       </Modal>
 
       <Modal show={showCategoryModal} title={t("categories.add")} onClose={() => setShowCategoryModal(false)}>

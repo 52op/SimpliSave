@@ -5,7 +5,7 @@ import { useAuthStore } from "../stores/authStore"
 import { useBookmarkStore } from "../stores/bookmarkStore"
 import { userBookmarkApi, userCategoryApi, tagApi, fetchMetaApi, submissionApi, imagebedApi } from "../services/api"
 import { Bookmark } from "../types"
-import { Plus, Search, Upload, Download, Folder, X, Loader2, Menu, PanelLeftClose, Trash2, ArrowUpDown, MoreHorizontal, Tag } from "lucide-react"
+import { Plus, Search, Upload, Download, Folder, X, Loader2, Menu, PanelLeftClose, Trash2, ArrowUpDown, MoreHorizontal, Tag, Star, Archive } from "lucide-react"
 import { translateText } from "../utils/translate"
 import Modal from "../components/Modal"
 import ImageUploader from "../components/ImageUploader"
@@ -435,12 +435,12 @@ export default function Bookmarks() {
           </button>
           <div className="flex-1" />
           <button onClick={() => setShowFavoritesOnly(v => !v)}
-            className={`px-3 py-2 rounded-lg text-sm ${showFavoritesOnly ? "bg-yellow-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-            {t("bookmarks.starred")}
+            className={`px-3 py-2 rounded-lg text-sm flex items-center gap-1.5 ${showFavoritesOnly ? "bg-yellow-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+            <Star className={`w-4 h-4 ${showFavoritesOnly ? "fill-current" : ""}`} />{t("bookmarks.starred")}
           </button>
           <button onClick={() => setShowArchived(v => !v)}
-            className={`px-3 py-2 rounded-lg text-sm ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-            {showArchived ? t("bookmarks.unarchivedFilter") : t("bookmarks.archivedFilter")}
+            className={`px-3 py-2 rounded-lg text-sm flex items-center gap-1.5 ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+            <Archive className="w-4 h-4" />{showArchived ? t("bookmarks.unarchivedFilter") : t("bookmarks.archivedFilter")}
           </button>
           <button onClick={() => setShowTagCloud(true)}
             className={`px-3 py-2 rounded-lg text-sm flex items-center gap-1.5 ${selectedTag ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
