@@ -101,8 +101,8 @@ export async function withCache(
 
   // Only cache successful responses
   if (response.status === 200) {
-    // Don't await — fire and forget to avoid blocking the response
-    cachePut(requestUrl, response, ttl).catch(() => {});
+    // Clone the response so cachePut can consume the body without affecting the original
+    cachePut(requestUrl, response.clone(), ttl).catch(() => {});
   }
 
   return response;
