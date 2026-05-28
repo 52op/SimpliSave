@@ -3,11 +3,6 @@ import { corsHeaders } from './response';
 
 // Lightweight in-request user validation cache (TTL 5 min via Cache API)
 const USER_CACHE_TTL = 300;
-const USER_CACHE_PREFIX = 'ss:auth:';
-
-function getUserCacheKey(userId: string): string {
-  return USER_CACHE_PREFIX + userId;
-}
 
 // 从 Cookie 头中提取指定 cookie 值
 function getCookieValue(request: Request, name: string): string | null {
@@ -68,8 +63,8 @@ export async function getUserId(request: Request, env: any): Promise<string | nu
   if (!rawId) return null;
   const userId = String(rawId);
 
-  // Check Cache API first — skip D1 query for known valid users
-  const cacheKey = getUserCacheKey(userId);
+  // Cache API requires fully-qualified URLs as keys
+  const cacheKey = new URL(`/__auth/${userId}`, request.url).href;
   const cached = await caches.default.match(cacheKey);
   if (cached) return userId;
 
@@ -87,8 +82,9 @@ export async function getUserId(request: Request, env: any): Promise<string | nu
     const created = await findOrCreateSSOUser(env, payload.email, payload.username, payload.role);
     if (created) {
       // Cache newly created user
+      const key = new URL(`/__auth/${created.id}`, request.url).href;
       const resp = new Response(String(created.id), { status: 200, headers: { 'Cache-Control': `max-age=${USER_CACHE_TTL}` } });
-      caches.default.put(getUserCacheKey(String(created.id)), resp).catch(() => {});
+      caches.default.put(key, resp).catch(() => {});
       return String(created.id);
     }
   }
