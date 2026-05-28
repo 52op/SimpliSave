@@ -51,7 +51,6 @@ export default function AdminBookmarks() {
   const [formNewGroup, setFormNewGroup] = useState("")
   const [fetching, setFetching] = useState(false)
   const [syncIconLoading, setSyncIconLoading] = useState(false)
-  const token = useAuthStore((s) => s.token)
 
   const cleanText = (value?: string | null) =>
     (value || "")
