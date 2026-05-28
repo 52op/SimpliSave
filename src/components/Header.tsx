@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { Sun, Moon, LogOut, Menu, X, Home, Star, BookOpen, User, Shield, Send, Globe, Search, Image, Settings, Mail } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import SearchModal from "./SearchModal"
+import { getAvatarUrl } from "../utils/data"
 
 export default function Header() {
   const { token, logout, user } = useAuthStore()
@@ -155,8 +156,13 @@ export default function Header() {
                   to="/profile"
                   className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
-                  <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-blue-600 dark:text-blue-300" />
+                  <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+                    <img
+                      src={getAvatarUrl(user?.avatar_url, user?.email || '', 24)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.currentTarget.src = getAvatarUrl('', user?.email || '', 24) }}
+                    />
                   </div>
                   <span className="text-sm text-gray-700 dark:text-gray-300">{user?.name || user?.email}</span>
                   {isAdmin && <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 px-1.5 py-0.5 rounded">Admin</span>}
