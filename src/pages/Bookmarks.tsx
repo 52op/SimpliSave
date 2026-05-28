@@ -5,7 +5,7 @@ import { useAuthStore } from "../stores/authStore"
 import { useBookmarkStore } from "../stores/bookmarkStore"
 import { userBookmarkApi, userCategoryApi, tagApi, fetchMetaApi, submissionApi, imagebedApi } from "../services/api"
 import { Bookmark } from "../types"
-import { Plus, Search, Upload, Download, Folder, X, Loader2, Menu, PanelLeftClose, Trash2, ArrowUpDown, MoreHorizontal } from "lucide-react"
+import { Plus, Search, Upload, Download, Folder, X, Loader2, Menu, PanelLeftClose, Trash2, ArrowUpDown, MoreHorizontal, Tag } from "lucide-react"
 import { translateText } from "../utils/translate"
 import Modal from "../components/Modal"
 import ImageUploader from "../components/ImageUploader"
@@ -49,6 +49,7 @@ export default function Bookmarks() {
   const moreRef = useRef<HTMLDivElement>(null)
   const [syncIconLoading, setSyncIconLoading] = useState(false)
   const [newTag, setNewTag] = useState("")
+  const [showTagCloud, setShowTagCloud] = useState(false)
 
   useEffect(() => {
     if (!moreOpen) return
@@ -441,6 +442,10 @@ export default function Bookmarks() {
             className={`px-3 py-2 rounded-lg text-sm ${showArchived ? "bg-purple-500 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
             {showArchived ? t("bookmarks.unarchivedFilter") : t("bookmarks.archivedFilter")}
           </button>
+          <button onClick={() => setShowTagCloud(true)}
+            className={`px-3 py-2 rounded-lg text-sm flex items-center gap-1.5 ${selectedTag ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+            <Tag className="w-4 h-4" />{t("bookmarks.tags")}
+          </button>
         </div>
         <div className="mt-3 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -448,18 +453,14 @@ export default function Bookmarks() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800" />
         </div>
-        {tags.length > 0 && (
-          <div className="flex gap-2 mt-3 flex-wrap">
-            <button onClick={() => setSelectedTag("")}
-              className={`px-3 py-1 text-sm rounded-lg transition ${!selectedTag ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
-              {t("common.all")}
-            </button>
-            {tags.map((tag: string) => (
-              <button key={tag} onClick={() => setSelectedTag(selectedTag === tag ? "" : tag)}
-                className={`px-3 py-1 text-sm rounded-lg transition ${selectedTag === tag ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"}`}>
-                #{tag}
-              </button>
-            ))}
+        {selectedTag && (
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <span className="text-gray-500 dark:text-gray-400">{t("common.filterBy")}:</span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded text-sm">
+              #{selectedTag}
+              <button onClick={() => setSelectedTag("")} className="text-white/80 hover:text-white ml-0.5">×</button>
+            </span>
+            <button onClick={() => setSelectedTag("")} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 underline">{t("common.clear")}</button>
           </div>
         )}
       </SectionCard>
@@ -582,6 +583,32 @@ export default function Bookmarks() {
               {label}
             </button>
           ))}
+        </div>
+      </Modal>
+
+      <Modal show={showTagCloud} title={t("bookmarks.tags")} onClose={() => setShowTagCloud(false)}>
+        <div className="space-y-4">
+          {selectedTag && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">{t("common.filterBy")}:</span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded text-sm">
+                #{selectedTag}
+                <button onClick={() => setSelectedTag("")} className="text-white/80 hover:text-white ml-0.5">×</button>
+              </span>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => { setSelectedTag(""); setShowTagCloud(false) }}
+              className={`px-3 py-1.5 rounded-lg text-sm ${!selectedTag ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+              {t("common.all")}
+            </button>
+            {tags.map((tag: string) => (
+              <button key={tag} onClick={() => { setSelectedTag(tag === selectedTag ? "" : tag); setShowTagCloud(false) }}
+                className={`px-3 py-1.5 rounded-lg text-sm ${selectedTag === tag ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"}`}>
+                #{tag}
+              </button>
+            ))}
+          </div>
         </div>
       </Modal>
 
