@@ -418,37 +418,43 @@ export default function Home() {
           </div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("home.categories")}</h2>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => setSelectedCategory("all")}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
-              selectedCategory === "all"
-                ? "bg-[var(--color-primary)] text-white shadow-sm"
-                : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text-main)]"
-            }`}
-            aria-label={t("home.all")}
-          >
-            {t("home.all")}
-          </button>
-          {categories.map((c) => (
+        <div className="relative">
+          {/* 左右渐变遮罩（仅移动端） */}
+          <div className="absolute left-0 top-0 bottom-2 w-6 bg-gradient-to-r from-[var(--color-page)] to-transparent z-10 pointer-events-none md:hidden" />
+          <div className="absolute right-0 top-0 bottom-2 w-6 bg-gradient-to-l from-[var(--color-page)] to-transparent z-10 pointer-events-none md:hidden" />
+          {/* 分类按钮容器 */}
+          <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar md:flex-wrap md:overflow-visible">
             <button
-              key={c.id}
-              onClick={() => setSelectedCategory(c.id)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1.5 ${
-                selectedCategory === c.id
-                  ? "text-white shadow-sm"
+              onClick={() => setSelectedCategory("all")}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap ${
+                selectedCategory === "all"
+                  ? "bg-[var(--color-primary)] text-white shadow-sm"
                   : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text-main)]"
               }`}
-              style={selectedCategory === c.id ? { backgroundColor: c.color } : {}}
-              aria-label={c.name}
+              aria-label={t("home.all")}
             >
-              {c.icon && (
-                <span className="w-4 h-4 flex items-center justify-center overflow-hidden [&_svg]:max-w-full [&_svg]:max-h-full" dangerouslySetInnerHTML={{ __html: c.icon.startsWith('<svg') ? c.icon : '' }} />
-              )}
-              {c.icon && !c.icon.startsWith('<svg') && <img src={c.icon} alt="" className="w-4 h-4 object-contain" />}
-              {c.name}
+              {t("home.all")}
             </button>
-          ))}
+            {categories.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedCategory(c.id)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1.5 whitespace-nowrap ${
+                  selectedCategory === c.id
+                    ? "text-white shadow-sm"
+                    : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text-main)]"
+                }`}
+                style={selectedCategory === c.id ? { backgroundColor: c.color } : {}}
+                aria-label={c.name}
+              >
+                {c.icon && (
+                  <span className="w-4 h-4 flex items-center justify-center overflow-hidden [&_svg]:max-w-full [&_svg]:max-h-full" dangerouslySetInnerHTML={{ __html: c.icon.startsWith('<svg') ? c.icon : '' }} />
+                )}
+                {c.icon && !c.icon.startsWith('<svg') && <img src={c.icon} alt="" className="w-4 h-4 object-contain" />}
+                {c.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -197,6 +197,15 @@ body {
 }
 .animate-marquee:hover { animation-play-state: paused; }
 
+/* 隐藏滚动条但保留滚动 */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* 登录/注册页装饰圆 */
 .auth-blob {
   position: absolute;
