@@ -5,7 +5,7 @@ import { useAuthStore } from "../stores/authStore"
 import { useSiteSettingsStore } from "../stores/siteSettingsStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
-import { Search, Folder, Globe, Zap, Loader2, X, RefreshCw } from "lucide-react"
+import { Search, Folder, Globe, Zap, Loader2, X, RefreshCw, ChevronDown } from "lucide-react"
 import Favicon from "../components/Favicon"
 import EmptyState from "../components/EmptyState"
 import PageHeader from "../components/PageHeader"
@@ -50,6 +50,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedEngineId, setSelectedEngineId] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
   const [showEngines, setShowEngines] = useState(false)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
   const [submitForm, setSubmitForm] = useState({ url: "", title: "", description: "" })
@@ -474,51 +475,64 @@ export default function Home() {
           <p className="text-sm text-[var(--color-text-muted)]">{t("home.loginToAdd")}</p>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-4">
           {Object.entries(groupedGroups).map(([catId, items]) => {
             const category = categories.find(c => c.id === catId)
             const catName = category?.name || (catId === "uncategorized" ? t("home.uncategorized") || "未分类" : t("home.other") || "其他")
             const catColor = category?.color || "#3b82f6"
+            const isCollapsed = collapsedCategories.has(catId)
 
             return (
-              <div key={catId}>
-                <div className="flex items-center gap-2 mb-3">
+              <div key={catId} className="ui-card !p-0 overflow-hidden">
+                {/* 分类头 */}
+                <button
+                  type="button"
+                  onClick={() => setCollapsedCategories(prev => {
+                    const next = new Set(prev)
+                    if (next.has(catId)) next.delete(catId)
+                    else next.add(catId)
+                    return next
+                  })}
+                  className="w-full flex items-center gap-2.5 px-5 py-3.5 hover:bg-[var(--color-surface-2)] transition-colors"
+                >
                   <div
-                    className="w-1 h-5 rounded-full"
-                    style={{ backgroundColor: catColor }}
-                  />
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
-                    {category?.icon && (
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: catColor + "18" }}
+                  >
+                    {category?.icon ? (
                       <span className="w-5 h-5 flex items-center justify-center overflow-hidden [&_svg]:max-w-full [&_svg]:max-h-full" dangerouslySetInnerHTML={{ __html: category.icon.startsWith('<svg') ? category.icon : '' }} />
+                    ) : (
+                      <Folder className="w-4 h-4" style={{ color: catColor }} />
                     )}
-                    {category?.icon && !category.icon.startsWith('<svg') && (
-                      <img src={category.icon} alt="" className="w-5 h-5 object-contain" />
-                    )}
-                    {catName}
-                  </h3>
+                  </div>
+                  <span className="font-semibold text-[var(--color-text-main)] text-[15px]">{catName}</span>
                   <span className="text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-2)] px-2 py-0.5 rounded-full">{items.length}</span>
-                </div>
-                <div className="stagger-enter grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {items.map((g) => (
-                    <a
-                      key={g.id}
-                      href={`/g/${g.slug}`}
-                      onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                      className="ui-card-link"
-                      style={{ '--cat-color': catColor } as React.CSSProperties}
-                      aria-label={`${g.title}${g.description ? `: ${g.description}` : ''}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Favicon src={g.icon_url} title={g.title} size="md" />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-[var(--color-text-main)] truncate">{g.title}</p>
-                          {g.description && (
-                            <p className="text-xs text-[var(--color-text-muted)] mt-1 line-clamp-2">{g.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    </a>
-                  ))}
+                  <ChevronDown
+                    className={`w-4 h-4 ml-auto text-[var(--color-text-muted)] transition-transform duration-200 shrink-0 ${isCollapsed ? "" : "rotate-180"}`}
+                  />
+                </button>
+
+                {/* 分类内容 */}
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? "max-h-0" : "max-h-[500px]"}`}>
+                  <div className="relative px-5 pb-4 pt-1">
+                    {/* 左右渐变遮罩（仅移动端） */}
+                    <div className="absolute left-0 top-0 bottom-0 w-5 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none md:hidden dark:from-[var(--color-surface)]" />
+                    <div className="absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none md:hidden dark:from-[var(--color-surface)]" />
+                    <div className="flex gap-5 overflow-x-auto py-2 no-scrollbar md:flex-wrap md:overflow-visible md:justify-start">
+                      {items.map((g) => (
+                        <a
+                          key={g.id}
+                          href={`/g/${g.slug}`}
+                          onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
+                          className="flex flex-col items-center gap-1.5 w-[68px] shrink-0 group"
+                          title={g.description || g.title}
+                        >
+                          <Favicon src={g.icon_url} title={g.title} size="md" />
+                          <span className="text-xs text-[var(--color-text-main)] text-center leading-tight line-clamp-2 w-full group-hover:text-[var(--color-primary)] transition-colors">{g.title}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )
