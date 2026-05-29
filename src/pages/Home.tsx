@@ -483,7 +483,7 @@ export default function Home() {
             const isCollapsed = collapsedCategories.has(catId)
 
             return (
-              <div key={catId} className="ui-card !p-0 overflow-hidden">
+              <div key={catId} className="ui-card !p-0 overflow-hidden bg-[var(--color-surface-2)]/50">
                 {/* 分类头 */}
                 <button
                   type="button"
@@ -527,7 +527,7 @@ export default function Home() {
                           className="flex flex-col items-center gap-1.5 w-[68px] shrink-0 group"
                           title={g.description || g.title}
                         >
-                          <Favicon src={g.icon_url} title={g.title} size="md" />
+                          <Favicon src={g.icon_url} title={g.title} size="category" />
                           <span className="text-xs text-[var(--color-text-main)] text-center leading-tight line-clamp-2 w-full group-hover:text-[var(--color-primary)] transition-colors">{g.title}</span>
                         </a>
                       ))}
