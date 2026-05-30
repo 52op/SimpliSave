@@ -518,17 +518,17 @@ export default function Home() {
                     {/* 左右渐变遮罩（仅移动端） */}
                     <div className="absolute left-0 top-0 bottom-0 w-5 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none md:hidden dark:from-[var(--color-surface)]" />
                     <div className="absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none md:hidden dark:from-[var(--color-surface)]" />
-                    <div className="flex gap-5 overflow-x-auto py-2 no-scrollbar md:flex-wrap md:overflow-visible md:justify-start">
+                    <div className="flex gap-7 overflow-x-auto py-2 no-scrollbar md:flex-wrap md:overflow-visible md:justify-start">
                       {items.map((g) => (
                         <a
                           key={g.id}
                           href={`/g/${g.slug}`}
                           onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                          className="flex flex-col items-center gap-1.5 w-[68px] shrink-0 group"
+                          className="flex flex-col items-center gap-1.5 w-[76px] shrink-0 group"
                           title={g.description || g.title}
                         >
                           <Favicon src={g.icon_url} title={g.title} size="category" />
-                          <span className="text-xs text-[var(--color-text-main)] text-center leading-tight line-clamp-2 w-full group-hover:text-[var(--color-primary)] transition-colors">{g.title}</span>
+                          <span className="text-[13px] text-[var(--color-text-main)] text-center leading-snug line-clamp-2 w-full group-hover:text-[var(--color-primary)] transition-colors">{g.title}</span>
                         </a>
                       ))}
                     </div>
