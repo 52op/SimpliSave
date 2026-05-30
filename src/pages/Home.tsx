@@ -397,13 +397,13 @@ export default function Home() {
           <div className="relative px-5 pb-4 pt-1">
             <div className="absolute left-0 top-0 bottom-0 w-5 bg-gradient-to-r from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
             <div className="absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
-            <div className="flex gap-7 overflow-x-auto py-2 no-scrollbar md:flex-wrap md:overflow-visible md:justify-start">
+            <div className="flex gap-5 overflow-x-auto py-2 no-scrollbar md:grid md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5 md:overflow-visible">
               {topGroups.map((g) => (
                 <a
                   key={g.id}
                   href={`/g/${g.slug}`}
                   onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                  className="flex flex-col items-center gap-1.5 w-[76px] shrink-0 group"
+                  className="flex flex-col items-center gap-1.5 w-[76px] md:w-auto shrink-0 group"
                   title={g.title}
                 >
                   <Favicon src={g.icon_url} title={g.title} size="category" />
@@ -517,18 +517,18 @@ export default function Home() {
                 </button>
 
                 {/* 分类内容 */}
-                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? "max-h-0" : "max-h-[500px]"}`}>
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? "max-h-0" : "max-h-[800px]"}`}>
                   <div className="relative px-5 pb-4 pt-1">
                     {/* 左右渐变遮罩（仅移动端） */}
-                    <div className="absolute left-0 top-0 bottom-0 w-5 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none md:hidden dark:from-[var(--color-surface)]" />
-                    <div className="absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none md:hidden dark:from-[var(--color-surface)]" />
-                    <div className="flex gap-7 overflow-x-auto py-2 no-scrollbar md:flex-wrap md:overflow-visible md:justify-start">
+                    <div className="absolute left-0 top-0 bottom-0 w-5 bg-gradient-to-r from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
+                    <div className="absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
+                    <div className="flex gap-5 overflow-x-auto py-2 no-scrollbar md:grid md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5 md:overflow-visible">
                       {items.map((g) => (
                         <a
                           key={g.id}
                           href={`/g/${g.slug}`}
                           onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                          className="flex flex-col items-center gap-1.5 w-[76px] shrink-0 group"
+                          className="flex flex-col items-center gap-1.5 w-[76px] md:w-auto shrink-0 group"
                           title={g.description || g.title}
                         >
                           <Favicon src={g.icon_url} title={g.title} size="category" />
