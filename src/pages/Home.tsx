@@ -394,10 +394,8 @@ export default function Home() {
             </div>
             <h2 className="font-semibold text-[var(--color-text-main)] text-[15px]">{t("home.recommended")}</h2>
           </div>
-          <div className="relative px-5 pb-4 pt-1">
-            <div className="absolute left-0 top-0 bottom-0 w-5 bg-gradient-to-r from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
-            <div className="absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
-            <div className="flex gap-5 overflow-x-auto py-2 no-scrollbar md:grid md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5 md:overflow-visible">
+          <div className="px-5 pb-4 pt-1">
+            <div className="flex flex-wrap gap-x-4 gap-y-3 py-2 md:grid md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5">
               {topGroups.map((g) => (
                 <a
                   key={g.id}
@@ -518,11 +516,8 @@ export default function Home() {
 
                 {/* 分类内容 */}
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? "max-h-0" : "max-h-[800px]"}`}>
-                  <div className="relative px-5 pb-4 pt-1">
-                    {/* 左右渐变遮罩（仅移动端） */}
-                    <div className="absolute left-0 top-0 bottom-0 w-5 bg-gradient-to-r from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
-                    <div className="absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
-                    <div className="flex gap-5 overflow-x-auto py-2 no-scrollbar md:grid md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5 md:overflow-visible">
+                  <div className="px-5 pb-4 pt-1">
+                    <div className="flex flex-wrap gap-x-4 gap-y-3 py-2 md:grid md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5">
                       {items.map((g) => (
                         <a
                           key={g.id}
