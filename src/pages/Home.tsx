@@ -395,13 +395,13 @@ export default function Home() {
             <h2 className="font-semibold text-[var(--color-text-main)] text-[15px]">{t("home.recommended")}</h2>
           </div>
           <div className="px-5 pb-4 pt-1">
-            <div className="flex flex-wrap gap-x-4 gap-y-3 py-2 md:grid md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5">
+            <div className="grid grid-cols-4 gap-x-3 gap-y-4 py-2 md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5">
               {topGroups.map((g) => (
                 <a
                   key={g.id}
                   href={`/g/${g.slug}`}
                   onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                  className="flex flex-col items-center gap-1.5 w-[76px] md:w-auto shrink-0 group"
+                  className="flex flex-col items-center gap-1.5 group"
                   title={g.title}
                 >
                   <Favicon src={g.icon_url} title={g.title} size="category" />
@@ -517,13 +517,13 @@ export default function Home() {
                 {/* 分类内容 */}
                 <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? "max-h-0" : "max-h-[800px]"}`}>
                   <div className="px-5 pb-4 pt-1">
-                    <div className="flex flex-wrap gap-x-4 gap-y-3 py-2 md:grid md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5">
+                    <div className="grid grid-cols-4 gap-x-3 gap-y-4 py-2 md:grid-cols-[repeat(auto-fill,minmax(72px,1fr))] md:gap-x-7 md:gap-y-5">
                       {items.map((g) => (
                         <a
                           key={g.id}
                           href={`/g/${g.slug}`}
                           onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                          className="flex flex-col items-center gap-1.5 w-[76px] md:w-auto shrink-0 group"
+                          className="flex flex-col items-center gap-1.5 group"
                           title={g.description || g.title}
                         >
                           <Favicon src={g.icon_url} title={g.title} size="category" />
