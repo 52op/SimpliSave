@@ -387,26 +387,30 @@ export default function Home() {
 
       {/* 常用推荐 */}
       {topGroups.length > 0 && (
-        <div className="mb-10">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-sm">
-              <Zap className="w-3.5 h-3.5 text-white" />
+        <div className="mb-6 ui-card !p-0 overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-3.5">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center shadow-sm shrink-0">
+              <Zap className="w-4 h-4 text-white" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("home.recommended")}</h2>
+            <h2 className="font-semibold text-[var(--color-text-main)] text-[15px]">{t("home.recommended")}</h2>
           </div>
-          <div className="stagger-enter grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {topGroups.map((g) => (
-              <a
-                key={g.id}
-                href={`/g/${g.slug}`}
-                onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
-                className="ui-card-link !p-3 flex items-center gap-2.5"
-                aria-label={g.title}
-              >
-                <Favicon src={g.icon_url} title={g.title} size="sm" />
-                <p className="text-sm font-medium text-[var(--color-text-main)] truncate" title={g.title}>{g.title}</p>
-              </a>
-            ))}
+          <div className="relative px-5 pb-4 pt-1">
+            <div className="absolute left-0 top-0 bottom-0 w-5 bg-gradient-to-r from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
+            <div className="absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-[var(--color-surface-2)] to-transparent z-10 pointer-events-none md:hidden" />
+            <div className="flex gap-7 overflow-x-auto py-2 no-scrollbar md:flex-wrap md:overflow-visible md:justify-start">
+              {topGroups.map((g) => (
+                <a
+                  key={g.id}
+                  href={`/g/${g.slug}`}
+                  onClick={(e) => { e.preventDefault(); navigate(`/g/${g.slug}`) }}
+                  className="flex flex-col items-center gap-1.5 w-[76px] shrink-0 group"
+                  title={g.title}
+                >
+                  <Favicon src={g.icon_url} title={g.title} size="category" />
+                  <span className="text-[13px] text-[var(--color-text-main)] text-center leading-snug line-clamp-2 w-full group-hover:text-[var(--color-primary)] transition-colors">{g.title}</span>
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       )}
