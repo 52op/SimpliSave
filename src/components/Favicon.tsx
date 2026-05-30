@@ -32,7 +32,7 @@ export default function Favicon({ src, title, size = "md" }: { src?: string | nu
     md: "w-10 h-10 text-sm",
     lg: "w-14 h-14 text-lg",
     xl: "w-20 h-20 text-xl",
-    category: "w-14 h-14 text-sm",
+    category: "w-12 h-12 text-sm",
   }[size]
 
   if (!src || errored) {

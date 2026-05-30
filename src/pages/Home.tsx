@@ -483,7 +483,7 @@ export default function Home() {
             const isCollapsed = collapsedCategories.has(catId)
 
             return (
-              <div key={catId} className="ui-card !p-0 overflow-hidden bg-[var(--color-surface-2)]/50">
+              <div key={catId} className="ui-card !p-0 overflow-hidden">
                 {/* 分类头 */}
                 <button
                   type="button"
