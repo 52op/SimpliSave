@@ -277,7 +277,26 @@ export default function Home() {
         <div className="flex gap-2 mb-6">
           <SkeletonCategory />
         </div>
-        <SkeletonCard count={8} />
+        <div className="ui-card !p-0 overflow-hidden mb-4">
+          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[var(--color-border)]">
+            <div className="skeleton w-5 h-5 rounded" />
+            <div className="skeleton h-4 w-24 rounded" />
+            <div className="skeleton h-5 w-6 rounded-full" />
+          </div>
+          <div className="px-5 pb-4 pt-1">
+            <SkeletonCard count={8} />
+          </div>
+        </div>
+        <div className="ui-card !p-0 overflow-hidden">
+          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[var(--color-border)]">
+            <div className="skeleton w-5 h-5 rounded" />
+            <div className="skeleton h-4 w-24 rounded" />
+            <div className="skeleton h-5 w-6 rounded-full" />
+          </div>
+          <div className="px-5 pb-4 pt-1">
+            <SkeletonCard count={12} />
+          </div>
+        </div>
       </div>
     )
   }
