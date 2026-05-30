@@ -41,11 +41,14 @@
   --color-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   --color-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
+.dark body {
+  background: linear-gradient(160deg, #0b1220 0%, #0f172a 40%, #110f20 100%);
+}
 
 body {
   margin: 0;
   font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, -apple-system, sans-serif;
-  background: var(--color-page);
+  background: linear-gradient(160deg, #eef2ff 0%, #f2f4f8 40%, #f5f0ff 100%);
   color: var(--color-text-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -57,7 +60,7 @@ body {
 
 /* ──────── UI Card ──────── */
 .ui-card {
-  background: var(--color-surface-2);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 1rem;
   box-shadow: var(--color-shadow);
