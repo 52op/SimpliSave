@@ -391,7 +391,7 @@ export default function Bookmarks() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6">
       <PageHeader title={t("bookmarks.pageTitle")} description={t("bookmarks.pageDesc")} />
 
       {/* Toolbar */}

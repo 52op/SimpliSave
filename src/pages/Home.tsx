@@ -267,7 +267,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
         <PageHeader title={siteSettings?.site_name || "SimpliSave"} description={siteSettings?.description || t("app.description")} />
         <div className="ui-card text-center py-10 px-4 mb-8">
           <div className="skeleton h-8 w-64 mx-auto mb-3 rounded" />
@@ -283,7 +283,7 @@ export default function Home() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto dark:text-gray-300">
+    <div className="max-w-6xl mx-auto dark:text-gray-300">
       {/* 搜索区域 */}
       <div className="relative ui-card text-center py-12 px-4 mb-8 z-10">
         <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
