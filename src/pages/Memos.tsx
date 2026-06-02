@@ -218,6 +218,64 @@ export default function Memos() {
     }
   }
 
+  function renderMemoCard(m: typeof memos[0]) {
+    const tagsArr = typeof m.tags === "string" ? JSON.parse(m.tags || "[]") : (m.tags || [])
+    return (
+      <div key={m.id} className="rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow border border-gray-100 dark:border-gray-700/50 overflow-hidden">
+        {m.cover_image && (
+          <button onClick={() => navigate(`/memo/${m.id}`)} className="block w-full">
+            <img src={m.cover_image} alt="" className="w-full h-32 object-cover" />
+          </button>
+        )}
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <button onClick={() => handlePinMemo(m.id)} className="text-gray-400 dark:text-gray-500 hover:text-yellow-500 flex-shrink-0">
+                {m.is_pinned ? <Pin className="w-4 h-4 fill-current text-yellow-500" /> : <PinOff className="w-4 h-4" />}
+              </button>
+              {m.is_pinned && <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded flex-shrink-0">{t("memos.pinned")}</span>}
+              {m.is_public ? (
+                <span className="text-xs bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded flex-shrink-0 flex items-center gap-1">
+                  {m.share_password ? <Lock className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
+                  {t("memos.public")}
+                </span>
+              ) : null}
+              <div className="flex-1 min-w-0">
+                <button onClick={() => navigate(`/memo/${m.id}`)} className="text-left w-full">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate hover:text-blue-600">{m.title}</h3>
+                </button>
+                <div className="flex items-center gap-1 mt-1 flex-wrap">
+                  {m.category_id && (
+                    <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">
+                      {categories.find(c => c.id === m.category_id)?.name || t("common.noCategory")}
+                    </span>
+                  )}
+                  {tagsArr.slice(0, 3).map((tag: string, i: number) => (
+                    <button key={i} onClick={() => setSelectedTag(selectedTag === tag ? "" : tag)}
+                      className={`text-xs px-2 py-0.5 rounded ${selectedTag === tag ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"}`}>#{tag}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <button onClick={() => navigate(`/memo/${m.id}`)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600" title={t("common.view")}><Eye className="w-4 h-4" /></button>
+                <button onClick={() => { setEditingMemo(m); setShowEditModal(true) }} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={() => handleDeleteMemo(m.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            </div>
+          </div>
+          {m.content && (
+            <button onClick={() => navigate(`/memo/${m.id}`)} className="text-left w-full">
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">{stripHtml(m.content)}</p>
+            </button>
+          )}
+          <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+            {formatDateKey(m.created_at, t)}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto p-6">
@@ -311,77 +369,32 @@ export default function Memos() {
           action={!searchQuery && selectedCategory === "all" && !showPinnedOnly && timeFilter === "all" && !dateRange.start && !dateRange.end ? <button onClick={() => setShowAddModal(true)} className="ui-btn ui-btn-primary">{t("memos.addFirst")}</button> : undefined}
         />
       ) : !pageError ? (
-        <div className="space-y-8">
-          {groupedMemos.map((group) => (
-            <div key={group.key}>
-              <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">
-                {group.labelKey === "timelineYearMonth"
-                  ? t("memos.timelineYearMonth", { year: group.year, month: String(group.month).padStart(2, "0") })
-                  : t(`memos.${group.labelKey}`)}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {group.items.map((m) => {
-                  const tagsArr = typeof m.tags === "string" ? JSON.parse(m.tags || "[]") : (m.tags || [])
-                  return (
-                    <div key={m.id} className={`rounded-lg shadow-md dark:shadow-gray-900/30 hover:shadow-lg transition border-l-4 overflow-hidden ${m.is_pinned ? 'md:col-span-2' : ''}`}
-                      style={{ borderLeftColor: m.color || "#e5e7eb", backgroundColor: m.color === "#ffffff" ? "#fff" : m.color + "15" }}>
-                      {m.cover_image && (
-                        <button onClick={() => navigate(`/memo/${m.id}`)} className="block w-full">
-                          <img src={m.cover_image} alt="" className="w-full h-32 object-cover" />
-                        </button>
-                      )}
-                      <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <button onClick={() => handlePinMemo(m.id)} className="text-gray-400 dark:text-gray-500 hover:text-yellow-500 flex-shrink-0">
-                            {m.is_pinned ? <Pin className="w-4 h-4 fill-current text-yellow-500" /> : <PinOff className="w-4 h-4" />}
-                          </button>
-                          {m.is_pinned && <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded flex-shrink-0">{t("memos.pinned")}</span>}
-                          {m.is_public ? (
-                            <span className="text-xs bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded flex-shrink-0 flex items-center gap-1">
-                              {m.share_password ? <Lock className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
-                              {t("memos.public")}
-                            </span>
-                          ) : null}
-                          <div className="flex-1 min-w-0">
-                            <button onClick={() => navigate(`/memo/${m.id}`)} className="text-left w-full">
-                              <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate hover:text-blue-600">{m.title}</h3>
-                            </button>
-                            <div className="flex items-center gap-1 mt-1 flex-wrap">
-                              {m.category_id && (
-                                <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">
-                                  {categories.find(c => c.id === m.category_id)?.name || t("common.noCategory")}
-                                </span>
-                              )}
-                              {tagsArr.slice(0, 3).map((tag: string, i: number) => (
-                                <button key={i} onClick={() => setSelectedTag(selectedTag === tag ? "" : tag)}
-                                  className={`text-xs px-2 py-0.5 rounded ${selectedTag === tag ? "bg-blue-600 text-white" : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"}`}>#{tag}</button>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="flex gap-1 flex-shrink-0">
-                            <button onClick={() => navigate(`/memo/${m.id}`)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600" title={t("common.view")}><Eye className="w-4 h-4" /></button>
-                            <button onClick={() => { setEditingMemo(m); setShowEditModal(true) }} className="p-1 text-gray-500 dark:text-gray-400 hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
-                            <button onClick={() => handleDeleteMemo(m.id)} className="p-1 text-gray-500 dark:text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                          </div>
-                        </div>
-                      </div>
-                      {m.content && (
-                        <button onClick={() => navigate(`/memo/${m.id}`)} className="text-left w-full">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">{stripHtml(m.content)}</p>
-                        </button>
-                      )}
-                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                        {formatDateKey(m.created_at, t)}
-                      </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+        showPinnedOnly ? (
+          <div className="space-y-3">
+            {filteredMemos.map(renderMemoCard)}
+          </div>
+        ) : (
+          <div className="relative">
+            <div className="absolute left-[13px] top-[18px] bottom-4 w-0.5 bg-gray-200 dark:bg-gray-700/50" />
+            <div className="space-y-8">
+              {groupedMemos.map((group) => (
+                <div key={group.key} className="ml-7">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`-ml-[21px] w-3 h-3 rounded-full z-10 ring-[5px] ring-[var(--color-surface-2)] flex-shrink-0 ${group.key === 'today' ? 'bg-blue-500 shadow-sm shadow-blue-500/30' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                    <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                      {group.labelKey === "timelineYearMonth"
+                        ? t("memos.timelineYearMonth", { year: group.year, month: String(group.month).padStart(2, "0") })
+                        : t(`memos.${group.labelKey}`)}
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {group.items.map(renderMemoCard)}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )
       ) : null}
 
       <Modal show={showAddModal} title={t("memos.add")} onClose={() => { setShowAddModal(false) }} fullScreen>
