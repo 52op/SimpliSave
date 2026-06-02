@@ -25,7 +25,7 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 function getTimelineLabel(dateStr: string): { key: string; label: string } {
-  const d = new Date(dateStr)
+  const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z')
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const yesterdayStart = new Date(todayStart.getTime() - 86400000)
@@ -319,11 +319,11 @@ export default function Memos() {
                   ? t("memos.timelineYearMonth", { year: group.year, month: String(group.month).padStart(2, "0") })
                   : t(`memos.${group.labelKey}`)}
               </h3>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {group.items.map((m) => {
                   const tagsArr = typeof m.tags === "string" ? JSON.parse(m.tags || "[]") : (m.tags || [])
                   return (
-                    <div key={m.id} className="rounded-lg shadow-md dark:shadow-gray-900/30 hover:shadow-lg transition border-l-4 overflow-hidden"
+                    <div key={m.id} className={`rounded-lg shadow-md dark:shadow-gray-900/30 hover:shadow-lg transition border-l-4 overflow-hidden ${m.is_pinned ? 'md:col-span-2' : ''}`}
                       style={{ borderLeftColor: m.color || "#e5e7eb", backgroundColor: m.color === "#ffffff" ? "#fff" : m.color + "15" }}>
                       {m.cover_image && (
                         <button onClick={() => navigate(`/memo/${m.id}`)} className="block w-full">
@@ -459,7 +459,7 @@ export default function Memos() {
 }
 
 function formatDateKey(dateStr: string, t: (key: string, opts?: any) => string): string {
-  const d = new Date(dateStr)
+  const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z')
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const diffDays = Math.floor((todayStart.getTime() - d.getTime()) / 86400000)
