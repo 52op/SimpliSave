@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useMemoStore } from "../stores/memoStore"
 import { memoApi, userCategoryApi, tagApi } from "../services/api"
-import { Plus, Search, Trash2, Edit2, Pin, PinOff, Globe, Lock, Eye, FileText, Folder, Tag } from "lucide-react"
+import { Plus, Search, Trash2, Edit2, Pin, PinOff, Globe, Lock, Eye, FileText, Folder, Tag, Settings, Check, X } from "lucide-react"
 import Modal from "../components/Modal"
 import MemoForm, { type MemoFormData } from "../components/MemoForm"
 import EmptyState from "../components/EmptyState"
@@ -44,13 +44,26 @@ function getTimelineLabel(dateStr: string): { key: string; label: string } {
 
 function isInTimeRange(dateStr: string, filter: string): boolean {
   if (filter === "all") return true
-  const d = new Date(dateStr)
+  const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z')
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const dayOfWeek = todayStart.getDay()
+  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  const thisMonday = new Date(todayStart.getTime() - mondayOffset * 86400000)
   switch (filter) {
     case "today": return d >= todayStart
     case "7days": return d >= new Date(todayStart.getTime() - 6 * 86400000)
+    case "lastWeek": {
+      const lastMonday = new Date(thisMonday.getTime() - 7 * 86400000)
+      return d >= lastMonday && d < thisMonday
+    }
     case "month": return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    case "lastMonth": {
+      let lastMonth = now.getMonth() - 1
+      let lastMonthYear = now.getFullYear()
+      if (lastMonth < 0) { lastMonth = 11; lastMonthYear-- }
+      return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear
+    }
     case "year": return d.getFullYear() === now.getFullYear()
     default: return true
   }
@@ -60,7 +73,9 @@ const TIME_FILTERS: { value: string; labelKey: string }[] = [
   { value: "all", labelKey: "memos.filterAll" },
   { value: "today", labelKey: "memos.filterToday" },
   { value: "7days", labelKey: "memos.filter7Days" },
+  { value: "lastWeek", labelKey: "memos.filterLastWeek" },
   { value: "month", labelKey: "memos.filterMonth" },
+  { value: "lastMonth", labelKey: "memos.filterLastMonth" },
   { value: "year", labelKey: "memos.filterYear" },
 ]
 
@@ -68,7 +83,7 @@ export default function Memos() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const token = useAuthStore((s) => s.token)
-  const { memos, categories, tags, setMemos, setCategories, setTags, addMemo, updateMemo, removeMemo, addCategory } = useMemoStore()
+  const { memos, categories, tags, setMemos, setCategories, setTags, addMemo, updateMemo, removeMemo, addCategory, updateCategory, removeCategory } = useMemoStore()
   const { toast, confirm } = useToast()
 
   const [loading, setLoading] = useState(true)
@@ -87,6 +102,9 @@ export default function Memos() {
 
   const [categoryNameState, setCategoryNameState] = useState("")
   const [categoryColorState, setCategoryColorState] = useState("#3b82f6")
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
+  const [editCategoryName, setEditCategoryName] = useState("")
+  const [editCategoryColor, setEditCategoryColor] = useState("#3b82f6")
   const [searchParams, setSearchParams] = useSearchParams()
 
   useEffect(() => {
@@ -139,7 +157,9 @@ export default function Memos() {
     })
     .sort((a, b) => {
       if (a.is_pinned !== b.is_pinned) return b.is_pinned - a.is_pinned
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      const aDate = new Date(a.created_at.endsWith('Z') ? a.created_at : a.created_at + 'Z')
+      const bDate = new Date(b.created_at.endsWith('Z') ? b.created_at : b.created_at + 'Z')
+      return bDate.getTime() - aDate.getTime()
     })
 
   const groupedMemos: { key: string; labelKey: string; year?: number; month?: number; items: typeof memos }[] = []
@@ -150,7 +170,7 @@ export default function Memos() {
     if (!group) {
       group = { key, labelKey: label, items: [] }
       if (label === "timelineYearMonth") {
-        const d = new Date(m.created_at)
+        const d = new Date(m.created_at.endsWith('Z') ? m.created_at : m.created_at + 'Z')
         group.year = d.getFullYear()
         group.month = d.getMonth() + 1
       }
@@ -210,9 +230,35 @@ export default function Memos() {
     try {
       const res = await userCategoryApi.create(token, { name: categoryNameState.trim(), color: categoryColorState, type: "memo" })
       addCategory(res)
-      setShowCategoryModal(false)
       setCategoryNameState("")
       setCategoryColorState("#3b82f6")
+    } catch (err: any) {
+      toast(err.message || t("common.error"), "error")
+    }
+  }
+
+  async function handleUpdateCategory(id: string, data: { name: string; color: string }) {
+    if (!token) return
+    try {
+      const res = await userCategoryApi.update(token, id, data)
+      updateCategory(id, res)
+      setEditingCategoryId(null)
+      setEditCategoryName("")
+      setEditCategoryColor("#3b82f6")
+      toast(t("categories.edit") + " ✓", "success")
+    } catch (err: any) {
+      toast(err.message || t("common.error"), "error")
+    }
+  }
+
+  async function handleDeleteCategory(id: string) {
+    if (!token) return
+    const ok = await confirm(t("categories.deleteConfirm"))
+    if (!ok) return
+    try {
+      await userCategoryApi.delete(token, id)
+      removeCategory(id)
+      toast(t("categories.delete") + " ✓", "success")
     } catch (err: any) {
       toast(err.message || t("common.error"), "error")
     }
@@ -291,19 +337,6 @@ export default function Memos() {
       <PageHeader title={t("memos.title")} description={t("memos.pageDesc")} />
 
       <SectionCard className="mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex gap-2">
-            <button onClick={() => setShowCategoryModal(true)} className="ui-btn ui-btn-ghost">
-              <Folder className="w-4 h-4" />{t("categories.add")}
-            </button>
-            <button onClick={() => setShowAddModal(true)} className="ui-btn ui-btn-primary">
-              <Plus className="w-4 h-4" />{t("memos.add")}
-            </button>
-          </div>
-        </div>
-      </SectionCard>
-
-      <SectionCard className="mb-6">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative min-w-0 flex-1">
@@ -319,12 +352,22 @@ export default function Memos() {
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
+            <button onClick={() => setShowCategoryModal(true)}
+              className="h-11 w-11 flex items-center justify-center text-gray-400 hover:text-blue-600 transition shrink-0"
+              title={t("categories.manage")}>
+              <Settings className="w-4 h-4" />
+            </button>
             <button onClick={() => setShowPinnedOnly((prev) => !prev)} className={`${showPinnedOnly ? "ui-btn ui-btn-primary" : "ui-btn ui-btn-ghost"} h-11 whitespace-nowrap`}>
               {t("memos.pinnedOnly")}
             </button>
             <button onClick={() => setShowTagCloud(true)}
               className={`ui-btn h-11 whitespace-nowrap ${selectedTag ? "ui-btn-primary" : "ui-btn-ghost"}`}>
               <Tag className="w-4 h-4" />{t("bookmarks.tags")}
+            </button>
+            <button onClick={() => setShowAddModal(true)}
+              className="w-11 h-11 flex items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition shrink-0"
+              title={t("memos.add")}>
+              <Plus className="w-5 h-5" />
             </button>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -448,22 +491,67 @@ export default function Memos() {
         </div>
       </Modal>
 
-      <Modal show={showCategoryModal} title={t("categories.add")} onClose={() => setShowCategoryModal(false)}>
-        <div className="space-y-4">
+      <Modal show={showCategoryModal} title={t("categories.title")} onClose={() => {
+        setShowCategoryModal(false)
+        setEditingCategoryId(null)
+        setEditCategoryName("")
+        setEditCategoryColor("#3b82f6")
+      }}>
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.name")}</label>
-            <input type="text" value={categoryNameState} onChange={(e) => setCategoryNameState(e.target.value)}
-              placeholder={t("categories.namePlaceholder")}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("categories.add")}</h4>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <input type="text" value={categoryNameState} onChange={(e) => setCategoryNameState(e.target.value)}
+                  placeholder={t("categories.namePlaceholder")}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+              </div>
+              <input type="color" value={categoryColorState} onChange={(e) => setCategoryColorState(e.target.value)}
+                className="w-10 h-[42px] border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer" />
+              <button onClick={handleAddCategory} disabled={!categoryNameState.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap">
+                {t("common.add")}
+              </button>
+            </div>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("categories.color")}</label>
-            <input type="color" value={categoryColorState} onChange={(e) => setCategoryColorState(e.target.value)}
-              className="w-full h-10 border border-gray-300 dark:border-gray-600 rounded-lg" />
-          </div>
-          <div className="flex gap-2 pt-4">
-            <button onClick={() => setShowCategoryModal(false)} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
-            <button onClick={handleAddCategory} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t("common.save")}</button>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t("categories.existing")}</h4>
+            {categories.filter(c => c.type === "memo").length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-4 text-center">{t("categories.noCategories")}</p>
+            ) : (
+              <div className="space-y-1">
+                {categories.filter(c => c.type === "memo").map((c) => (
+                  <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 group">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: c.color || '#3b82f6' }} />
+                    {editingCategoryId === c.id ? (
+                      <>
+                        <input type="text" value={editCategoryName} onChange={(e) => setEditCategoryName(e.target.value)}
+                          className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+                        <input type="color" value={editCategoryColor} onChange={(e) => setEditCategoryColor(e.target.value)}
+                          className="w-8 h-8 border border-gray-300 dark:border-gray-600 rounded cursor-pointer" />
+                        <button onClick={() => handleUpdateCategory(c.id, { name: editCategoryName, color: editCategoryColor })}
+                          className="p-1 text-green-600 hover:text-green-700" title={t("common.save")}><Check className="w-4 h-4" /></button>
+                        <button onClick={() => { setEditingCategoryId(null) }}
+                          className="p-1 text-gray-400 hover:text-gray-600" title={t("common.cancel")}><X className="w-4 h-4" /></button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{c.name}</span>
+                        <button onClick={() => { setEditingCategoryId(c.id); setEditCategoryName(c.name); setEditCategoryColor(c.color || '#3b82f6') }}
+                          className="p-1 text-gray-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition" title={t("categories.edit")}>
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeleteCategory(c.id)}
+                          className="p-1 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition" title={t("categories.delete")}>
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </Modal>

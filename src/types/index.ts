@@ -177,6 +177,8 @@ export interface MemoState {
   updateMemo: (id: string, updates: Partial<Memo>) => void
   removeMemo: (id: string) => void
   addCategory: (category: Category) => void
+  updateCategory: (id: string, updates: Partial<Category>) => void
+  removeCategory: (id: string) => void
   addTag: (tag: string) => void
   clearError: () => void
 }

@@ -34,7 +34,19 @@ export const useMemoStore = create<MemoState>()(
         
       addCategory: (category: Category) =>
         set(state => ({ categories: [...state.categories, category] })),
-        
+
+      updateCategory: (id: string, updates: Partial<Category>) =>
+        set(state => ({
+          categories: state.categories.map(c =>
+            c.id === id ? { ...c, ...updates } : c
+          )
+        })),
+
+      removeCategory: (id: string) =>
+        set(state => ({
+          categories: state.categories.filter(c => c.id !== id)
+        })),
+
       addTag: (tag: string) =>
         set(state => ({ tags: [...state.tags, tag] })),
         
