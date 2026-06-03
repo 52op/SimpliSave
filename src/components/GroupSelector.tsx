@@ -51,7 +51,7 @@ export default function GroupSelector({ groups, value, onChange, placeholder, cl
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50">
           <div className="p-2 border-b">
             <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 dark:bg-gray-700 rounded">
               <Search className="w-3.5 h-3.5 text-gray-400" />
