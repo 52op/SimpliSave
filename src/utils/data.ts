@@ -90,6 +90,12 @@ function md5(s: string): string {
   return hex(a) + hex(b) + hex(c) + hex(d)
 }
 
+export function stripHtml(html: string): string {
+  const div = document.createElement("div")
+  div.innerHTML = html
+  return div.textContent || div.innerText || ""
+}
+
 export function getAvatarUrl(avatarUrl: string | null | undefined, email: string, size: number = 80): string {
   if (avatarUrl) return avatarUrl
   const hash = md5((email || '').trim().toLowerCase())

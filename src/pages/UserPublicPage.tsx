@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { publicUserApi } from "../services/api"
-import { getAvatarUrl } from "../utils/data"
+import { getAvatarUrl, stripHtml } from "../utils/data"
 import { ArrowLeft, User as UserIcon, Globe, Github, Quote, Loader2, BookOpen, FileText, Calendar, Tag, Link as LinkIcon, FolderOpen, ExternalLink, ChevronDown } from "lucide-react"
 import type { Memo } from "../types"
 import Favicon from "../components/Favicon"
@@ -234,8 +234,7 @@ export default function UserPublicPage() {
             >
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{memo.title}</h3>
               {memo.content && (
-                <div className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{ __html: memo.content }} />
+                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{stripHtml(memo.content)}</p>
               )}
               <div className="flex items-center gap-3 mt-3 text-xs text-gray-400 dark:text-gray-500">
                 <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(memo.created_at).toLocaleDateString()}</span>

@@ -13,12 +13,7 @@ import PageHeader from "../components/PageHeader"
 import SectionCard from "../components/SectionCard"
 import FilterBar from "../components/FilterBar"
 import { pinyinMatch } from "../utils/pinyin"
-
-function stripHtml(html: string): string {
-  const div = document.createElement("div")
-  div.innerHTML = html
-  return div.textContent || div.innerText || ""
-}
+import { stripHtml } from "../utils/data"
 
 function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
