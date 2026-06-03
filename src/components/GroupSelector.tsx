@@ -65,7 +65,7 @@ export default function GroupSelector({ groups, value, onChange, placeholder, cl
               />
             </div>
           </div>
-          <div className="max-h-64 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto">
             <button
               type="button"
               onClick={() => { onChange(""); setOpen(false) }}

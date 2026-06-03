@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { Folder, FolderOpen, ChevronRight, ChevronDown, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import type { Category, Bookmark } from "../types"
@@ -56,6 +56,18 @@ function TreeNode({
   const [showMenu, setShowMenu] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState(category.name)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showMenu) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick, true)
+    return () => document.removeEventListener('mousedown', handleClick, true)
+  }, [showMenu])
 
   const count = getDescendantCount(category.id, bookmarks, categories)
   const isSelected = selectedCategoryId === category.id
@@ -119,7 +131,7 @@ function TreeNode({
             <MoreHorizontal className="w-4 h-4" />
           </button>
           {showMenu && (
-            <div className="absolute right-0 top-6 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[120px]" onClick={e => e.stopPropagation()}>
+            <div ref={menuRef} className="absolute right-0 top-6 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[120px]" onClick={e => e.stopPropagation()}>
               <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left" onClick={() => { onAddSub(category.id); setShowMenu(false) }}>
                 <Plus className="w-3.5 h-3.5" />{t("bookmarks.addSubcategory")}
               </button>
@@ -176,7 +188,7 @@ export default function CategoryTree({
   }
 
   return (
-    <div className="overflow-y-auto">
+    <div>
       <div
         className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm mb-1
           ${selectedCategoryId === null ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'}`}
