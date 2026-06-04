@@ -147,7 +147,7 @@ export default function AdminSiteSettings() {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.siteTagline")}</label>
           <input type="text" value={form.site_tagline} onChange={(e) => setForm({ ...form, site_tagline: e.target.value })}
             className="ui-input w-full px-3 py-2" />
-          <p className="mt-1 text-xs text-[var(--color-text-muted)]">显示在搜索框上方的一句话介绍</p>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">显示在搜索框上方的一句话介绍，多条用 || 分隔可随机展示</p>
         </div>
 
         <div>

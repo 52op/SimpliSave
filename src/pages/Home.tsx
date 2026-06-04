@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
@@ -13,6 +13,7 @@ import { SkeletonCard, SkeletonCategory } from "../components/Skeleton"
 import Modal from "../components/Modal"
 import { useNavigate } from "react-router-dom"
 import { pinyinMatch } from "../utils/pinyin"
+import { randomTagline } from "../utils/data"
 
 const STORAGE_KEY = "preferredEngineId"
 const MAX_TAGS = 12
@@ -256,6 +257,8 @@ export default function Home() {
     setLoading(false)
   }
 
+  const tagline = useMemo(() => randomTagline(siteSettings?.site_tagline), [siteSettings?.site_tagline])
+
   const selectedEngine = engines.find(e => e.id === selectedEngineId) || engines[0]
 
   const currentPlaceholder = displayTags.length > 0
@@ -371,7 +374,7 @@ export default function Home() {
         </div>
         <div className="relative">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">{siteSettings?.site_alias || siteSettings?.site_name || "SimpliSave"}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">{siteSettings?.site_tagline || siteSettings?.description || t("app.description")}</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">{tagline || siteSettings?.description || t("app.description")}</p>
         
         {/* 搜索框 */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}

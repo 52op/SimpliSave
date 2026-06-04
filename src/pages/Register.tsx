@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useSiteSettingsStore } from "../stores/siteSettingsStore"
 import { emailApi } from "../services/api"
 import { Link, useNavigate } from "react-router-dom"
 import { Bookmark, FileText, Search, Shield } from "lucide-react"
+import { randomTagline } from "../utils/data"
 
 const COOLDOWN = 60
 
@@ -32,6 +33,8 @@ const RegisterPage = () => {
   const [sendLoading, setSendLoading] = useState(false)
   const [sendError, setSendError] = useState("")
   const [countdown, setCountdown] = useState(0)
+
+  const tagline = useMemo(() => randomTagline(siteSettings?.site_tagline), [siteSettings?.site_tagline])
 
   useEffect(() => {
     if (error) errorRef.current?.focus()
@@ -122,7 +125,7 @@ const RegisterPage = () => {
               <span className="text-white font-bold text-xl">S</span>
             </div>
             <h2 className="text-3xl font-bold mb-3">{siteSettings?.site_alias || siteSettings?.site_name || "SimpliSave"}</h2>
-            <p className="text-blue-100 mb-10 leading-relaxed">{siteSettings?.site_tagline || siteSettings?.description || t("app.description")}</p>
+            <p className="text-blue-100 mb-10 leading-relaxed">{tagline || siteSettings?.description || t("app.description")}</p>
             <ul className="space-y-5">
               {FEATURES.map(({ icon: Icon, text }) => (
                 <li key={text} className="flex items-center gap-3">

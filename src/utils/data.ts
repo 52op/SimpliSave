@@ -96,6 +96,13 @@ export function stripHtml(html: string): string {
   return div.textContent || div.innerText || ""
 }
 
+export function randomTagline(tagline: string | null | undefined): string {
+  if (!tagline) return ""
+  const parts = tagline.split("||").map(s => s.trim()).filter(Boolean)
+  if (parts.length <= 1) return tagline
+  return parts[Math.floor(Math.random() * parts.length)]
+}
+
 export function getAvatarUrl(avatarUrl: string | null | undefined, email: string, size: number = 80): string {
   if (avatarUrl) return avatarUrl
   const hash = md5((email || '').trim().toLowerCase())
