@@ -332,7 +332,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto p-6">
-        <PageHeader title={siteSettings?.site_name || "SimpliSave"} description={siteSettings?.description || t("app.description")} />
+        {/* <PageHeader title={siteSettings?.site_name || "SimpliSave"} description={siteSettings?.description || t("app.description")} /> */}
         <div className="ui-card text-center py-10 px-4 mb-8">
           <div className="skeleton h-8 w-64 mx-auto mb-3 rounded" />
           <div className="skeleton h-4 w-96 max-w-full mx-auto mb-8 rounded" />
