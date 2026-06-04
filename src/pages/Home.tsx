@@ -151,6 +151,27 @@ export default function Home() {
       e.preventDefault()
       const q = searchQuery.trim()
       if (q) navigate(`/search?q=${encodeURIComponent(q)}`)
+      return
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "ArrowDown") {
+      e.preventDefault()
+      if (displayTags.length > 0) {
+        const next = (placeholderIndex + 1) % displayTags.length
+        setPlaceholderIndex(next)
+        setSearchQuery(displayTags[next])
+        doSuggest(displayTags[next])
+      }
+      return
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "ArrowUp") {
+      e.preventDefault()
+      if (displayTags.length > 0) {
+        const prev = (placeholderIndex - 1 + displayTags.length) % displayTags.length
+        setPlaceholderIndex(prev)
+        setSearchQuery(displayTags[prev])
+        doSuggest(displayTags[prev])
+      }
+      return
     }
   }
 

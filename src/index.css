@@ -20,6 +20,7 @@
   --color-skeleton: #e5e7eb;
   --color-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
   --color-shadow-hover: 0 8px 32px rgba(15, 23, 42, 0.10);
+  --favicon-fallback-font-size: 2.125rem;
 }
 
 .dark {
@@ -40,6 +41,7 @@
   --color-skeleton: #1e293b;
   --color-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   --color-shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --favicon-fallback-font-size: 2.125rem;
 }
 .dark body {
   background: linear-gradient(160deg, #0b1220 0%, #0f172a 40%, #110f20 100%);

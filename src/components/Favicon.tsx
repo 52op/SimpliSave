@@ -64,7 +64,7 @@ export default function Favicon({ src, title, size = "md" }: { src?: string | nu
     return (
       <div
         className={`${sizeClass} shrink-0 rounded-xl flex items-center justify-center font-bold`}
-        style={{ backgroundColor: hexToRgba(color, 0.12), color }}
+        style={{ backgroundColor: hexToRgba(color, 0.12), color, fontSize: 'var(--favicon-fallback-font-size)' }}
       >
         {title?.trim()?.[0]?.toUpperCase() || "S"}
       </div>
