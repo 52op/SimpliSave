@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../../stores/authStore"
 import { searchEngineApi } from "../../services/api"
 import { SearchEngine } from "../../types"
-import { Plus, Trash2, Edit2, Search } from "lucide-react"
+import { Plus, Trash2, Edit2, ArrowUp, ArrowDown, Search } from "lucide-react"
 import ImageUploader from "../../components/ImageUploader"
 import Modal from "../../components/Modal"
 import EmptyState from "../../components/EmptyState"
@@ -75,6 +75,36 @@ export default function AdminSearchEngines() {
     }
   }
 
+  async function handleMoveUp(index: number) {
+    if (index <= 0 || !token) return
+    const prev = engines[index - 1]
+    const curr = engines[index]
+    try {
+      await Promise.all([
+        searchEngineApi.update(token, prev.id, { sort_order: curr.sort_order }),
+        searchEngineApi.update(token, curr.id, { sort_order: prev.sort_order }),
+      ])
+      await loadData()
+    } catch (err: any) {
+      toast(err.message || t("common.error"), "error")
+    }
+  }
+
+  async function handleMoveDown(index: number) {
+    if (index >= engines.length - 1 || !token) return
+    const next = engines[index + 1]
+    const curr = engines[index]
+    try {
+      await Promise.all([
+        searchEngineApi.update(token, next.id, { sort_order: curr.sort_order }),
+        searchEngineApi.update(token, curr.id, { sort_order: next.sort_order }),
+      ])
+      await loadData()
+    } catch (err: any) {
+      toast(err.message || t("common.error"), "error")
+    }
+  }
+
   function openEdit(engine: SearchEngine) {
     setEditing(engine)
     setForm({
@@ -111,7 +141,7 @@ export default function AdminSearchEngines() {
         <EmptyState title={t("admin.searchEngines.noData")} description={t("admin.searchEngines.noDataDesc")} icon={<Search className="w-6 h-6" />} action={<button onClick={openAdd} className="ui-btn ui-btn-primary">{t("admin.searchEngines.add")}</button>} />
       ) : (
         <div className="space-y-2">
-          {engines.map((engine) => (
+          {engines.map((engine, index) => (
             <SectionCard key={engine.id} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {engine.icon_url ? (
@@ -131,7 +161,12 @@ export default function AdminSearchEngines() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-1">
+              <div className="flex items-center gap-0.5">
+                <button onClick={() => handleMoveUp(index)} disabled={index === 0}
+                  className="p-1 text-[var(--color-text-muted)] hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"><ArrowUp className="w-4 h-4" /></button>
+                <button onClick={() => handleMoveDown(index)} disabled={index === engines.length - 1}
+                  className="p-1 text-[var(--color-text-muted)] hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed"><ArrowDown className="w-4 h-4" /></button>
+                <span className="w-px h-5 bg-[var(--color-border)] mx-1" />
                 <button onClick={() => openEdit(engine)} className="p-1 text-[var(--color-text-muted)] hover:text-blue-600"><Edit2 className="w-4 h-4" /></button>
                 <button onClick={() => handleDelete(engine.id)} className="p-1 text-[var(--color-text-muted)] hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
               </div>

@@ -598,8 +598,16 @@ export default function Home() {
         </div>
       ) : (
         <div className="space-y-4">
-          {Object.entries(groupedGroups).map(([catId, items]) => {
-            const category = categories.find(c => c.id === catId)
+          {(() => {
+            const sortedCats = categories
+              .filter(c => groupedGroups[c.id])
+              .sort((a, b) => a.sort_order - b.sort_order)
+            const hasUncategorized = !!groupedGroups["uncategorized"]
+            const entries = [
+              ...sortedCats.map(c => ({ catId: c.id, category: c, items: groupedGroups[c.id] })),
+              ...(hasUncategorized ? [{ catId: "uncategorized", category: null as Category | null, items: groupedGroups["uncategorized"] }] : []),
+            ]
+            return entries.map(({ catId, category, items }) => {
             const catName = category?.name || (catId === "uncategorized" ? t("home.uncategorized") || "未分类" : t("home.other") || "其他")
             const catColor = category?.color || "#3b82f6"
             const isCollapsed = collapsedCategories.has(catId)
@@ -655,7 +663,8 @@ export default function Home() {
                 </div>
               </div>
             )
-          })}
+          })
+          })()}
         </div>
       )}
 
