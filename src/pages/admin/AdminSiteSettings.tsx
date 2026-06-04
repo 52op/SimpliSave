@@ -23,7 +23,9 @@ export default function AdminSiteSettings() {
 
   const [form, setForm] = useState({
     site_name: "",
+    site_alias: "",
     description: "",
+    site_tagline: "",
     keywords: "",
     logo_url: "",
     favicon_url: "",
@@ -45,7 +47,9 @@ export default function AdminSiteSettings() {
       setSettings(res)
       setForm({
         site_name: res.site_name,
+        site_alias: res.site_alias || "",
         description: res.description,
+        site_tagline: res.site_tagline || "",
         keywords: res.keywords,
         logo_url: res.logo_url || "",
         favicon_url: res.favicon_url || "",
@@ -122,12 +126,28 @@ export default function AdminSiteSettings() {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.siteName")}</label>
           <input type="text" value={form.site_name} onChange={(e) => setForm({ ...form, site_name: e.target.value })}
             className="ui-input w-full px-3 py-2" />
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">用于 SEO 标题，建议完整名称</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.siteAlias")}</label>
+          <input type="text" value={form.site_alias} onChange={(e) => setForm({ ...form, site_alias: e.target.value })}
+            className="ui-input w-full px-3 py-2" />
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">显示在页面 LOGO 位置的短名称</p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.description")}</label>
           <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
             rows={2} className="ui-textarea w-full px-3 py-2" />
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">用于 SEO 描述</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("admin.siteSettings.siteTagline")}</label>
+          <input type="text" value={form.site_tagline} onChange={(e) => setForm({ ...form, site_tagline: e.target.value })}
+            className="ui-input w-full px-3 py-2" />
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">显示在搜索框上方的一句话介绍</p>
         </div>
 
         <div>

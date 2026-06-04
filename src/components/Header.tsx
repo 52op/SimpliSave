@@ -85,7 +85,7 @@ export default function Header() {
                   <span className="text-white font-bold text-sm">S</span>
                 </div>
               )}
-              <span className="hidden md:inline text-xl font-bold text-[var(--color-text-main)]">{siteSettings?.site_name || "SimpliSave"}</span>
+              <span className="hidden md:inline text-xl font-bold text-[var(--color-text-main)]">{siteSettings?.site_alias || siteSettings?.site_name || "SimpliSave"}</span>
             </Link>
             <nav className="hidden md:flex gap-1">
               {navs.map((n) => (

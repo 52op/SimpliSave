@@ -263,7 +263,9 @@ export interface UploadTokenResponse {
 export interface SiteSettings {
   id: string
   site_name: string
+  site_alias: string
   description: string
+  site_tagline: string
   keywords: string
   logo_url: string | null
   favicon_url: string | null

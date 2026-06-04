@@ -59,6 +59,8 @@ export default function Home() {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hotTags, setHotTags] = useState<string[]>([])
+  const [showHotPanel, setShowHotPanel] = useState(false)
+  const [hotPanelIndex, setHotPanelIndex] = useState(0)
   const [pageError, setPageError] = useState("")
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const [placeholderVisible, setPlaceholderVisible] = useState(true)
@@ -95,6 +97,17 @@ export default function Home() {
     return () => document.removeEventListener("mousedown", handler)
   }, [showSuggestions])
 
+  useEffect(() => {
+    if (!showHotPanel) return
+    const handler = (e: MouseEvent) => {
+      if (suggestRef.current && !suggestRef.current.contains(e.target as Node)) {
+        setShowHotPanel(false)
+      }
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [showHotPanel])
+
   const displayTags = hotTags.slice(0, MAX_TAGS)
 
   function startRotate() {
@@ -128,6 +141,7 @@ export default function Home() {
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value
     setSearchQuery(val)
+    setShowHotPanel(false)
     doSuggest(val)
   }
 
@@ -172,6 +186,32 @@ export default function Home() {
         doSuggest(displayTags[prev])
       }
       return
+    }
+    if (showHotPanel && hotTags.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault()
+        setHotPanelIndex(i => (i + 1) % hotTags.length)
+        return
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault()
+        setHotPanelIndex(i => (i - 1 + hotTags.length) % hotTags.length)
+        return
+      }
+      if (e.key === "Enter") {
+        e.preventDefault()
+        const word = hotTags[hotPanelIndex]
+        setSearchQuery(word)
+        setShowHotPanel(false)
+        doSuggest(word)
+        handleSearchDirect(word)
+        return
+      }
+      if (e.key === "Escape") {
+        e.preventDefault()
+        setShowHotPanel(false)
+        return
+      }
     }
   }
 
@@ -330,8 +370,8 @@ export default function Home() {
           <div className="w-full h-full bg-gradient-to-br from-blue-50/40 via-transparent to-purple-50/30 dark:from-blue-900/10 dark:via-transparent dark:to-purple-900/10" />
         </div>
         <div className="relative">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">{siteSettings?.site_name || "SimpliSave"}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">{siteSettings?.description || t("app.description")}</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">{siteSettings?.site_alias || siteSettings?.site_name || "SimpliSave"}</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">{siteSettings?.site_tagline || siteSettings?.description || t("app.description")}</p>
         
         {/* 搜索框 */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}
@@ -371,7 +411,13 @@ export default function Home() {
               value={searchQuery}
               onChange={handleInputChange}
               onKeyDown={handleInputKeyDown}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              onFocus={() => {
+                if (searchQuery.trim()) {
+                  suggestions.length > 0 && setShowSuggestions(true)
+                } else {
+                  setShowHotPanel(hotTags.length > 0)
+                }
+              }}
               placeholder={currentPlaceholder}
               className={`min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-[var(--color-text-main)] outline-none focus:ring-0 transition-opacity duration-300 ${placeholderVisible ? "placeholder:opacity-100" : "placeholder:opacity-0"}`}
               autoComplete="off"
@@ -408,6 +454,37 @@ export default function Home() {
                 <Search className="w-3.5 h-3.5 shrink-0" />
                 <span>{t("home.inSiteSearch") || "在站内搜索"} &ldquo;{searchQuery}&rdquo;</span>
               </button>
+            </div>
+          )}
+          {showHotPanel && hotTags.length > 0 && (
+            <div className="absolute left-0 right-0 top-full mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg z-50 overflow-hidden">
+              <div className="px-4 py-2 text-xs text-[var(--color-text-muted)] font-semibold flex items-center gap-1.5 border-b border-[var(--color-border)]">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500" />
+                🔥 {t("home.hotTrending") || "热搜词"}
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {hotTags.map((word, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(word)
+                      setShowHotPanel(false)
+                      doSuggest(word)
+                      inputRef.current?.focus()
+                    }}
+                    onMouseEnter={() => setHotPanelIndex(i)}
+                    className={`w-full px-4 py-2 text-left text-sm flex items-center gap-2 ${
+                      i === hotPanelIndex
+                        ? "bg-[var(--color-primary-weak)] text-[var(--color-primary)]"
+                        : "dark:text-gray-200 hover:bg-[var(--color-surface-2)]"
+                    }`}
+                  >
+                    <span className="shrink-0 w-5 text-xs font-mono text-[var(--color-text-muted)]">{i + 1}</span>
+                    <span className="truncate">{word}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {searchQuery.trim() && (

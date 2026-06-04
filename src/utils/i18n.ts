@@ -394,7 +394,9 @@ const resources = {
       "admin.siteSettings.favicon": "Favicon",
       "admin.siteSettings.faviconPlaceholder": "or enter Favicon URL",
       "admin.siteSettings.siteName": "Site name",
+      "admin.siteSettings.siteAlias": "Site alias",
       "admin.siteSettings.description": "Site description",
+      "admin.siteSettings.siteTagline": "Site tagline",
       "admin.siteSettings.keywords": "Keywords (comma separated)",
       "admin.siteSettings.footerHtml": "Footer HTML",
       "admin.siteSettings.gaId": "Google Analytics ID",
@@ -444,6 +446,7 @@ const resources = {
       "home.fetching": "Fetching...",
       "home.fetchFailed": "Fetch failed: ",
       "home.fillManually": "Please fill manually",
+      "home.hotTrending": "🔥 Trending",
 
       // Search page
       "search.title": "Search",
@@ -850,7 +853,9 @@ const resources = {
       "admin.siteSettings.favicon": "Favicon",
       "admin.siteSettings.faviconPlaceholder": "或输入 Favicon URL",
       "admin.siteSettings.siteName": "站点名称",
-      "admin.siteSettings.description": "站点描述",
+      "admin.siteSettings.siteAlias": "站点别名",
+      "admin.siteSettings.description": "站点描述（SEO）",
+      "admin.siteSettings.siteTagline": "站点介绍",
       "admin.siteSettings.keywords": "关键词（逗号分隔）",
       "admin.siteSettings.footerHtml": "页脚 HTML",
       "admin.siteSettings.gaId": "Google Analytics ID",
@@ -900,6 +905,7 @@ const resources = {
       "home.fetching": "抓取中...",
       "home.fetchFailed": "抓取失败: ",
       "home.fillManually": "请手动填写",
+      "home.hotTrending": "🔥 热搜词",
 
       // 搜索页
       "search.title": "搜索",

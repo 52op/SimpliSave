@@ -32,7 +32,7 @@ export async function handleUpdateSiteSettings(request: Request, env: any): Prom
   const values: any[] = [];
 
   const fields = [
-    'site_name', 'description', 'keywords', 'logo_url',
+    'site_name', 'site_alias', 'description', 'site_tagline', 'keywords', 'logo_url',
     'favicon_url', 'footer_html', 'ga_id', 'beian', 'custom_head_html',
     'translate_api', 'translate_source_lang', 'translate_target_lang',
   ];

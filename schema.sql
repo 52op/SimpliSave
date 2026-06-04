@@ -273,6 +273,10 @@ CREATE TABLE IF NOT EXISTS site_settings (
 -- 插入默认站点设置
 INSERT OR IGNORE INTO site_settings (id) VALUES ('global');
 
+-- Migration: site_alias and site_tagline
+ALTER TABLE site_settings ADD COLUMN site_alias TEXT;
+ALTER TABLE site_settings ADD COLUMN site_tagline TEXT;
+
 -- Migration v4: User public profile fields
 ALTER TABLE users ADD COLUMN bio TEXT;
 ALTER TABLE users ADD COLUMN website TEXT;
