@@ -18,6 +18,7 @@ export async function handleGetSiteSettings(request: Request, env: any): Promise
       translate_api: null,
       translate_source_lang: 'auto',
       translate_target_lang: 'chinese',
+      admin_email: null,
     });
   }
   return successResponse(settings);
@@ -35,6 +36,7 @@ export async function handleUpdateSiteSettings(request: Request, env: any): Prom
     'site_name', 'site_alias', 'description', 'site_tagline', 'keywords', 'logo_url',
     'favicon_url', 'footer_html', 'ga_id', 'beian', 'custom_head_html',
     'translate_api', 'translate_source_lang', 'translate_target_lang',
+    'admin_email',
   ];
 
   for (const field of fields) {

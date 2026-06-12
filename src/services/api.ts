@@ -248,6 +248,13 @@ export const linkReportApi = {
     ),
 };
 
+export const adminLinkReportApi = {
+  list: (token: string, page = 1, pageSize = 20) =>
+    request<{ items: any[]; total: number; page: number; page_size: number }>(
+      'GET', `/admin/link-reports?page=${page}&page_size=${pageSize}`, undefined, token
+    ),
+};
+
 export const emailConfigApi = {
   get: (token: string) => request<any[]>('GET', '/admin/email-config', undefined, token),
   update: (token: string, data: any) => request<{ message: string }>('PUT', '/admin/email-config', data, token),

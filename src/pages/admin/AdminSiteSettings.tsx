@@ -36,6 +36,7 @@ export default function AdminSiteSettings() {
     translate_api: "",
     translate_source_lang: "auto",
     translate_target_lang: "chinese",
+    admin_email: "",
   })
 
   useEffect(() => { loadSettings() }, [])
@@ -60,6 +61,7 @@ export default function AdminSiteSettings() {
         translate_api: res.translate_api || "",
         translate_source_lang: res.translate_source_lang || "auto",
         translate_target_lang: res.translate_target_lang || "chinese",
+        admin_email: res.admin_email || "",
       })
       setPageError("")
     } catch (err: any) {
@@ -83,6 +85,7 @@ export default function AdminSiteSettings() {
         translate_api: form.translate_api || null,
         translate_source_lang: form.translate_source_lang || null,
         translate_target_lang: form.translate_target_lang || null,
+        admin_email: form.admin_email || null,
       }
       const res = await updateSiteSettings(token, data)
       setSettings(res)
@@ -210,6 +213,17 @@ export default function AdminSiteSettings() {
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">默认 chinese</p>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="border-t border-[var(--color-border)] pt-6">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">通知设置</h3>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">管理员邮箱</label>
+            <input type="email" value={form.admin_email} onChange={(e) => setForm({ ...form, admin_email: e.target.value })}
+              placeholder="admin@example.com"
+              className="ui-input w-full px-3 py-2" />
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">用于接收链接反馈等系统通知，留空则使用邮件配置的发件人地址</p>
           </div>
         </div>
 

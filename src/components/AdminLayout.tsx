@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Star, Send, Globe, Search, Image, Settings, Mail } from "lucide-react"
+import { Star, Send, Globe, Search, Image, Settings, Mail, Flag } from "lucide-react"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
@@ -14,6 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { p: "/admin/imagebeds", l: t("admin.imagebeds.title"), icon: Image },
     { p: "/admin/site-settings", l: t("admin.siteSettings.title"), icon: Settings },
     { p: "/admin/email-config", l: "邮件配置", icon: Mail },
+    { p: "/admin/link-reports", l: "反馈管理", icon: Flag },
   ]
 
   return (

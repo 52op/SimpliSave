@@ -275,7 +275,22 @@ export interface SiteSettings {
   custom_head_html: string | null
   translate_api: string | null
   translate_source_lang: string
-  translate_target_lang: string
+  translate_target_lang: string  
+  admin_email: string | null
+  created_at: string  
+  updated_at: string  
+}
+
+export interface LinkReport {
+  id: string
+  bookmark_id: string
+  problem_type: string
+  description: string
+  reporter_ip: string
+  url: string
+  title: string
+  is_alive: number
+  current_title: string
+  status_code: number | null
   created_at: string
-  updated_at: string
 }

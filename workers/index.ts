@@ -44,6 +44,7 @@ import { handleGetPublicUser, handleListPublicBookmarksByUser } from './api/publ
 import { handleSendCode } from './api/emailVerify';
 import { handleGetEmailConfig, handleUpdateEmailConfig, handleTestEmailConfig, handleActivateEmailConfig } from './api/emailConfig';
 import { handleCreateLinkReport } from './api/linkReports';
+import { handleListLinkReports } from './api/adminLinkReports';
 
 interface Env {
   DB: D1Database;
@@ -145,6 +146,7 @@ async function handleAdmin(request: Request, env: Env, path: string): Promise<Re
   }
   if (path === '/admin/email-config/activate' && request.method === 'POST') return handleActivateEmailConfig(request, env);
   if (path === '/admin/email-config/test' && request.method === 'POST') return handleTestEmailConfig(request, env);
+  if (path === '/admin/link-reports' && request.method === 'GET') return handleListLinkReports(request, env);
   return new Response('Not Found', { status: 404, headers: corsHeaders() });
 }
 

@@ -81,8 +81,9 @@ async function notifyAdmin(env: any, bookmark: any, problemType: string, descrip
   const emailCfg = await getEmailConfig(env.DB);
   if (!emailCfg) return;
 
-  const site = await env.DB.prepare('SELECT site_name FROM site_settings WHERE id = ?').bind('global').first<{ site_name: string }>();
+  const site = await env.DB.prepare('SELECT site_name, admin_email FROM site_settings WHERE id = ?').bind('global').first<{ site_name: string; admin_email: string | null }>();
   const siteName = site?.site_name || 'SimpliSave';
+  const toEmail = site?.admin_email || emailCfg.from_address;
 
   let groupName = '';
   if (bookmark.group_id) {
@@ -101,5 +102,5 @@ async function notifyAdmin(env: any, bookmark: any, problemType: string, descrip
     currentTitle,
     siteName,
   });
-  await sendEmail({ to: emailCfg.from_address, subject, html }, emailCfg);
+  await sendEmail({ to: toEmail, subject, html }, emailCfg);
 }
