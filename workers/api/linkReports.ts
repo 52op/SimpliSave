@@ -4,7 +4,7 @@ import { buildLinkReportEmail } from '../utils/emailTemplates';
 
 const RATE_LIMIT_SECONDS = 300;
 
-export async function handleCreateLinkReport(request: Request, env: any): Promise<Response> {
+export async function handleCreateLinkReport(request: Request, env: any, ctx: ExecutionContext): Promise<Response> {
   if (request.method !== 'POST') return errorResponse('Method not allowed', 405);
   if (!request.body) return errorResponse('Body required', 400);
 
@@ -67,7 +67,7 @@ export async function handleCreateLinkReport(request: Request, env: any): Promis
     statusCode,
   ).run();
 
-  notifyAdmin(env, bookmark, body.problem_type, body.description || '', isAlive, statusCode, currentTitle).catch(console.error);
+  ctx.waitUntil(notifyAdmin(env, bookmark, body.problem_type, body.description || '', isAlive, statusCode, currentTitle));
 
   return successResponse({
     url: bookmark.url,
@@ -81,9 +81,15 @@ async function notifyAdmin(env: any, bookmark: any, problemType: string, descrip
   const emailCfg = await getEmailConfig(env.DB);
   if (!emailCfg) return;
 
-  const site = await env.DB.prepare('SELECT site_name, admin_email FROM site_settings WHERE id = ?').bind('global').first<{ site_name: string; admin_email: string | null }>();
-  const siteName = site?.site_name || 'SimpliSave';
-  const toEmail = site?.admin_email || emailCfg.from_address;
+  let siteName = 'SimpliSave';
+  let toEmail = emailCfg.from_address;
+  try {
+    const site = await env.DB.prepare('SELECT site_name, admin_email FROM site_settings WHERE id = ?').bind('global').first<{ site_name: string; admin_email: string | null }>();
+    if (site) {
+      siteName = site.site_name || 'SimpliSave';
+      if (site.admin_email) toEmail = site.admin_email;
+    }
+  } catch {} // fallback if admin_email column doesn't exist yet
 
   let groupName = '';
   if (bookmark.group_id) {

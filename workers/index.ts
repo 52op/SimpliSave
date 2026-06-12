@@ -57,7 +57,7 @@ interface Env {
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const corsResponse = handleCors(request);
     if (corsResponse) return corsResponse;
 
@@ -81,7 +81,7 @@ export default {
       if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
       if (path.startsWith('/site-settings')) return handleSiteSettings(request, env);
       if (path === '/hot-tags') return withCache(request.url, TTL.HOT_TAGS, () => handleHotTags());
-      if (path.startsWith('/link-reports')) return handleCreateLinkReport(request, env);
+      if (path.startsWith('/link-reports')) return handleCreateLinkReport(request, env, ctx);
 
       const publicMemoVerifyMatch = path.match(/^\/public-memos\/([^\/]+)\/verify$/);
       const publicMemoMatch = path.match(/^\/public-memos\/([^\/]+)$/);
