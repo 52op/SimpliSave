@@ -219,3 +219,30 @@ body {
   opacity: 0.18;
   pointer-events: none;
 }
+
+/* ──────── TipTap Table ──────── */
+.tiptap table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+}
+.tiptap th,
+.tiptap td {
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+.tiptap th {
+  background: var(--color-surface-2);
+  font-weight: 600;
+}
+.tiptap .selectedCell {
+  background: var(--color-primary-weak);
+}
+.tiptap .tableWrapper {
+  overflow-x: auto;
+}
+.tiptap table .resize-cursor {
+  cursor: col-resize;
+}

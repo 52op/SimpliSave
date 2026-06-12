@@ -7,6 +7,10 @@ import Placeholder from "@tiptap/extension-placeholder"
 import ImageExt from "@tiptap/extension-image"
 import Underline from "@tiptap/extension-underline"
 import Link from "@tiptap/extension-link"
+import { Table } from "@tiptap/extension-table"
+import TableRow from "@tiptap/extension-table-row"
+import TableCell from "@tiptap/extension-table-cell"
+import TableHeader from "@tiptap/extension-table-header"
 import { marked } from "marked"
 import { DOMParser } from "@tiptap/pm/model"
 import { imagebedApi } from "../services/api"
@@ -90,6 +94,7 @@ function EditorToolbar({ editor, onImageUpload, uploading }: {
   uploading: boolean
 }) {
   const [showLink, setShowLink] = useState(false)
+  const [showTablePicker, setShowTablePicker] = useState(false)
   if (!editor) return null
 
   const handleImageClick = () => {
@@ -101,6 +106,11 @@ function EditorToolbar({ editor, onImageUpload, uploading }: {
       if (file) onImageUpload(file)
     }
     input.click()
+  }
+
+  const insertTable = (rows: number, cols: number) => {
+    editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run()
+    setShowTablePicker(false)
   }
 
   return (
@@ -121,6 +131,33 @@ function EditorToolbar({ editor, onImageUpload, uploading }: {
           className={`p-1.5 rounded text-sm ${editor.isActive("orderedList") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>1.</button>
         <button onClick={() => editor.chain().focus().toggleBlockquote().run()}
           className={`p-1.5 rounded text-sm ${editor.isActive("blockquote") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>"</button>
+        <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
+        <div className="relative">
+          <button onClick={() => setShowTablePicker(!showTablePicker)}
+            className={`p-1.5 rounded text-sm ${editor.isActive("table") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`} title="插入表格">⊞</button>
+          {showTablePicker && (
+            <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 z-50"
+              onMouseDown={(e) => e.preventDefault()}>
+              <div className="text-xs text-gray-500 mb-1 px-1">选择表格大小</div>
+              {[3, 4, 5].map((n) => (
+                <button key={n} onClick={() => insertTable(n, n)}
+                  className="block w-full text-left px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700">{n}×{n}</button>
+              ))}
+              <div className="border-t dark:border-gray-700 mt-1 pt-1">
+                <button onClick={() => { editor.chain().focus().addRowAfter().run(); setShowTablePicker(false) }}
+                  className="block w-full text-left px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700">➕ 行</button>
+                <button onClick={() => { editor.chain().focus().addColumnAfter().run(); setShowTablePicker(false) }}
+                  className="block w-full text-left px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700">➕ 列</button>
+                <button onClick={() => { editor.chain().focus().deleteRow().run(); setShowTablePicker(false) }}
+                  className="block w-full text-left px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700">➖ 行</button>
+                <button onClick={() => { editor.chain().focus().deleteColumn().run(); setShowTablePicker(false) }}
+                  className="block w-full text-left px-2 py-1 text-sm rounded hover:bg-gray-100 dark:hover:bg-gray-700">➖ 列</button>
+                <button onClick={() => { editor.chain().focus().deleteTable().run(); setShowTablePicker(false) }}
+                  className="block w-full text-left px-2 py-1 text-sm rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">🗑 删除表格</button>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
         <button onClick={() => setShowLink(true)}
           className={`p-1.5 rounded text-sm ${editor.isActive("link") ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300" : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>🔗</button>
@@ -197,6 +234,10 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
       Underline,
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder: t("memos.contentPlaceholder") }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
     ],
     content: initialData?.content || "",
     onUpdate: ({ editor }) => {
@@ -222,7 +263,7 @@ export default function MemoForm({ initialData, onSave, onCancel, categories, to
 
         // 新增：粘贴 Markdown 文本自动转换
         const text = event.clipboardData?.getData('text/plain') || ''
-        const looksLikeMarkdown = /^#{1,6}\s|^\s*[-*]\s|^\s*\d+\.\s|\*\*.*\*\*|`/.test(text)
+        const looksLikeMarkdown = /^#{1,6}\s|^\s*[-*]\s|^\s*\d+\.\s|\*\*.*\*\*|`|\|/.test(text)
 
         if (looksLikeMarkdown) {
           event.preventDefault()
