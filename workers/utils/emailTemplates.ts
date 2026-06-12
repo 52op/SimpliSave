@@ -1,5 +1,9 @@
 // 邮件模板 - 4 种场景
 
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;')
+}
+
 const BASE_STYLE = 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f4f5;margin:0;padding:24px;'
 const CARD = 'max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);'
 const HEADER_STYLE = 'background:#18181b;padding:20px 32px;'
@@ -83,6 +87,51 @@ export function buildApprovalEmail(params: {
   `
   return {
     subject: `「${params.title}」已通过审核 ✓`,
+    html: wrap(params.siteName, body),
+  }
+}
+
+/** 链接失效/问题反馈通知（发给管理员） */
+export function buildLinkReportEmail(params: {
+  bookmarkTitle: string
+  bookmarkUrl: string
+  groupName: string
+  problemType: string
+  description: string
+  isAlive: boolean
+  statusCode: number | null
+  currentTitle: string
+  siteName: string
+}): { subject: string; html: string } {
+  const typeLabels: Record<string, string> = {
+    dead: '链接失效',
+    changed: '内容变更',
+    other: '其他问题',
+  }
+  const statusBadge = params.isAlive
+    ? `<span style="display:inline-block;background:#dcfce7;color:#166534;font-size:13px;padding:2px 10px;border-radius:4px;">存活 (HTTP ${params.statusCode ?? 'N/A'})</span>`
+    : `<span style="display:inline-block;background:#fef2f2;color:#991b1b;font-size:13px;padding:2px 10px;border-radius:4px;">无法访问 (HTTP ${params.statusCode ?? 'N/A'})</span>`
+  const body = `
+    <p style="color:#3f3f46;font-size:15px;margin:0 0 16px;">用户反馈了一个链接问题：</p>
+    <div style="border:1px solid #e4e4e7;border-radius:8px;padding:16px;margin:0 0 20px;">
+      <p style="margin:0 0 4px;font-size:13px;color:#71717a;">链接标题</p>
+      <p style="margin:0 0 12px;font-weight:600;color:#18181b;">${escapeHtml(params.bookmarkTitle)}</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#71717a;">URL</p>
+      <p style="margin:0 0 12px;"><a href="${escapeHtml(params.bookmarkUrl)}" style="color:#6366f1;font-size:13px;word-break:break-all;">${escapeHtml(params.bookmarkUrl)}</a></p>
+      <p style="margin:0 0 4px;font-size:13px;color:#71717a;">所在卡片组</p>
+      <p style="margin:0 0 12px;color:#52525b;font-size:14px;">${escapeHtml(params.groupName) || '无'}</p>
+      <p style="margin:0 0 4px;font-size:13px;color:#71717a;">问题类型</p>
+      <p style="margin:0 0 12px;color:#18181b;font-size:14px;">${typeLabels[params.problemType] || params.problemType}</p>
+      ${params.description ? `<p style="margin:0 0 4px;font-size:13px;color:#71717a;">用户描述</p><p style="margin:0 0 12px;color:#52525b;font-size:14px;">${escapeHtml(params.description)}</p>` : ''}
+    </div>
+    <p style="color:#3f3f46;font-size:15px;margin:0 0 12px;font-weight:500;">自动检测结果</p>
+    <div style="border:1px solid #e4e4e7;border-radius:8px;padding:16px;margin:0 0 24px;">
+      <p style="margin:0 0 8px;">状态：${statusBadge}</p>
+      ${params.currentTitle ? `<p style="margin:0;font-size:13px;color:#71717a;">当前页面标题：<span style="color:#18181b;">${params.currentTitle}</span></p>` : ''}
+    </div>
+  `
+  return {
+    subject: `[链接反馈] ${params.bookmarkTitle} — ${typeLabels[params.problemType] || params.problemType}`,
     html: wrap(params.siteName, body),
   }
 }

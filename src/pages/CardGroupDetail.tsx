@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { cardGroupApi, publicBookmarkApi, publicCategoryApi, fetchMetaApi, imagebedApi } from "../services/api"
+import { cardGroupApi, publicBookmarkApi, publicCategoryApi, fetchMetaApi, imagebedApi, linkReportApi } from "../services/api"
 import { CardGroupDetail, Category } from "../types"
 import { useAuthStore } from "../stores/authStore"
-import { ExternalLink, ArrowLeft, Globe, Loader2, Pencil, Trash2, Plus, X, Wand2, ImageIcon } from "lucide-react"
+import { ExternalLink, ArrowLeft, Globe, Loader2, Pencil, Trash2, Plus, X, Wand2, ImageIcon, Flag } from "lucide-react"
 import { useToast } from "../components/Toast"
 import Favicon from "../components/Favicon"
 import ImageUploader from "../components/ImageUploader"
@@ -151,6 +151,13 @@ export default function CardGroupDetailPage() {
   const [bookmarkForm, setBookmarkForm] = useState<FormBookmark>(emptyBookmarkForm())
   const [groupForm, setGroupForm] = useState<FormGroup>({ title: "", description: "", icon_url: "", category_id: "" })
 
+  // report state
+  const [reportBookmarkId, setReportBookmarkId] = useState<string | null>(null)
+  const [reportType, setReportType] = useState("dead")
+  const [reportDesc, setReportDesc] = useState("")
+  const [reportSubmitting, setReportSubmitting] = useState(false)
+  const [reportResult, setReportResult] = useState<{ url: string; is_alive: boolean; status_code: number | null; current_title: string } | null>(null)
+
   const loadGroup = useCallback(() => {
     if (!slug) return
     setLoading(true)
@@ -281,6 +288,41 @@ export default function CardGroupDetailPage() {
     }
   }
 
+  async function handleDeleteGroup() {
+    if (!token || !group) return
+    const ok = window.confirm(`确定删除卡片组"${group.title}"吗？其下的所有链接也会一并删除。`)
+    if (!ok) return
+    try {
+      await cardGroupApi.delete(token, group.id)
+      toast("卡片组已删除", "success")
+      navigate("/")
+    } catch (err: any) {
+      toast(err.message || "删除失败", "error")
+    }
+  }
+
+  function openReport(bm: any) {
+    setReportBookmarkId(bm.id)
+    setReportType("dead")
+    setReportDesc("")
+    setReportResult(null)
+  }
+
+  async function handleSubmitReport() {
+    if (!reportBookmarkId) return
+    setReportSubmitting(true)
+    setReportResult(null)
+    try {
+      const res = await linkReportApi.submit(reportBookmarkId, reportType, reportDesc)
+      setReportResult(res)
+      toast("反馈已提交，管理员将收到通知", "success")
+    } catch (err: any) {
+      toast(err.message || "提交失败", "error")
+    } finally {
+      setReportSubmitting(false)
+    }
+  }
+
   function closePanel() {
     setPanelOpen(false)
     setEditBookmarkId(null)
@@ -323,6 +365,10 @@ export default function CardGroupDetailPage() {
             <button onClick={openAddBookmark}
               className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
               <Plus className="w-4 h-4" /> 添加链接
+            </button>
+            <button onClick={handleDeleteGroup}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+              <Trash2 className="w-4 h-4" /> 删除
             </button>
           </div>
         )}
@@ -376,8 +422,13 @@ export default function CardGroupDetailPage() {
                     </div>
                   </div>
                 </a>
+                <button onClick={(e) => { e.preventDefault(); openReport(bm) }}
+                  className="absolute top-2 right-2 p-1 rounded text-gray-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition opacity-0 group-hover/card:opacity-100"
+                  title="反馈问题">
+                  <Flag className="w-3.5 h-3.5" />
+                </button>
                 {isAdmin && (
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                  <div className="absolute top-2 right-8 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
                     <button onClick={(e) => { e.preventDefault(); openEditBookmark(bm) }}
                       className="p-1 rounded bg-white dark:bg-gray-700 shadow hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400">
                       <Pencil className="w-3.5 h-3.5" />
@@ -456,6 +507,75 @@ export default function CardGroupDetailPage() {
           </button>
         </div>
       </SlidePanel>
+
+      {/* report modal */}
+      {reportBookmarkId && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setReportBookmarkId(null)}>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md mx-4 p-5" onClick={(e) => e.stopPropagation()}>
+            {!reportResult ? (
+              <>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">反馈链接问题</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">问题类型</label>
+                    {[
+                      { value: "dead", label: "链接失效（打不开/404）" },
+                      { value: "changed", label: "内容变更（与原内容不符）" },
+                      { value: "other", label: "其他问题" },
+                    ].map((opt) => (
+                      <label key={opt.value} className="flex items-center gap-2 py-1.5 cursor-pointer">
+                        <input type="radio" name="reportType" value={opt.value} checked={reportType === opt.value}
+                          onChange={() => setReportType(opt.value)} className="accent-blue-600" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">问题描述（可选）</label>
+                    <textarea value={reportDesc} onChange={(e) => setReportDesc(e.target.value)} rows={3}
+                      placeholder="请简单描述您遇到的问题..."
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm resize-none" />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={() => setReportBookmarkId(null)}
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
+                    <button onClick={handleSubmitReport} disabled={reportSubmitting}
+                      className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg text-sm hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-1">
+                      {reportSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                      提交反馈
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">反馈已提交</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 dark:text-gray-400">链接状态：</span>
+                      {reportResult.is_alive
+                        ? <span className="text-green-600 font-medium">可访问 (HTTP {reportResult.status_code})</span>
+                        : <span className="text-red-500 font-medium">无法访问 (HTTP {reportResult.status_code ?? 'N/A'})</span>}
+                    </div>
+                    {reportResult.current_title && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-gray-500 dark:text-gray-400 shrink-0">当前标题：</span>
+                        <span className="text-gray-800 dark:text-gray-200">{reportResult.current_title}</span>
+                      </div>
+                    )}
+                    <div className="text-gray-400 dark:text-gray-500 text-xs pt-1">
+                      管理员将收到邮件通知，感谢您的反馈！
+                    </div>
+                  </div>
+                  <button onClick={() => setReportBookmarkId(null)}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">关闭</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

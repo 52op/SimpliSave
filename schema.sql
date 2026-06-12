@@ -359,3 +359,19 @@ CREATE TABLE IF NOT EXISTS email_verification_codes (
 );
 CREATE INDEX IF NOT EXISTS idx_evc_email_purpose
   ON email_verification_codes(email, purpose, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS link_reports (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  bookmark_id  TEXT NOT NULL,
+  problem_type TEXT NOT NULL CHECK(problem_type IN ('dead','changed','other')),
+  description  TEXT DEFAULT '',
+  reporter_ip  TEXT NOT NULL,
+  url          TEXT NOT NULL,
+  title        TEXT NOT NULL,
+  is_alive     INTEGER NOT NULL DEFAULT 0,
+  current_title TEXT DEFAULT '',
+  status_code  INTEGER,
+  created_at   INTEGER NOT NULL DEFAULT (unixepoch())
+);
+CREATE INDEX IF NOT EXISTS idx_lr_ip_bm
+  ON link_reports(reporter_ip, bookmark_id, created_at DESC);

@@ -43,6 +43,7 @@ import { handleGetPublicMemo, handleVerifyPublicMemoPassword, handleListPublicMe
 import { handleGetPublicUser, handleListPublicBookmarksByUser } from './api/publicUsers';
 import { handleSendCode } from './api/emailVerify';
 import { handleGetEmailConfig, handleUpdateEmailConfig, handleTestEmailConfig, handleActivateEmailConfig } from './api/emailConfig';
+import { handleCreateLinkReport } from './api/linkReports';
 
 interface Env {
   DB: D1Database;
@@ -79,6 +80,7 @@ export default {
       if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
       if (path.startsWith('/site-settings')) return handleSiteSettings(request, env);
       if (path === '/hot-tags') return withCache(request.url, TTL.HOT_TAGS, () => handleHotTags());
+      if (path.startsWith('/link-reports')) return handleCreateLinkReport(request, env);
 
       const publicMemoVerifyMatch = path.match(/^\/public-memos\/([^\/]+)\/verify$/);
       const publicMemoMatch = path.match(/^\/public-memos\/([^\/]+)$/);

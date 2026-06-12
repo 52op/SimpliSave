@@ -241,6 +241,13 @@ export const emailApi = {
     request<{ message: string; expires_in: number }>('POST', '/email/send-code', { email, purpose }),
 };
 
+export const linkReportApi = {
+  submit: (bookmarkId: string, problemType: string, description: string) =>
+    request<{ url: string; is_alive: boolean; status_code: number | null; current_title: string }>(
+      'POST', '/link-reports', { bookmark_id: bookmarkId, problem_type: problemType, description }
+    ),
+};
+
 export const emailConfigApi = {
   get: (token: string) => request<any[]>('GET', '/admin/email-config', undefined, token),
   update: (token: string, data: any) => request<{ message: string }>('PUT', '/admin/email-config', data, token),
