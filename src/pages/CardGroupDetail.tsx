@@ -1,20 +1,130 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { cardGroupApi } from "../services/api"
-import { CardGroupDetail } from "../types"
-import { ExternalLink, ArrowLeft, Globe, Loader2 } from "lucide-react"
+import { cardGroupApi, publicBookmarkApi, publicCategoryApi, fetchMetaApi, imagebedApi } from "../services/api"
+import { CardGroupDetail, Category } from "../types"
+import { useAuthStore } from "../stores/authStore"
+import { ExternalLink, ArrowLeft, Globe, Loader2, Pencil, Trash2, Plus, X, Wand2 } from "lucide-react"
+import { useToast } from "../components/Toast"
 import Favicon from "../components/Favicon"
+
+interface FormBookmark {
+  url: string
+  title: string
+  description: string
+  icon_url: string
+  category_id: string
+}
+
+interface FormGroup {
+  title: string
+  description: string
+  icon_url: string
+  category_id: string
+}
+
+const emptyBookmarkForm = (): FormBookmark => ({ url: "", title: "", description: "", icon_url: "", category_id: "" })
+
+function SlidePanel({ open, title, onClose, children }: { open: boolean; title: string; onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => { document.body.style.overflow = "" }
+  }, [open])
+
+  return (
+    <>
+      {open && <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />}
+      <div className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-800 shadow-2xl z-50 transform transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="p-4 overflow-y-auto" style={{ height: "calc(100% - 64px)" }}>{children}</div>
+      </div>
+    </>
+  )
+}
+
+function BookmarkForm({ form, onChange, onFetchMeta, fetching, categories }: {
+  form: FormBookmark
+  onChange: (f: FormBookmark) => void
+  onFetchMeta: () => void
+  fetching: boolean
+  categories: Category[]
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL</label>
+        <div className="flex gap-2">
+          <input type="url" value={form.url} onChange={(e) => onChange({ ...form, url: e.target.value })}
+            placeholder="https://..." className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm" />
+          <button onClick={onFetchMeta} disabled={!form.url || fetching}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 flex items-center gap-1">
+            {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} 抓取
+          </button>
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.title")}</label>
+        <input type="text" value={form.title} onChange={(e) => onChange({ ...form, title: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.description")}</label>
+        <textarea value={form.description} onChange={(e) => onChange({ ...form, description: e.target.value })}
+          rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm resize-none" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">图标 URL</label>
+        <div className="flex gap-2 items-center">
+          <input type="url" value={form.icon_url} onChange={(e) => onChange({ ...form, icon_url: e.target.value })}
+            placeholder="https://..." className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm" />
+          {form.icon_url && <img src={form.icon_url} alt="" className="w-8 h-8 rounded object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />}
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label>
+        <select value={form.category_id} onChange={(e) => onChange({ ...form, category_id: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm">
+          <option value="">{t("common.noCategory")}</option>
+          {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+        </select>
+      </div>
+    </div>
+  )
+}
 
 export default function CardGroupDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { toast } = useToast()
+  const { user, token } = useAuthStore()
+  const isAdmin = user?.role === "admin"
+
   const [group, setGroup] = useState<CardGroupDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [categories, setCategories] = useState<Category[]>([])
 
-  useEffect(() => {
+  // slide panel state
+  const [panelOpen, setPanelOpen] = useState(false)
+  const [panelMode, setPanelMode] = useState<"group" | "bookmark">("bookmark")
+  const [editBookmarkId, setEditBookmarkId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [fetching, setFetching] = useState(false)
+
+  // form state
+  const [bookmarkForm, setBookmarkForm] = useState<FormBookmark>(emptyBookmarkForm())
+  const [groupForm, setGroupForm] = useState<FormGroup>({ title: "", description: "", icon_url: "", category_id: "" })
+
+  const loadGroup = useCallback(() => {
     if (!slug) return
     setLoading(true)
     cardGroupApi.getBySlug(slug)
@@ -25,6 +135,129 @@ export default function CardGroupDetailPage() {
       .catch((err) => setError(err.message || "Not found"))
       .finally(() => setLoading(false))
   }, [slug])
+
+  useEffect(() => { loadGroup() }, [loadGroup])
+
+  useEffect(() => {
+    if (isAdmin) {
+      publicCategoryApi.list().then(setCategories).catch(() => {})
+    }
+  }, [isAdmin])
+
+  function openAddBookmark() {
+    setEditBookmarkId(null)
+    setBookmarkForm({ ...emptyBookmarkForm(), category_id: group?.category_id || "" })
+    setPanelMode("bookmark")
+    setPanelOpen(true)
+  }
+
+  function openEditBookmark(bm: any) {
+    setEditBookmarkId(bm.id)
+    setBookmarkForm({
+      url: bm.url || "",
+      title: bm.title || "",
+      description: bm.description || "",
+      icon_url: bm.icon_url || "",
+      category_id: bm.category_id || group?.category_id || "",
+    })
+    setPanelMode("bookmark")
+    setPanelOpen(true)
+  }
+
+  function openEditGroup() {
+    if (!group) return
+    setGroupForm({
+      title: group.title || "",
+      description: group.description || "",
+      icon_url: group.icon_url || "",
+      category_id: group.category_id || "",
+    })
+    setPanelMode("group")
+    setPanelOpen(true)
+  }
+
+  async function handleFetchMeta() {
+    if (!bookmarkForm.url) return
+    setFetching(true)
+    try {
+      const meta = await fetchMetaApi.fetch(bookmarkForm.url)
+      setBookmarkForm((prev) => ({
+        ...prev,
+        title: prev.title || meta.title || "",
+        description: prev.description || meta.description || "",
+        icon_url: prev.icon_url || meta.icon || "",
+      }))
+    } catch (err: any) {
+      toast(err.message || "抓取失败", "error")
+    } finally {
+      setFetching(false)
+    }
+  }
+
+  async function handleSaveBookmark() {
+    if (!token || !group || !bookmarkForm.title.trim() || !bookmarkForm.url.trim()) return
+    setSaving(true)
+    try {
+      const payload = {
+        title: bookmarkForm.title.trim(),
+        url: bookmarkForm.url.trim(),
+        description: bookmarkForm.description.trim() || undefined,
+        icon_url: bookmarkForm.icon_url.trim() || undefined,
+        category_id: bookmarkForm.category_id || undefined,
+        group_id: group.id,
+      }
+      if (editBookmarkId) {
+        await publicBookmarkApi.update(token, editBookmarkId, payload)
+      } else {
+        await publicBookmarkApi.create(token, payload)
+      }
+      setPanelOpen(false)
+      loadGroup()
+      toast(editBookmarkId ? "链接已更新" : "链接已添加", "success")
+    } catch (err: any) {
+      toast(err.message || "操作失败", "error")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleSaveGroup() {
+    if (!token || !group || !groupForm.title.trim()) return
+    setSaving(true)
+    try {
+      await cardGroupApi.update(token, group.id, {
+        title: groupForm.title.trim(),
+        description: groupForm.description.trim() || undefined,
+        icon_url: groupForm.icon_url.trim() || undefined,
+        category_id: groupForm.category_id || undefined,
+      })
+      setPanelOpen(false)
+      loadGroup()
+      toast("卡片组已更新", "success")
+    } catch (err: any) {
+      toast(err.message || "更新失败", "error")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDeleteBookmark(id: string, title: string) {
+    if (!token) return
+    const ok = window.confirm(`确定删除链接"${title}"吗？`)
+    if (!ok) return
+    try {
+      await publicBookmarkApi.delete(token, id)
+      loadGroup()
+      toast("链接已删除", "success")
+    } catch (err: any) {
+      toast(err.message || "删除失败", "error")
+    }
+  }
+
+  function closePanel() {
+    setPanelOpen(false)
+    setEditBookmarkId(null)
+  }
 
   if (loading) {
     return (
@@ -42,9 +275,7 @@ export default function CardGroupDetailPage() {
         <div className="text-center py-20">
           <Globe className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400 text-lg">{error || "Not found"}</p>
-          <button onClick={() => navigate("/")} className="mt-4 text-blue-600 hover:underline">
-            ← 返回首页
-          </button>
+          <button onClick={() => navigate("/")} className="mt-4 text-blue-600 hover:underline">← 返回首页</button>
         </div>
       </div>
     )
@@ -52,14 +283,28 @@ export default function CardGroupDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      <button onClick={() => navigate("/")} className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 mb-6">
-        <ArrowLeft className="w-4 h-4" /> 返回首页
-      </button>
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={() => navigate("/")} className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-blue-600">
+          <ArrowLeft className="w-4 h-4" /> 返回首页
+        </button>
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <button onClick={openEditGroup}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+              <Pencil className="w-4 h-4" /> 编辑
+            </button>
+            <button onClick={openAddBookmark}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <Plus className="w-4 h-4" /> 添加链接
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 sm:p-6 mb-8">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
           <Favicon src={group.icon_url} title={group.title} size="lg" />
-          <div className="text-center sm:text-left">
+          <div className="text-center sm:text-left flex-1">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{group.title}</h1>
             {group.description && (
               <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm sm:text-base">{group.description}</p>
@@ -74,39 +319,115 @@ export default function CardGroupDetailPage() {
       </div>
 
       {group.bookmarks && group.bookmarks.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {group.bookmarks.map((bm) => (
-            <a
-              key={bm.id}
-              href={bm.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition group"
-            >
-              <div className="flex items-start gap-3">
-                <Favicon src={bm.icon_url} title={bm.title} size="md" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-blue-600">{bm.title}</p>
-                  {bm.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{bm.description}</p>
-                  )}
-                  <div className="flex items-center gap-1 mt-2">
-                    <ExternalLink className="w-3 h-3 text-gray-400 dark:text-gray-500" />
-                    <span className="text-xs text-gray-400 dark:text-gray-500 truncate">
-                      {(() => { try { return new URL(bm.url).hostname } catch { return bm.url } })()}
-                    </span>
+        <>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-gray-500 dark:text-gray-400">共 {group.bookmarks.length} 个链接</p>
+            {isAdmin && (
+              <button onClick={openAddBookmark}
+                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700">
+                <Plus className="w-4 h-4" /> 添加链接
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {group.bookmarks.map((bm) => (
+              <div key={bm.id} className="group/card relative bg-white dark:bg-gray-800 rounded-lg shadow-md dark:shadow-gray-900/30 p-4 hover:shadow-lg transition">
+                <a href={bm.url} target="_blank" rel="noopener noreferrer" className="block">
+                  <div className="flex items-start gap-3">
+                    <Favicon src={bm.icon_url} title={bm.title} size="md" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 truncate group-hover/card:text-blue-600">{bm.title}</p>
+                      {bm.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{bm.description}</p>
+                      )}
+                      <div className="flex items-center gap-1 mt-2">
+                        <ExternalLink className="w-3 h-3 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                        <span className="text-xs text-gray-400 dark:text-gray-500 truncate">
+                          {(() => { try { return new URL(bm.url).hostname } catch { return bm.url } })()}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </a>
+                {isAdmin && (
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.preventDefault(); openEditBookmark(bm) }}
+                      className="p-1 rounded bg-white dark:bg-gray-700 shadow hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={(e) => { e.preventDefault(); handleDeleteBookmark(bm.id, bm.title) }}
+                      className="p-1 rounded bg-white dark:bg-gray-700 shadow hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
-            </a>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       ) : (
         <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/30">
           <Globe className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">暂无链接</p>
+          {isAdmin && (
+            <button onClick={openAddBookmark}
+              className="mt-4 inline-flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+              <Plus className="w-4 h-4" /> 添加第一个链接
+            </button>
+          )}
         </div>
       )}
+
+      {/* edit group panel */}
+      <SlidePanel open={panelOpen && panelMode === "group"} title="编辑卡片组" onClose={closePanel}>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">标题</label>
+            <input type="text" value={groupForm.title} onChange={(e) => setGroupForm({ ...groupForm, title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">描述</label>
+            <textarea value={groupForm.description} onChange={(e) => setGroupForm({ ...groupForm, description: e.target.value })}
+              rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm resize-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">图标 URL</label>
+            <div className="flex gap-2 items-center">
+              <input type="url" value={groupForm.icon_url} onChange={(e) => setGroupForm({ ...groupForm, icon_url: e.target.value })}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm" />
+              {groupForm.icon_url && <img src={groupForm.icon_url} alt="" className="w-10 h-10 rounded object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">分类</label>
+            <select value={groupForm.category_id} onChange={(e) => setGroupForm({ ...groupForm, category_id: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm">
+              <option value="">无分类</option>
+              {categories.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+            </select>
+          </div>
+          <div className="flex gap-2 pt-4">
+            <button onClick={closePanel} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
+            <button onClick={handleSaveGroup} disabled={!groupForm.title.trim() || saving}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">
+              {saving ? "保存中..." : "保存"}
+            </button>
+          </div>
+        </div>
+      </SlidePanel>
+
+      {/* add/edit bookmark panel */}
+      <SlidePanel open={panelOpen && panelMode === "bookmark"} title={editBookmarkId ? "编辑链接" : "添加链接"} onClose={closePanel}>
+        <BookmarkForm form={bookmarkForm} onChange={setBookmarkForm} onFetchMeta={handleFetchMeta} fetching={fetching} categories={categories} />
+        <div className="flex gap-2 pt-4 mt-4 border-t dark:border-gray-700">
+          <button onClick={closePanel} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
+          <button onClick={handleSaveBookmark} disabled={!bookmarkForm.title.trim() || !bookmarkForm.url.trim() || saving}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">
+            {saving ? "保存中..." : "保存"}
+          </button>
+        </div>
+      </SlidePanel>
     </div>
   )
 }
