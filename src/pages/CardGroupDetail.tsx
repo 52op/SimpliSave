@@ -4,9 +4,10 @@ import { useTranslation } from "react-i18next"
 import { cardGroupApi, publicBookmarkApi, publicCategoryApi, fetchMetaApi, imagebedApi } from "../services/api"
 import { CardGroupDetail, Category } from "../types"
 import { useAuthStore } from "../stores/authStore"
-import { ExternalLink, ArrowLeft, Globe, Loader2, Pencil, Trash2, Plus, X, Wand2 } from "lucide-react"
+import { ExternalLink, ArrowLeft, Globe, Loader2, Pencil, Trash2, Plus, X, Wand2, ImageIcon } from "lucide-react"
 import { useToast } from "../components/Toast"
 import Favicon from "../components/Favicon"
+import ImageUploader from "../components/ImageUploader"
 
 interface FormBookmark {
   url: string
@@ -49,14 +50,30 @@ function SlidePanel({ open, title, onClose, children }: { open: boolean; title: 
   )
 }
 
-function BookmarkForm({ form, onChange, onFetchMeta, fetching, categories }: {
+function BookmarkForm({ form, onChange, onFetchMeta, fetching, categories, token }: {
   form: FormBookmark
   onChange: (f: FormBookmark) => void
   onFetchMeta: () => void
   fetching: boolean
   categories: Category[]
+  token: string | null
 }) {
   const { t } = useTranslation()
+  const [syncLoading, setSyncLoading] = useState(false)
+
+  const handleSyncIcon = async () => {
+    if (!token || !form.icon_url) return
+    setSyncLoading(true)
+    try {
+      const res = await imagebedApi.uploadByUrl(token, form.icon_url, 'icon')
+      onChange({ ...form, icon_url: res.public_url })
+    } catch (err: any) {
+      console.error("sync icon failed", err)
+    } finally {
+      setSyncLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -81,12 +98,21 @@ function BookmarkForm({ form, onChange, onFetchMeta, fetching, categories }: {
           rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm resize-none" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">图标 URL</label>
-        <div className="flex gap-2 items-center">
-          <input type="url" value={form.icon_url} onChange={(e) => onChange({ ...form, icon_url: e.target.value })}
-            placeholder="https://..." className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm" />
-          {form.icon_url && <img src={form.icon_url} alt="" className="w-8 h-8 rounded object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />}
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">图标</label>
+        <div className="flex items-start gap-3">
+          <ImageUploader type="icon" value={form.icon_url} onChange={(url) => onChange({ ...form, icon_url: url })}
+            className="w-12 h-12 shrink-0" />
+          <div className="flex-1 flex gap-2">
+            <input type="url" value={form.icon_url} onChange={(e) => onChange({ ...form, icon_url: e.target.value })}
+              placeholder="https://..." className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm" />
+            <button type="button" disabled={syncLoading || !form.icon_url} onClick={handleSyncIcon}
+              className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40"
+              title="同步到图床">
+              <Loader2 className={`w-4 h-4 ${syncLoading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">支持上传、拖拽、粘贴图片；远程 URL 可点击同步按钮托管到图床</p>
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t("bookmarks.category")}</label>
@@ -119,6 +145,7 @@ export default function CardGroupDetailPage() {
   const [editBookmarkId, setEditBookmarkId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [fetching, setFetching] = useState(false)
+  const [syncIconLoading, setSyncIconLoading] = useState(false)
 
   // form state
   const [bookmarkForm, setBookmarkForm] = useState<FormBookmark>(emptyBookmarkForm())
@@ -392,11 +419,12 @@ export default function CardGroupDetailPage() {
               rows={3} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm resize-none" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">图标 URL</label>
-            <div className="flex gap-2 items-center">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">图标</label>
+            <div className="flex items-start gap-3">
+              <ImageUploader type="icon" value={groupForm.icon_url} onChange={(url) => setGroupForm({ ...groupForm, icon_url: url })}
+                className="w-12 h-12 shrink-0" />
               <input type="url" value={groupForm.icon_url} onChange={(e) => setGroupForm({ ...groupForm, icon_url: e.target.value })}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm" />
-              {groupForm.icon_url && <img src={groupForm.icon_url} alt="" className="w-10 h-10 rounded object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />}
+                placeholder="https://..." className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-sm" />
             </div>
           </div>
           <div>
@@ -419,7 +447,7 @@ export default function CardGroupDetailPage() {
 
       {/* add/edit bookmark panel */}
       <SlidePanel open={panelOpen && panelMode === "bookmark"} title={editBookmarkId ? "编辑链接" : "添加链接"} onClose={closePanel}>
-        <BookmarkForm form={bookmarkForm} onChange={setBookmarkForm} onFetchMeta={handleFetchMeta} fetching={fetching} categories={categories} />
+        <BookmarkForm form={bookmarkForm} onChange={setBookmarkForm} onFetchMeta={handleFetchMeta} fetching={fetching} categories={categories} token={token} />
         <div className="flex gap-2 pt-4 mt-4 border-t dark:border-gray-700">
           <button onClick={closePanel} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700">取消</button>
           <button onClick={handleSaveBookmark} disabled={!bookmarkForm.title.trim() || !bookmarkForm.url.trim() || saving}
