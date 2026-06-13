@@ -236,13 +236,23 @@ export default function Home() {
     setLoading(true)
     setPageError("")
     try {
+      let fetchFailed = false
+      const onError = () => { fetchFailed = true; return [] }
       const [groups, cats, engs, tags] = await Promise.all([
-        cardGroupApi.list().catch(() => [] as CardGroup[]),
-        publicCategoryApi.list().catch(() => [] as Category[]),
-        searchEngineApi.list(true).catch(() => [] as SearchEngine[]),
-        hotTagsApi.list().catch(() => [] as string[]),
+        cardGroupApi.list().catch(onError),
+        publicCategoryApi.list().catch(onError),
+        searchEngineApi.list(true).catch(onError),
+        hotTagsApi.list().catch(onError),
       ])
       if (loadRef.current.generation !== gen) return
+      if (fetchFailed) {
+        const allEmpty = groups.length === 0 && cats.length === 0 && engs.length === 0 && tags.length === 0
+        if (allEmpty) {
+          setPageError(t("common.error") + "：数据加载失败")
+          setLoading(false)
+          return
+        }
+      }
       setCardGroups(groups)
       setCategories(cats)
       setSearchEngines(engs)
