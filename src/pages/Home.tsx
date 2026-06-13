@@ -69,11 +69,13 @@ export default function Home() {
   const suggestRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const tagTimerRef = useRef<ReturnType<typeof setInterval>>()
+  const loadRef = useRef({ generation: 0, timer: 0 as unknown as ReturnType<typeof setTimeout> })
 
   useEffect(() => {
     loadData()
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) setSelectedEngineId(saved)
+    return () => { clearTimeout(loadRef.current.timer) }
   }, [])
 
   useEffect(() => {
@@ -229,23 +231,27 @@ export default function Home() {
   }
 
   async function loadData(retry = true) {
+    const gen = ++loadRef.current.generation
+    clearTimeout(loadRef.current.timer)
     setLoading(true)
     setPageError("")
     try {
       const [groups, cats, engs, tags] = await Promise.all([
-        cardGroupApi.list(),
-        publicCategoryApi.list(),
-        searchEngineApi.list(true),
+        cardGroupApi.list().catch(() => [] as CardGroup[]),
+        publicCategoryApi.list().catch(() => [] as Category[]),
+        searchEngineApi.list(true).catch(() => [] as SearchEngine[]),
         hotTagsApi.list().catch(() => [] as string[]),
       ])
+      if (loadRef.current.generation !== gen) return
       setCardGroups(groups)
       setCategories(cats)
       setSearchEngines(engs)
       setHotTags(tags)
+      setLoading(false)
     } catch (err: any) {
-      console.error("Failed to load data:", err)
-      if (retry) {
-        setTimeout(() => loadData(false), 2000)
+      if (loadRef.current.generation !== gen) return
+      if (retry && loadRef.current.generation === gen) {
+        loadRef.current.timer = setTimeout(() => loadData(false), 2000)
         return
       }
       setPageError(err?.message || t("common.error"))
@@ -253,8 +259,8 @@ export default function Home() {
       setCategories([])
       setSearchEngines([])
       setHotTags([])
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const [tagline, setTagline] = useState(() => randomTagline(siteSettings?.site_tagline))
