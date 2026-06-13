@@ -257,7 +257,9 @@ export default function Home() {
     setLoading(false)
   }
 
-  const tagline = useMemo(() => randomTagline(siteSettings?.site_tagline), [siteSettings?.site_tagline])
+  const [tagline, setTagline] = useState(() => randomTagline(siteSettings?.site_tagline))
+  const cycleTagline = useCallback(() => setTagline(randomTagline(siteSettings?.site_tagline)), [siteSettings?.site_tagline])
+  useEffect(() => { setTagline(randomTagline(siteSettings?.site_tagline)) }, [siteSettings?.site_tagline])
 
   const selectedEngine = engines.find(e => e.id === selectedEngineId) || engines[0]
 
@@ -374,7 +376,7 @@ export default function Home() {
         </div>
         <div className="relative">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 tracking-tight">{siteSettings?.site_alias || siteSettings?.site_name || "SimpliSave"}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">{tagline || siteSettings?.description || t("app.description")}</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onClick={cycleTagline} title="点击切换">{tagline || siteSettings?.description || t("app.description")}</p>
         
         {/* 搜索框 */}
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative" ref={suggestRef}
