@@ -236,6 +236,10 @@ export const publicUserApi = {
   listBookmarks: (id: string) => request<any[]>('GET', `/public/users/${id}/bookmarks`),
 };
 
+export const homeDataApi = {
+  get: () => request<{ card_groups: any[]; categories: any[]; search_engines: any[] }>('GET', '/home-data'),
+};
+
 export const emailApi = {
   sendCode: (email: string, purpose: 'register' | 'login' | 'change_email') =>
     request<{ message: string; expires_in: number }>('POST', '/email/send-code', { email, purpose }),

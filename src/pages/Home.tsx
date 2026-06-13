@@ -3,7 +3,7 @@ import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useSiteSettingsStore } from "../stores/siteSettingsStore"
-import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi } from "../services/api"
+import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi, homeDataApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
 import { Search, Folder, Globe, Zap, Loader2, X, RefreshCw, ChevronDown } from "lucide-react"
 import Favicon from "../components/Favicon"
@@ -236,26 +236,14 @@ export default function Home() {
     setLoading(true)
     setPageError("")
     try {
-      let fetchFailed = false
-      const onError = () => { fetchFailed = true; return [] }
-      const [groups, cats, engs, tags] = await Promise.all([
-        cardGroupApi.list().catch(onError),
-        publicCategoryApi.list().catch(onError),
-        searchEngineApi.list(true).catch(onError),
-        hotTagsApi.list().catch(onError),
+      const [data, tags] = await Promise.all([
+        homeDataApi.get(),
+        hotTagsApi.list().catch(() => [] as string[]),
       ])
       if (loadRef.current.generation !== gen) return
-      if (fetchFailed) {
-        const allEmpty = groups.length === 0 && cats.length === 0 && engs.length === 0 && tags.length === 0
-        if (allEmpty) {
-          setPageError(t("common.error") + "：数据加载失败")
-          setLoading(false)
-          return
-        }
-      }
-      setCardGroups(groups)
-      setCategories(cats)
-      setSearchEngines(engs)
+      setCardGroups(data.card_groups || [])
+      setCategories(data.categories || [])
+      setSearchEngines(data.search_engines || [])
       setHotTags(tags)
       setLoading(false)
     } catch (err: any) {

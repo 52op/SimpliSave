@@ -45,6 +45,7 @@ import { handleSendCode } from './api/emailVerify';
 import { handleGetEmailConfig, handleUpdateEmailConfig, handleTestEmailConfig, handleActivateEmailConfig } from './api/emailConfig';
 import { handleCreateLinkReport } from './api/linkReports';
 import { handleListLinkReports } from './api/adminLinkReports';
+import { handleGetHomeData } from './api/homeData';
 
 interface Env {
   DB: D1Database;
@@ -81,6 +82,7 @@ export default {
       if (path.startsWith('/imagebed')) return handleImagebed(request, env, path);
       if (path.startsWith('/site-settings')) return handleSiteSettings(request, env);
       if (path === '/hot-tags') return withCache(request.url, TTL.HOT_TAGS, () => handleHotTags());
+      if (path === '/home-data') return withCache(request.url, TTL.CARD_GROUPS, () => handleGetHomeData(request, env));
       if (path.startsWith('/link-reports')) return handleCreateLinkReport(request, env, ctx);
 
       const publicMemoVerifyMatch = path.match(/^\/public-memos\/([^\/]+)\/verify$/);
