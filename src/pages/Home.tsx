@@ -3,6 +3,7 @@ import { useToast } from "../components/Toast"
 import { useTranslation } from "react-i18next"
 import { useAuthStore } from "../stores/authStore"
 import { useSiteSettingsStore } from "../stores/siteSettingsStore"
+import { useHomeCacheStore } from "../stores/homeCacheStore"
 import { cardGroupApi, publicCategoryApi, submissionApi, fetchMetaApi, searchEngineApi, hotTagsApi, homeDataApi } from "../services/api"
 import { CardGroup, Category, SearchEngine } from "../types"
 import { Search, Folder, Globe, Zap, Loader2, X, RefreshCw, ChevronDown } from "lucide-react"
@@ -44,14 +45,18 @@ export default function Home() {
   const siteSettings = useSiteSettingsStore((s) => s.settings)
   const { toast } = useToast()
 
-  const [loading, setLoading] = useState(true)
-  const [cardGroups, setCardGroups] = useState<CardGroup[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [engines, setSearchEngines] = useState<SearchEngine[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
+  // 使用全局缓存 Store
+  const cache = useHomeCacheStore()
+
+  // 本地状态（UI 交互状态）
+  const [loading, setLoading] = useState(!cache.isLoaded)
+  const [cardGroups, setCardGroups] = useState<CardGroup[]>(cache.cardGroups)
+  const [categories, setCategories] = useState<Category[]>(cache.categories)
+  const [engines, setSearchEngines] = useState<SearchEngine[]>(cache.searchEngines)
+  const [searchQuery, setSearchQuery] = useState(cache.searchQuery)
   const [selectedEngineId, setSelectedEngineId] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
+  const [selectedCategory, setSelectedCategory] = useState<string>(cache.selectedCategory)
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(cache.collapsedCategories)
   const [showEngines, setShowEngines] = useState(false)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
   const [submitForm, setSubmitForm] = useState({ url: "", title: "", description: "" })
@@ -59,7 +64,7 @@ export default function Home() {
   const [fetching, setFetching] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [hotTags, setHotTags] = useState<string[]>([])
+  const [hotTags, setHotTags] = useState<string[]>(cache.hotTags)
   const [showHotPanel, setShowHotPanel] = useState(false)
   const [hotPanelIndex, setHotPanelIndex] = useState(0)
   const [pageError, setPageError] = useState("")
@@ -70,11 +75,43 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null)
   const tagTimerRef = useRef<ReturnType<typeof setInterval>>()
   const loadRef = useRef({ generation: 0, timer: 0 as unknown as ReturnType<typeof setTimeout> })
+  const isRestoredRef = useRef(false)
+
+  // 恢复滚动位置
+  useEffect(() => {
+    if (cache.scrollPosition > 0 && !isRestoredRef.current) {
+      window.scrollTo(0, cache.scrollPosition)
+      isRestoredRef.current = true
+    }
+  }, [])
+
+  // 保存滚动位置
+  useEffect(() => {
+    const handleScroll = () => {
+      cache.setScrollPosition(window.scrollY)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [cache])
 
   useEffect(() => {
-    loadData()
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) setSelectedEngineId(saved)
+
+    // 如果有有效缓存，直接使用，只在后台静默刷新
+    if (cache.isCacheValid()) {
+      setCardGroups(cache.cardGroups)
+      setCategories(cache.categories)
+      setSearchEngines(cache.searchEngines)
+      setHotTags(cache.hotTags)
+      setLoading(false)
+      // 后台静默刷新数据
+      loadData(true)
+    } else {
+      // 无缓存或缓存过期，显示 loading 加载
+      loadData(false)
+    }
+
     return () => { clearTimeout(loadRef.current.timer) }
   }, [])
 
@@ -144,6 +181,7 @@ export default function Home() {
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value
     setSearchQuery(val)
+    cache.setSearchQuery(val)
     setShowHotPanel(false)
     doSuggest(val)
   }
@@ -230,10 +268,10 @@ export default function Home() {
     }
   }
 
-  async function loadData(retry = true) {
+  async function loadData(silent = false) {
     const gen = ++loadRef.current.generation
     clearTimeout(loadRef.current.timer)
-    setLoading(true)
+    if (!silent) setLoading(true)
     setPageError("")
     try {
       const [data, tags] = await Promise.all([
@@ -241,23 +279,32 @@ export default function Home() {
         hotTagsApi.list().catch(() => [] as string[]),
       ])
       if (loadRef.current.generation !== gen) return
-      setCardGroups(data.card_groups || [])
-      setCategories(data.categories || [])
-      setSearchEngines(data.search_engines || [])
-      setHotTags(tags)
+
+      const cardGroupsData = data.card_groups || []
+      const categoriesData = data.categories || []
+      const enginesData = data.search_engines || []
+      const hotTagsData = tags
+
+      // 更新本地状态
+      setCardGroups(cardGroupsData)
+      setCategories(categoriesData)
+      setSearchEngines(enginesData)
+      setHotTags(hotTagsData)
       setLoading(false)
+
+      // 同步到全局缓存
+      cache.setData({
+        cardGroups: cardGroupsData,
+        categories: categoriesData,
+        searchEngines: enginesData,
+        hotTags: hotTagsData,
+      })
     } catch (err: any) {
       if (loadRef.current.generation !== gen) return
-      if (retry && loadRef.current.generation === gen) {
-        loadRef.current.timer = setTimeout(() => loadData(false), 2000)
-        return
+      if (!silent) {
+        setPageError(err?.message || t("common.error"))
+        setLoading(false)
       }
-      setPageError(err?.message || t("common.error"))
-      setCardGroups([])
-      setCategories([])
-      setSearchEngines([])
-      setHotTags([])
-      setLoading(false)
     }
   }
 
@@ -554,7 +601,7 @@ export default function Home() {
           {/* 分类按钮容器 */}
           <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar md:flex-wrap md:overflow-visible">
             <button
-              onClick={() => setSelectedCategory("all")}
+              onClick={() => { setSelectedCategory("all"); cache.setSelectedCategory("all") }}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap ${
                 selectedCategory === "all"
                   ? "bg-[var(--color-primary)] text-white shadow-sm"
@@ -567,7 +614,7 @@ export default function Home() {
             {categories.map((c) => (
               <button
                 key={c.id}
-                onClick={() => setSelectedCategory(c.id)}
+                onClick={() => { setSelectedCategory(c.id); cache.setSelectedCategory(c.id) }}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition flex items-center gap-1.5 whitespace-nowrap ${
                   selectedCategory === c.id
                     ? "text-white shadow-sm"
@@ -623,12 +670,13 @@ export default function Home() {
                 {/* 分类头 */}
                 <button
                   type="button"
-                  onClick={() => setCollapsedCategories(prev => {
-                    const next = new Set(prev)
+                  onClick={() => {
+                    const next = new Set(collapsedCategories)
                     if (next.has(catId)) next.delete(catId)
                     else next.add(catId)
-                    return next
-                  })}
+                    setCollapsedCategories(next)
+                    cache.toggleCollapsedCategory(catId)
+                  }}
                   className="w-full flex items-center gap-2.5 px-5 py-3.5 hover:bg-[var(--color-surface-2)] transition-colors"
                 >
                   <div
